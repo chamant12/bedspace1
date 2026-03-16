@@ -52,7 +52,7 @@
     <header>
         <nav id="nav-part" class="navbar header-nav custom_nav navbar-expand-md">
             <div class="container p-0">
-                <a class="navbar-brand" href=//index.html"><img src="{{url("theme/header-logo.png");}}" class="img-fluid" alt="logo"></a>
+                <a class="navbar-brand" href=//index.html"><img src="{{url('assets/images/logo.jpg');}}" class="img-fluid" alt="logo" style="width:64%"></a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span></span>
                     <span></span>
