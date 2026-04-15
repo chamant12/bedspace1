@@ -39,7 +39,7 @@
      <!-- ===================
        back to top start 
      =================== -->
-    <a href=//index.html#" id="back-top-btn">
+    <a href="/" id="back-top-btn">
        <i class="fas fa-angle-double-up"></i>
      </a>
      <!-- ===================
@@ -52,7 +52,7 @@
     <header>
         <nav id="nav-part" class="navbar header-nav custom_nav navbar-expand-md">
             <div class="container p-0">
-                <a class="navbar-brand" href=//index.html"><img src="{{url('assets/images/logo.jpg');}}" class="img-fluid" alt="logo" style="width:64%"></a>
+                <a class="navbar-brand" href="/"><img src="{{url('assets/images/logo.jpg');}}" class="img-fluid" alt="logo" style="width:64%"></a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span></span>
                     <span></span>
@@ -64,11 +64,15 @@
                         <li class="nav-item"><a class="nav-link" href=//popular.html">Popular Destination  </a></li>
                         <li class="nav-item"><a class="nav-link" href=//blog.html">Blog</a></li>
                         <li class="nav-item"><a class="nav-link" href=//tourpackage.html">Tour Packages</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/dashboard">Login</a></li>
+                        @if(auth()->check())
+                        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                        @else
+                        <li class="nav-item"><a class="nav-link" href="/signup">Signup</a></li>
+                        @endif
                         <li class="nav-item"><a class="nav-link" href=//index.html#contact">Contact</a></li>
                     </ul>
                     <ul class="login_menu navbar-right nav-sign">                    
-						<li class="login"><a href=//index.html#" class="btn-4">Sign up / login</a></li>
+						<li class="login"><a href="/signup" class="btn-4">Sign up / login</a></li>
 					</ul>
 
                 </div>
