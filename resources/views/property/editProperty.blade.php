@@ -58,10 +58,30 @@
                         <label for="exampleInputUsername1">Contact Email<span style="color:red;">*</span></label>
                         <input type="text" class="form-control" placeholder="Email" name="contact_email" required value="{{$property->contact_email}}">
                       </div>
+                      <div class="form-group">
+                        <label for="exampleInputUsername1">Available Room Types</label>
+                        @if(count($roomTypes)>0)
+                            <ul style="margin-left:10%;">
+                                @foreach($roomTypes as $roomType)
+                                <li>{{$roomType->roomType}}&nbsp;&nbsp;&nbsp;
+                                <a href="/view-roomType/{{$roomType->id}}" alt="View Property Details">
+                                    <i class="fa fa-eye"></i>
+                                </a>&nbsp;&nbsp;&nbsp;
+                                <a data-toggle="tooltip" style="text-decoration:none;color:red;" title="Delete Room Type with all its rooms" href="/delete-roomType/{{$roomType->id}}" onclick="return confirm('Are you sure you want to delete this room type and all its rooms?');">
+                                    <i class="ti-trash"></i>
+                                </a>
+                            </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <span class="form-control" style="border:0px;">No room types added</span><br/>
+                        @endif
+                        </div>
                       <div class="form-check form-check-flat form-check-primary">
                         <label class="form-check-label">
                           <input type="checkbox" class="form-check-input" required checked="checked">I hereby agree to the terms and conditions<i class="input-helper"></i><span style="color:red;">*</span> </label>
                       </div>
+                      
                       {{csrf_field()}}
                       <input type="hidden" name='property_id' value="{{$property->id}}">
                       <button type="submit" class="btn btn-primary">Update</button>
@@ -142,4 +162,37 @@ $("#district_id").change(function(){
 });
     });
 </script>
+@stop
+@section('styles')
+<style>
+    .tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Hide tooltip by default */
+.tooltip-text {
+  visibility: hidden;
+  width: 140px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 5px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%; /* Position above the link */
+  left: 50%;
+  margin-left: -70px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Show tooltip on hover */
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+</style>
 @stop

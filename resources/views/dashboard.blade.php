@@ -386,3 +386,6 @@
           </div>
           <!-- content-wrapper ends -->
 @stop
+@section('scripts')
+    <script src="{{url("assets/js/dashboard.js")}}"></script>
+@endsection

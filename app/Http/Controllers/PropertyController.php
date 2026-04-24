@@ -7,6 +7,9 @@ use App\Models\Property;
 use App\Models\Province;
 use App\Models\District;
 use App\Models\City;
+use App\Models\RoomType;
+use App\Models\RateType;
+use App\Models\CurrencyRate;
 
 class PropertyController extends Controller
 {
@@ -42,6 +45,25 @@ class PropertyController extends Controller
         $property->location = request()->location;
         $property->save();
 
+        $rateType = new RateType();
+        $rateType->property_id = $property->id;
+        $rateType->rateType = "base_rate";
+        $rateType->save();
+
+        $currencyRate = new CurrencyRate();
+        $currencyRate->currency_type_id = 1;
+        $currencyRate->property_owner_id = auth()->user()->id;
+        $currencyRate->rate_date = date('Y-m-d');
+        $currencyRate->rate = 1;
+        $currencyRate->save();
+
+        $currencyRate = new CurrencyRate();
+        $currencyRate->currency_type_id = 2;
+        $currencyRate->property_owner_id = auth()->user()->id;
+        $currencyRate->rate_date = date('Y-m-d');
+        $currencyRate->rate = 300;
+        $currencyRate->save();
+
         session()->flash('success', 'Property was created successfully');
 
         return redirect('/my-properties');
@@ -52,8 +74,9 @@ class PropertyController extends Controller
         $provinces = Province::all();
         $districts = District::all();
         $cities = City::all();
+        $roomTypes = RoomType::where('property_id',$property_id)->get();
 
-        return view('property.editProperty', compact('property','provinces','districts','cities'));
+        return view('property.editProperty', compact('property','provinces','districts','cities','roomTypes'));
     }
 
     public function updateProperty(){

@@ -17,4 +17,9 @@ class Property extends Model
     {
         return $this->belongsTo(User::class, 'property_owner_id','id');
     }
+
+    public function rateTypes(): HasMany
+    {
+        return $this->hasMany(RateType::class);
+    }
 }

@@ -24,8 +24,11 @@
                                 {{$property->city->district->district_name}}
                             </td>
                             <td>
-                                <a href="/view-property/{{$property->id}}" alt="View Property Details">
+                                <a href="/view-property/{{$property->id}}" data-toggle="tooltip" title="View Property Details" class="btn btn-primary">
                                     <i class="fa fa-eye"></i>
+                                </a>
+                                <a href="/add-base-rate/{{$property->id}}" data-toggle="tooltip" title="Add base rate" style="text-decoration:none;" class="btn btn-success">
+                                <i class="ti-tag"></i>
                                 </a>
                             </td>
                           </tr>
