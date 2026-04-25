@@ -128,7 +128,7 @@ class RateController extends Controller
         public function editDollarRate(){
             $currencyRate = CurrencyRate::where(['currency_type_id'=>2,'rate_date'=>date('Y-m-d'),'property_owner_id'=>auth()->user()->id])->orderBy('id','DESC')->first();
 
-            if($currencyRate->count()==0){
+            if(!$currencyRate){
                 $currencyRate = new CurrencyRate();
                 $currencyRate->rate = 3000;
             }
@@ -138,7 +138,7 @@ class RateController extends Controller
 
         public function updateDollarRate(){
             $currencyRate = CurrencyRate::where(['currency_type_id'=>2,'rate_date'=>date('Y-m-d'),'property_owner_id'=>auth()->user()->id])->orderBy('id','DESC')->first();
-            if($currencyRate->count()==0){
+            if(!$currencyRate){
                 $currencyRate = new CurrencyRate();
                 $currencyRate->currency_type_id = 2;
                 $currencyRate->rate_date = date('Y-m-d');
