@@ -6,6 +6,7 @@ use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\RateTypeController;
 use App\Http\Controllers\RateController;
+use App\Http\Controllers\AmenityController;
 
 
 Route::get('/user', function (Request $request) {
@@ -17,6 +18,8 @@ Route::get('/get-cities-by-district/{district_id}', [PropertyController::class, 
 Route::get('/get-properties-by-city/{city_id}/{property_owner_id}', [RoomTypeController::class, 'getPropertiesByCity']);
 Route::get('/get-base-rates/{roomType_id}/{currency_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRates']);
 Route::post('/update-baserate', [RateController::class, 'updateBaseRates']);
+Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
+
 
 
 
