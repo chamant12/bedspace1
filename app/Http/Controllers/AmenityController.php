@@ -7,6 +7,7 @@ use App\Model\Amenity;
 use App\Model\PropertyAmenityXref;
 use App\Model\RoomAmenityXref;
 use App\Model\RoomType;
+use App\Model\Property;
 use DB;
 
 class AmenityController extends Controller
@@ -104,5 +105,10 @@ class AmenityController extends Controller
 
         session()->flash('success', 'Amenity added successfully');
         return redirect()->back();
+    }
+
+    public function amenities(){
+        $properties = Property::with('city','city.district')->where(['property_owner_id'=>auth()->user()->id])->get();
+        return view('amenity.amenity',compact('properties'));
     }
 }
