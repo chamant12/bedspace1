@@ -34,6 +34,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/add-base-rate/{property_id}', [RateController::class, 'addBaseRate']);
     Route::post('/update-doillar-rate', [RateController::class, 'updateDollarRate']);
     Route::get('/edit-dollar-rate', [RateController::class, 'editDollarRate']);
-    
+    Route::get('/amenities', [RateController::class, 'amenities']);
     
 });
