@@ -5,6 +5,7 @@
                 <div class="card">
                   <div class="card-body">
                     <h4 class="card-title">Amenities</h4>
+                    <form action="/addAmenity" method="POST">
                       <div class="form-group">
                         <label for="exampleInputUsername1">Property name<span style="color:red;">*</span></label>
                         <select name="property_id" id="property_id" required class="form-control">
@@ -22,34 +23,20 @@
                             <option value="roomType">RoomType</option>
                         </select>
                       </div>
-                      <div class="form-group" id="room_types">
+                      <div class="form-group" id="room_type_id">
                         <label for="exampleInputUsername1">Available Room Types</label>
-                        @if(count($roomTypes)>0)
-                            <ul style="margin-left:10%;">
-                                @foreach($roomTypes as $roomType)
-                                <li>{{$roomType->roomType}}&nbsp;&nbsp;&nbsp;
-                                <a href="/view-roomType/{{$roomType->id}}" alt="View Property Details">
-                                    <i class="fa fa-eye"></i>
-                                </a>&nbsp;&nbsp;&nbsp;
-                                <a data-toggle="tooltip" style="text-decoration:none;color:red;" title="Delete Room Type with all its rooms" href="/delete-roomType/{{$roomType->id}}" onclick="return confirm('Are you sure you want to delete this room type and all its rooms?');">
-                                    <i class="ti-trash"></i>
-                                </a>
-                            </li>
-                                @endforeach
-                            </ul>
-                        @else
-                            <span class="form-control" style="border:0px;">No room types added</span><br/>
-                        @endif
+                         <selecl name="room_type_id" id="room_type_id">
+                        </select>
                         </div>
                       <div class="form-group">
                         <label id="amenity_label">Amenities</label>
                         <ul id="amenity_id">
-                        </ul>
+                        </ul id="amenity_list">
                         <div class="spinner-border" role="status" id="amenity_spinner">
                         <span class="visually-hidden">Loading...</span>
                         </div>
                       </div>
-                      <form action="/add-amenity" method="POST">
+                      
                     <div class="form-group">
                         <label for="exampleInputUsername1">Add Amenity<span style="color:red;">*</span></label>
                         <select name="amenity_id" id="amenity_id" required class="form-control">
@@ -94,14 +81,14 @@
 $("#property_id").change(function(){
     $("#amenity_id").html('');
     $("#amenity_type").val('');
-    $("#room_types").hide();
+    $("#room_type_id").hide();
 });
 $("#amenity_type").change(function(){
     if($(this).val()!=""){
         if($(this).val()=="roomType"){
-            $("#room_types").show();
+            $("#room_type_id").show();
         } else {
-            $("#room_types").hide();
+            $("#room_type_id").hide();
             ("#amenity_spinner").show();
             $.ajax({
                     url: '/api/get-amenities/'+$(this).val()+'/'+$("#property_id").val(),
@@ -109,7 +96,9 @@ $("#amenity_type").change(function(){
                     dataType: 'json',
                     success: function(response) {
                         $("#amenity_spinner").hide();
-                        $("#amenity_id").html(response.html);
+                        $("#amenity_list").html(response.html);
+                        $("#amenity_id").html(response.selectHtml);
+                        $("#room_type_id")..html(response.roomTypeHtml);
                         
                     },
                     error: function(error) {
@@ -118,12 +107,13 @@ $("#amenity_type").change(function(){
                     }
                 });
         }
+    } else {
+        $("#amenity_id").html('');
     }
 }):
 
-$("#room_types").change(function(){
+$("#room_type_id").change(function(){
     if($(this).val()!=""){
-            $("#room_types").hide();
             ("#amenity_spinner").show();
             $.ajax({
                     url: '/api/get-amenities/roomType/'+$(this).val(),
@@ -139,34 +129,32 @@ $("#room_types").change(function(){
                         console.error('Error fetching districts:', error);
                     }
                 });
+        } else {
+            $("#amenity_id").html('');
         }
-    }
+    
 }):
 
 
 
-function deleteAmenity(amenity_id,roomType_id,type_id){
-    
-    if(amenity_id==""){
-        alert('Please select a amenity to proceed!');
-        return false;
+function deleteAmenity(amenity_id,amenityType){
+    var confirmed = confirm('Are you sure you want to delete this?');
+    if(confirmed){
+        $("#"+amenity_id+"_"+amenityType+"_"+type_id).remove();
+        $('#loader-overlay').show();
+        $.ajax({
+            url: '/api/deleteAmenity/'+amenity_id+'/'+amenityType,
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                    $("#"+amenity_id+"_"+amenityType+"_"+type_id).remove();
+                    $('#loader-overlay').hide();
+            }
+        });
     }
 
-    if(roomType_id==""){
-        alert('Please select a Room Type to proceed!');
-        return false;
-    }
-    if(type_id ==""){
-        if(roomType_id==""){
-            alert('Please select a Room Type to proceed!');
-            return false;
-    } else {
-        alert('Please select start date to proceed!');
-        return false;
-    }
     
-
-    $('#loader-overlay').show();
+    
         $.ajax({
             url: '/api/get-base-rates/'+roomType_id+'/'+currency_id+'/'+from_date+'/'+to_date,
             type: 'GET',
