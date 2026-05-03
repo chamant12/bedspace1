@@ -89,7 +89,7 @@ $("#amenity_type").change(function(){
             $("#room_type_id").show();
         } else {
             $("#room_type_id").hide();
-            ("#amenity_spinner").show();
+            $("#amenity_spinner").show();
             $.ajax({
                     url: '/api/get-amenities/'+$(this).val()+'/'+$("#property_id").val(),
                     type: 'GET',
@@ -98,7 +98,7 @@ $("#amenity_type").change(function(){
                         $("#amenity_spinner").hide();
                         $("#amenity_list").html(response.html);
                         $("#amenity_id").html(response.selectHtml);
-                        $("#room_type_id")..html(response.roomTypeHtml);
+                        $("#room_type_id").html(response.roomTypeHtml);
                         
                     },
                     error: function(error) {
@@ -114,7 +114,7 @@ $("#amenity_type").change(function(){
 
 $("#room_type_id").change(function(){
     if($(this).val()!=""){
-            ("#amenity_spinner").show();
+            $("#amenity_spinner").show();
             $.ajax({
                     url: '/api/get-amenities/roomType/'+$(this).val(),
                     type: 'GET',
