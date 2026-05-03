@@ -26,15 +26,15 @@ class AmenityController extends Controller
 
         if($property_id>0){
             $amenities = DB::table('amenities')
-            ->join('amenity_property_xref', 'amenities.id', '=', 'amenity_property_xref.amenity_id')
-            ->where('amenity_property_xref.type_id', $property_id)
+            ->join('property_amenity_xrefs', 'amenities.id', '=', 'property_amenity_xrefs.amenity_id')
+            ->where('property_amenity_xrefs.type_id', $property_id)
             ->where('amenities.amenity_type', 'property') // Based on your 'amenity_type' filter
             ->select('amenities.*')
             ->get();
 
             $allAmenities = DB::table('amenities')
-            ->join('amenity_property_xref', 'amenities.id', '=', 'amenity_property_xref.amenity_id')
-            ->notWhere('amenity_property_xref.type_id', $property_id)
+            ->join('property_amenity_xrefs', 'amenities.id', '=', 'property_amenity_xrefs.amenity_id')
+            ->notWhere('property_amenity_xrefs.type_id', $property_id)
             ->where('amenities.amenity_type', 'property') // Based on your 'amenity_type' filter
             ->select('amenities.*')
             ->get();
