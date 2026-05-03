@@ -207,10 +207,11 @@ function deleteAmenity(amenity_id,amenityType){
             }
         });
     
-});
-
-
+}
     });
+
+
+    
 </script>
 @stop
 @section('styles')
