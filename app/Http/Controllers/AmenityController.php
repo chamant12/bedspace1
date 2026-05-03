@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Model\Amenity;
-use App\Model\PropertyAmenityXref;
-use App\Model\RoomAmenityXref;
-use App\Model\RoomType;
-use App\Model\Property;
+use App\Models\Amenity;
+use App\Models\PropertyAmenityXref;
+use App\Models\RoomAmenityXref;
+use App\Models\RoomType;
+use App\Models\Property;
 use DB;
 
 class AmenityController extends Controller
