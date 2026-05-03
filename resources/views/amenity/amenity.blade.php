@@ -110,7 +110,7 @@ $("#amenity_type").change(function(){
     } else {
         $("#amenity_id").html('');
     }
-}):
+});
 
 $("#room_type_id").change(function(){
     if($(this).val()!=""){
