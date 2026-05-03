@@ -5,6 +5,7 @@ use App\Http\Controllers\UserLoginController;
 use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\RateController;
+use App\Http\Controllers\AmenityController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -34,6 +35,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/add-base-rate/{property_id}', [RateController::class, 'addBaseRate']);
     Route::post('/update-doillar-rate', [RateController::class, 'updateDollarRate']);
     Route::get('/edit-dollar-rate', [RateController::class, 'editDollarRate']);
-    Route::get('/amenities', [RateController::class, 'amenities']);
+    Route::get('/amenities', [AmenityController::class, 'amenities']);
     
 });
