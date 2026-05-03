@@ -133,7 +133,7 @@ $("#room_type_id").change(function(){
             $("#amenity_id").html('');
         }
     
-}):
+});
 
 
 
