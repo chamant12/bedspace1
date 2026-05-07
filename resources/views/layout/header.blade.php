@@ -329,12 +329,12 @@
                         </div>
                       </div>
 @if (session('success'))
-    <div class="alert alert-success">
+    <div class="alert alert-success show-message" >
         {{ session('success') }}
     </div>
 @endif
 @if (session('error'))
-    <div class="alert alert-danger">
+    <div class="alert alert-danger show-message">
         {{ session('error') }}
     </div>
 @endif

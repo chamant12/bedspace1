@@ -23,16 +23,16 @@
                             <option value="roomType">RoomType</option>
                         </select>
                       </div>
-                      <div class="form-group" id="room_type_id">
+                      <div class="form-group" id="room_type_id_div">
                         <label for="exampleInputUsername1">Available Room Types</label>
-                         <selecl name="room_type_id" id="room_type_id">
+                         <select name="room_type_id" id="room_type_id" class="form-control">
                         </select>
                         </div>
                       <div class="form-group">
-                        <label id="amenity_label">Amenities</label>
-                        <ul id="amenity_id">
-                        </ul id="amenity_list">
-                        <div class="spinner-border" role="status" id="amenity_spinner">
+                        <label id="amenity_label">Amenities (added)</label>
+                        <ul id="amenity_list">
+                        </ul>
+                        <div class="spinner-border" role="status" id="amenity_spinner" style="display:none;">
                         <span class="visually-hidden">Loading...</span>
                         </div>
                       </div>
@@ -44,7 +44,7 @@
                         </select>
                       </div>
                       <div class="form-group">
-                        
+                        {{csrf_field()}}
                         <input type="submit" class="btn btn-success" value="Add"/>
                       </div>
                       </form>
@@ -61,7 +61,7 @@
                   </div>
                 </div>
               </div>
-</form>
+<
 <!-- Add a unique ID to the container to toggle it with JS -->
 <div id="loader-overlay" class="spinner-overlay" style="display:none;">
   <div class="spinner-border text-primary" role="status">
@@ -84,12 +84,31 @@ $("#property_id").change(function(){
     $("#room_type_id").hide();
 });
 $("#amenity_type").change(function(){
+    $("#amenity_list").html('');
+    $("#amenity_id").html('');
     if($(this).val()!=""){
         if($(this).val()=="roomType"){
+            $("#amenity_list").html('');
+            $("#amenity_id").html('');
             $("#room_type_id").show();
+            $.ajax({
+                    url: '/api/get-amenities/property/'+$("#property_id").val(),
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(response) {
+                        $("#amenity_spinner").hide();
+                        $("#room_type_id").html(response.roomTypeHtml);
+                    },
+                    error: function(error) {
+                        $('#loader-overlay').hide();
+                        console.error('Error fetching districts:', error);
+                    }
+                });
         } else {
             $("#room_type_id").hide();
             $("#amenity_spinner").show();
+            $("#amenity_list").html('');
+            $("#amenity_id").html('');
             $.ajax({
                     url: '/api/get-amenities/'+$(this).val()+'/'+$("#property_id").val(),
                     type: 'GET',
@@ -99,7 +118,26 @@ $("#amenity_type").change(function(){
                         $("#amenity_list").html(response.html);
                         $("#amenity_id").html(response.selectHtml);
                         $("#room_type_id").html(response.roomTypeHtml);
-                        
+                        $('[deleteAmenity]').click(function(){
+                            var amty = $(this).attr('deleteAmenity').split(',');
+                            var amenity_id = amty[0];
+                            var amenityType = amty[1];
+                            var parent = $(this).parent();
+
+                            var confirmed = confirm('Are you sure you want to delete this?');
+                            if(confirmed){
+                                $('#loader-overlay').show();
+                                $.ajax({
+                                    url: '/api/deleteAmenity/'+amenity_id+'/'+$("#property_id").val()+'/'+amenityType,
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    success: function(response) {
+                                            $(parent).remove();
+                                            $('#loader-overlay').hide();
+                                    }
+                                });
+                            }
+                        });
                     },
                     error: function(error) {
                         $('#loader-overlay').hide();
@@ -113,16 +151,40 @@ $("#amenity_type").change(function(){
 });
 
 $("#room_type_id").change(function(){
+    $("#amenity_list").html('');
+    $("#amenity_id").html('');
     if($(this).val()!=""){
             $("#amenity_spinner").show();
+            var roomType_id = $(this).val();
             $.ajax({
-                    url: '/api/get-amenities/roomType/'+$(this).val(),
+                    url: '/api/get-amenities/roomType/'+roomType_id,
                     type: 'GET',
                     dataType: 'json',
                     success: function(response) {
                         $("#amenity_spinner").hide();
-                        $("#amenity_id").html(response.html);
-                        
+                        $("#amenity_list").html(response.html);
+                        $("#amenity_id").html(response.selectHtml);
+                        $('[deleteAmenity]').click(function(){
+                        var amty = $(this).attr('deleteAmenity').split(',');
+                        var parent = $(this).parent();
+                        var amenity_id = amty[0];
+                        var amenityType = amty[1];
+
+                        var confirmed = confirm('Are you sure you want to delete this?');
+                        if(confirmed){
+                            
+                            $('#loader-overlay').show();
+                            $.ajax({
+                                url: '/api/deleteAmenity/'+amenity_id+'/'+roomType_id+'/'+amenityType,
+                                type: 'GET',
+                                dataType: 'json',
+                                success: function(response) {
+                                        $(parent).remove();
+                                        $('#loader-overlay').hide();
+                                }
+                            });
+                        }
+                    });
                     },
                     error: function(error) {
                         $('#loader-overlay').hide();
@@ -135,79 +197,65 @@ $("#room_type_id").change(function(){
     
 });
 
-
-
-function deleteAmenity(amenity_id,amenityType){
-    var confirmed = confirm('Are you sure you want to delete this?');
-    if(confirmed){
-        $("#"+amenity_id+"_"+amenityType+"_"+type_id).remove();
-        $('#loader-overlay').show();
-        $.ajax({
-            url: '/api/deleteAmenity/'+amenity_id+'/'+amenityType,
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                    $("#"+amenity_id+"_"+amenityType+"_"+type_id).remove();
-                    $('#loader-overlay').hide();
-            }
-        });
-    }
+$("['deleteamenity']").click(function(e){
+    alert("test");
+});
 
     
     
-        $.ajax({
-            url: '/api/get-base-rates/'+roomType_id+'/'+currency_id+'/'+from_date+'/'+to_date,
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                $('#loader-overlay').hide();
-                $("#response-container").html(response.html);
-                $(".rate_field").focus(function() {
-                            $(this).data('oldVal', $(this).val());
-                        }).blur(function() {
-                            var newVal = $(this).val();
-                            if(newVal !== "" && newVal !== $(this).data('oldVal')) {
-                        var occupancy_id = $(this).attr('occupancy_id');
-                        var mealtype_id = $(this).attr('mealtype_id');
-                        var roomType_id = $(this).attr('roomType_id');
-                        var currency_type_id = $(this).attr('currency_type_id');
-                        var rate_for = $(this).attr('rate_for');
-                        var rate = $(this).val();
-                        var input_box = $(this);
-                        $(input_box).hide();
-                        var spinner = $(this).parent().find(".spinner-border");
-                        $(spinner).show();
-                                $.ajax({
-                                    url: '/api/update-baserate',
-                                    type: 'POST',
-                                    data: {
-                                        _token: $('meta[name="csrf-token"]').attr('content'), // Required for Laravel
-                                        occupancy_id: occupancy_id,
-                                        mealtype_id: mealtype_id,
-                                        roomType_id: roomType_id,
-                                        currency_type_id: currency_type_id,
-                                        rate_for: rate_for,
-                                        rate: rate
-                                    },
-                                    dataType: 'json',
-                                    success: function(data) {
-                                        $(spinner).hide();
-                                        $(input_box).show();
-                                    },
-                                    error: function(error) {
-                                        console.error('Error fetching districts:', error);
-                                    }
-                                });
-                            }
-                        });
-            },
-            error: function(error) {
-                $('#loader-overlay').hide();
-                console.error('Error fetching districts:', error);
-            }
-        });
+        // $.ajax({
+        //     url: '/api/get-base-rates/'+roomType_id+'/'+currency_id+'/'+from_date+'/'+to_date,
+        //     type: 'GET',
+        //     dataType: 'json',
+        //     success: function(response) {
+        //         $('#loader-overlay').hide();
+        //         $("#response-container").html(response.html);
+        //         $(".rate_field").focus(function() {
+        //                     $(this).data('oldVal', $(this).val());
+        //                 }).blur(function() {
+        //                     var newVal = $(this).val();
+        //                     if(newVal !== "" && newVal !== $(this).data('oldVal')) {
+        //                 var occupancy_id = $(this).attr('occupancy_id');
+        //                 var mealtype_id = $(this).attr('mealtype_id');
+        //                 var roomType_id = $(this).attr('roomType_id');
+        //                 var currency_type_id = $(this).attr('currency_type_id');
+        //                 var rate_for = $(this).attr('rate_for');
+        //                 var rate = $(this).val();
+        //                 var input_box = $(this);
+        //                 $(input_box).hide();
+        //                 var spinner = $(this).parent().find(".spinner-border");
+        //                 $(spinner).show();
+        //                         $.ajax({
+        //                             url: '/api/update-baserate',
+        //                             type: 'POST',
+        //                             data: {
+        //                                 _token: $('meta[name="csrf-token"]').attr('content'), // Required for Laravel
+        //                                 occupancy_id: occupancy_id,
+        //                                 mealtype_id: mealtype_id,
+        //                                 roomType_id: roomType_id,
+        //                                 currency_type_id: currency_type_id,
+        //                                 rate_for: rate_for,
+        //                                 rate: rate
+        //                             },
+        //                             dataType: 'json',
+        //                             success: function(data) {
+        //                                 $(spinner).hide();
+        //                                 $(input_box).show();
+        //                             },
+        //                             error: function(error) {
+        //                                 console.error('Error fetching districts:', error);
+        //                             }
+        //                         });
+        //                     }
+        //                 });
+        //     },
+        //     error: function(error) {
+        //         $('#loader-overlay').hide();
+        //         console.error('Error fetching districts:', error);
+        //     }
+        // });
     
-}
+
     });
 
 

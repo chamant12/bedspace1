@@ -33,7 +33,13 @@
     
     <!-- <script src="{{url("assets/js/Chart.roundedBarCharts.js")}}"></script> -->
     <!-- End custom js for this page-->
-    
+     <script>
+    $(document).ready(function(){
+      setTimeout(function(){
+        $(".show-message").hide();
+      },2500);
+    });
+    </script>
      @yield('scripts')
   </body>
 </html>

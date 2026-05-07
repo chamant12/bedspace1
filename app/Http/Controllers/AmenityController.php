@@ -27,46 +27,52 @@ class AmenityController extends Controller
         if($property_id>0){
             $amenities = DB::table('amenities')
             ->join('property_amenity_xrefs', 'amenities.id', '=', 'property_amenity_xrefs.amenity_id')
-            ->where('property_amenity_xrefs.type_id', $property_id)
+            ->where('property_amenity_xrefs.property_id', $property_id)
             ->where('amenities.amenity_type', 'property') // Based on your 'amenity_type' filter
             ->select('amenities.*')
             ->get();
 
             $allAmenities = DB::table('amenities')
-            ->join('property_amenity_xrefs', 'amenities.id', '=', 'property_amenity_xrefs.amenity_id')
-            ->notWhere('property_amenity_xrefs.type_id', $property_id)
-            ->where('amenities.amenity_type', 'property') // Based on your 'amenity_type' filter
-            ->select('amenities.*')
+            ->where('amenities.amenity_type', 'property')
+            ->whereNotIn('amenities.id', function ($query) use ($property_id) {
+                $query->select('amenity_id')
+                    ->from('property_amenity_xrefs')
+                    ->where('property_id', $property_id);
+            })
             ->get();
 
             $roomTypes = RoomType::where('property_id',$property_id)->get();
         } else {
             $amenities = DB::table('amenities')
             ->join('roomType_amenity_xrefs', 'amenities.id', '=', 'roomType_amenity_xrefs.amenity_id')
-            ->where('roomType_amenity_xrefs.amenity_id', $amenity_id)
+            ->where('roomType_amenity_xrefs.roomType_id', $roomType_id)
             ->where('amenities.amenity_type', 'roomType') // Based on your 'amenity_type' filter
             ->select('amenities.*')
             ->get();
 
             $allAmenities = DB::table('amenities')
-            ->join('roomType_amenity_xrefs', 'amenities.id', '=', 'roomType_amenity_xrefs.amenity_id')
-            ->notWhere('roomType_amenity_xrefs.amenity_id', $amenity_id)
-            ->where('amenities.amenity_type', 'roomType') // Based on your 'amenity_type' filter
-            ->select('amenities.*')
+            ->where('amenities.amenity_type', 'roomType')
+            ->whereNotIn('amenities.id', function ($query) use ($roomType_id) {
+                $query->select('amenity_id')
+                    ->from('roomType_amenity_xrefs')
+                    ->where('roomType_id', $roomType_id);
+            })
             ->get();
+
         }
+
         
         $str="";
         $str2="<option value=''>Select Amenity</option>";
         $str3="<option value=''>Select Room Type</option>";
         foreach($amenities as $amenity){
-            $str .= "<li id='".$amenity->id."_".$amenity_type."'>".$amenity->amenity." <a href='#' class='btn btn-danger' onclick='deleteAmenity(".$amenity->id.",".$amenity_type.")'>Delete</a></li>";
+            $str .= "<li id='".$amenity->id."_".$amenity_type."'>".$amenity->amenity." <a href='#' class='btn btn-danger' deleteAmenity='".$amenity->id.",".$amenity_type."'>Delete</a></li>";
         }
-        foreach(allAmenities as $amenity){
-            $str2 .="<option value='".$amenity->id.'_'.$amenity_type."'>".$amenity->amenity."</option>";
+        foreach($allAmenities as $amenity){
+            $str2 .="<option value='".$amenity->id."'>".$amenity->amenity."</option>";
         }
 
-        foreach(roomTypes as $roomType){
+        foreach($roomTypes as $roomType){
             $str3 .="<option value='".$roomType->id."'>".$roomType->roomType."</option>";
         }
 
@@ -78,11 +84,11 @@ class AmenityController extends Controller
             ]);
     }
 
-    public function deleteAmenity($amenity_id,$amenity_type){
+    public function deleteAmenity($amenity_id,$type_id,$amenity_type){
         if($amenity_type=="roomType"){
-            RoomAmenityXref::where('id',$amenity_id)->delete();
+            RoomAmenityXref::where(['amenity_id'=>$amenity_id,'roomType_id'=>$type_id])->delete();
         } else {
-            PropertyAmenityXref::where('id',$amenity_id)->delete();
+            PropertyAmenityXref::where(['amenity_id'=>$amenity_id,'property_id'=>$type_id])->delete();
         }
 
         return response()->json([
@@ -91,6 +97,7 @@ class AmenityController extends Controller
     }
 
     public function addAmenity(){
+
         if(request()->amenity_type=="roomType"){
             $roomAmenityXref = new RoomAmenityXref();
             $roomAmenityXref->roomType_id = request()->room_type_id;

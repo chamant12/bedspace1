@@ -36,5 +36,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/update-doillar-rate', [RateController::class, 'updateDollarRate']);
     Route::get('/edit-dollar-rate', [RateController::class, 'editDollarRate']);
     Route::get('/amenities', [AmenityController::class, 'amenities']);
+    Route::post('/addAmenity', [AmenityController::class, 'addAmenity']);
     
 });
