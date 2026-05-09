@@ -7,6 +7,7 @@ use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\RateTypeController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\AmenityController;
+use App\Http\Controllers\PhotoController;
 
 
 Route::get('/user', function (Request $request) {
@@ -21,6 +22,8 @@ Route::post('/update-baserate', [RateController::class, 'updateBaseRates']);
 Route::get('/deleteAmenity/{amenity_id}/{type_id}/{amenityType}', [AmenityController::class, 'deleteAmenity']);
 Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
 Route::post('/addAmenity', [AmenityController::class, 'addAmenity']);
+Route::post('/upload-photos', [PhotoController::class, 'uploadPhotos']);
+
 
 
 

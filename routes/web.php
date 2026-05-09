@@ -6,6 +6,7 @@ use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\AmenityController;
+use App\Http\Controllers\PhotoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -37,5 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/edit-dollar-rate', [RateController::class, 'editDollarRate']);
     Route::get('/amenities', [AmenityController::class, 'amenities']);
     Route::post('/addAmenity', [AmenityController::class, 'addAmenity']);
+    Route::get('/photos', [PhotoController::class, 'selectPhotoType']);
+    Route::post('/manage-photos', [PhotoController::class, 'managePhotos']);
     
 });

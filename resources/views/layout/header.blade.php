@@ -226,6 +226,7 @@
                         <li class="nav-item"> <a class="nav-link" href="/add-room-type">Add Room Type</a></li>
                         <li class="nav-item"> <a class="nav-link" href="/edit-dollar-rate">Edit Dollar Rate</a></li>
                         <li class="nav-item"> <a class="nav-link" href="/amenities">Amenities</a></li>
+                        <li class="nav-item"> <a class="nav-link" href="/photos">Photos</a></li>
                     @endif
                     @if(auth()->user()->user_type_id==1)
                   <li class="nav-item"> <a class="nav-link" href="pages/ui-features/buttons.html">Properties</a></li>
