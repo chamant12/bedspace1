@@ -25,86 +25,21 @@
     <!-- SORTABLE GALLERY -->
     <div class="row sortable-gallery">
 
-        
-        <div class="col-lg-4 mb-4 image-item" data-id="1">
+        @foreach($photos as $photo)        
+        <div class="col-lg-4 mb-4 image-item" data-id="{{$photo->id}}">
             <div class="image-wrapper">
 <button  class="view-btn">&#128065;</button>
 
                 <!-- DELETE -->
                 <button  class="delete-btn">&times;</button>
                 <img 
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Horizontal/Nature/4-col/img%20(73).webp"
-                    data-full="https://mdbcdn.b-cdn.net/img/Photos/Horizontal/Nature/4-col/img%20(73).webp"
+                    src="{{ asset('storage'.$photo->upload_path.$photo->file_name) }}"
+                    data-full="{{ asset('storage'.$photo->upload_path.$photo->file_name) }}"
                     class="w-100 rounded"
                 >
             </div>
         </div>
-        <div class="col-lg-4 mb-4 image-item" data-id="2">
-            <div class="image-wrapper">
-<button  class="view-btn">&#128065;</button>
-
-                <!-- DELETE -->
-                <button  class="delete-btn">&times;</button>
-                <img 
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Vertical/mountain1.webp"
-                    data-full="https://mdbcdn.b-cdn.net/img/Photos/Vertical/mountain1.webp"
-                    class="w-100 rounded"
-                >
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4 image-item" data-id="3">
-            <div class="image-wrapper">
-<button  class="view-btn">&#128065;</button>
-
-                <!-- DELETE -->
-                <button  class="delete-btn">&times;</button>
-                <img 
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Vertical/mountain2.webp"
-                    data-full="https://mdbcdn.b-cdn.net/img/Photos/Vertical/mountain2.webp"
-                    class="w-100 rounded"
-                >
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4 image-item" data-id="4">
-            <div class="image-wrapper">
-<button  class="view-btn">&#128065;</button>
-
-                <!-- DELETE -->
-                <button  class="delete-btn">&times;</button>
-                <img 
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Horizontal/Nature/4-col/img%20(73).webp"
-                    data-full="https://mdbcdn.b-cdn.net/img/Photos/Horizontal/Nature/4-col/img%20(73).webp"
-                    class="w-100 rounded"
-                >
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4 image-item" data-id="5">
-            <div class="image-wrapper">
-<button  class="view-btn">&#128065;</button>
-
-                <!-- DELETE -->
-                <button  class="delete-btn">&times;</button>
-                <img 
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Horizontal/Nature/4-col/img%20(18).webp"
-                    data-full="https://mdbcdn.b-cdn.net/img/Photos/Horizontal/Nature/4-col/img%20(18).webp"
-                    class="w-100 rounded"
-                >
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4 image-item" data-id="6">
-            <div class="image-wrapper">
-<button  class="view-btn">&#128065;</button>
-
-                <!-- DELETE -->
-                <button  class="delete-btn">&times;</button>
-                <img 
-                    src="https://mdbcdn.b-cdn.net/img/Photos/Vertical/mountain3.webp"
-                    data-full="https://mdbcdn.b-cdn.net/img/Photos/Vertical/mountain3.webp"
-                    class="w-100 rounded"
-                >
-            </div>
-        </div>
-        
+        @endforeach        
 
     </div>
 </div>

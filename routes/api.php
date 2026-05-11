@@ -23,6 +23,9 @@ Route::get('/deleteAmenity/{amenity_id}/{type_id}/{amenityType}', [AmenityContro
 Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
 Route::post('/addAmenity', [AmenityController::class, 'addAmenity']);
 Route::post('/upload-photos', [PhotoController::class, 'uploadPhotos']);
+Route::post('/update-photo-order', [PhotoController::class, 'updatePhotoOrder']);
+Route::delete('/delete-photo/{photo_id}', [PhotoController::class, 'deletePhoto']);
+
 
 
 
