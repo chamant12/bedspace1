@@ -10,6 +10,8 @@ use App\Models\City;
 use App\Models\RoomType;
 use App\Models\RateType;
 use App\Models\CurrencyRate;
+use App\Mail\PropertyRegisteredMail;
+use Illuminate\Support\Facades\Mail;
 
 class PropertyController extends Controller
 {
@@ -64,6 +66,8 @@ class PropertyController extends Controller
         $currencyRate->rate = 300;
         $currencyRate->save();
 
+        $this->sendPropertyRegistrationMail($property,auth()->user());
+
         session()->flash('success', 'Property was created successfully');
 
         return redirect('/my-properties');
@@ -93,4 +97,20 @@ class PropertyController extends Controller
         session()->flash('success', 'Property was updated successfully');
         return redirect('/my-properties');
     }
+
+        public function sendPropertyRegistrationMail($property, $user)
+        {
+            $data = [
+                'owner_name' => $user->name,
+                'owner_email' => $user->email,
+                'owner_phone' => $user->phone,
+                'property_name' => $property->property_name,
+                'property_location' => $property->city()->city_name,
+                'created_at' => now(),
+                'admin_url' => url('/admin/properties/'.$property->id),
+            ];
+
+            Mail::to(env('ADMIN_EMAIL'))
+                ->send(new PropertyRegisteredMail($data));
+        }
 }

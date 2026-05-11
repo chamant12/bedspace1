@@ -57,6 +57,7 @@ class UserLoginController extends Controller
         $propertyOwner = new User();
         $propertyOwner->name = request()->full_name;
         $propertyOwner->email = request()->email;
+        $propertyOwner->phone = request()->phone;
         $propertyOwner->password = Hash::make(request()->password);
         $propertyOwner->user_role_id = 1;
         $propertyOwner->user_type_id = 2;
