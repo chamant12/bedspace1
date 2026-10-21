@@ -7,6 +7,8 @@ use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\AmenityController;
 use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin;
 
 Route::get('/', function () {
     return view('welcome');
@@ -14,15 +16,30 @@ Route::get('/', function () {
 
 
 Route::get('/login', [UserLoginController::class, 'login'])->name('login');
-Route::get('/logout', [UserLoginController::class, 'logout']);
+Route::post('/logout', [UserLoginController::class, 'logout'])->middleware('auth');
 Route::post('login', [UserLoginController::class, 'authenticateUser']);
 Route::get('/signup', [UserLoginController::class, 'propertyOwnerSignup']);
 Route::post('/create-property-owner', [UserLoginController::class, 'createPropertyOwner']);
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-            return view('dashboard');
-    });
+Route::get('/admin/login', [UserLoginController::class, 'adminLogin'])->name('admin.login');
+Route::post('/admin/login', [UserLoginController::class, 'authenticateAdmin']);
+
+// Platform admin area
+Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function () {
+    Route::get('/dashboard', [Admin\DashboardController::class, 'index']);
+    Route::get('/properties', [Admin\PropertyController::class, 'index']);
+    Route::post('/properties/{property_id}/toggle-active', [Admin\PropertyController::class, 'toggleActive']);
+    Route::get('/owners', [Admin\OwnerController::class, 'index']);
+    Route::post('/owners/{user_id}/toggle-status', [Admin\OwnerController::class, 'toggleStatus']);
+    Route::get('/amenities', [Admin\AmenityController::class, 'index']);
+    Route::post('/amenities', [Admin\AmenityController::class, 'store']);
+    Route::put('/amenities/{amenity_id}', [Admin\AmenityController::class, 'update']);
+    Route::delete('/amenities/{amenity_id}', [Admin\AmenityController::class, 'destroy']);
+});
+
+// Property owner area
+Route::middleware(['auth', 'user.type:owner'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/my-properties', [PropertyController::class, 'listMyProperties']);
     Route::get('/add-property', [PropertyController::class, 'addProperty']);
     Route::post('/create-property', [PropertyController::class, 'createProperty']);

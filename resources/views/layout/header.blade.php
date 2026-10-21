@@ -185,14 +185,17 @@
               <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="UserDropdown">
                 <div class="dropdown-header text-center">
                   <img class="img-md rounded-circle" src="{{url("assets/images/faces/face8.jpg")}}" alt="Profile image">
-                  <p class="mb-1 mt-3 fw-semibold">{{auth()->user()->first_name." ".auth()->user()->last_name}}</p>
+                  <p class="mb-1 mt-3 fw-semibold">{{auth()->user()->name}}</p>
                   <p class="fw-light text-muted mb-0">{{auth()->user()->email}}</p>
                 </div>
                 <a class="dropdown-item"><i class="dropdown-item-icon mdi mdi-account-outline text-primary me-2"></i> My Profile <span class="badge badge-pill badge-danger">1</span></a>
                 <a class="dropdown-item"><i class="dropdown-item-icon mdi mdi-message-text-outline text-primary me-2"></i> Messages</a>
                 <a class="dropdown-item"><i class="dropdown-item-icon mdi mdi-calendar-check-outline text-primary me-2"></i> Activity</a>
                 <a class="dropdown-item"><i class="dropdown-item-icon mdi mdi-help-circle-outline text-primary me-2"></i> FAQ</a>
-                <a class="dropdown-item" href="/logout"><i class="dropdown-item-icon mdi mdi-power text-primary me-2"></i>Sign Out</a>
+                <form method="POST" action="/logout">
+                  @csrf
+                  <button type="submit" class="dropdown-item"><i class="dropdown-item-icon mdi mdi-power text-primary me-2"></i>Sign Out</button>
+                </form>
               </div>
             </li>
           </ul>
@@ -207,61 +210,49 @@
         <nav class="sidebar sidebar-offcanvas" id="sidebar">
           <ul class="nav">
             <li class="nav-item">
-              <a class="nav-link" href="index.html">
+              <a class="nav-link" href="{{ auth()->user()->dashboardUrl() }}">
                 <i class="mdi mdi-grid-large menu-icon"></i>
                 <span class="menu-title">Dashboard</span>
               </a>
             </li>
+            @if(auth()->user()->isOwner())
             <li class="nav-item nav-category">Properties</li>
             <li class="nav-item">
-              <a class="nav-link" data-bs-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+              <a class="nav-link" data-bs-toggle="collapse" href="#menu-properties" aria-expanded="false" aria-controls="menu-properties">
                 <i class="menu-icon mdi mdi-floor-plan"></i>
                 <span class="menu-title">Properties</span>
                 <i class="menu-arrow"></i>
               </a>
-              <div class="collapse" id="ui-basic">
+              <div class="collapse" id="menu-properties">
                 <ul class="nav flex-column sub-menu">
-                    @if(auth()->user()->user_type_id==2)
-                        <li class="nav-item"> <a class="nav-link" href="/my-properties">My Properties</a></li>
-                        <li class="nav-item"> <a class="nav-link" href="/add-property">Add Property</a></li>
-                        <li class="nav-item"> <a class="nav-link" href="/add-room-type">Add Room Type</a></li>
-                        <li class="nav-item"> <a class="nav-link" href="/edit-dollar-rate">Edit Dollar Rate</a></li>
-                        <li class="nav-item"> <a class="nav-link" href="/amenities">Amenities</a></li>
-                        <li class="nav-item"> <a class="nav-link" href="/photos">Photos</a></li>
-                    @endif
-                    @if(auth()->user()->user_type_id==1)
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/buttons.html">Properties</a></li>
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/dropdowns.html">Property Owners</a></li>
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/typography.html">Provinces</a></li>
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/typography.html">Districts</a></li>
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/typography.html">Cities</a></li>
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/typography.html">Suites</a></li>
-                  @endif
-                  @if(auth()->user()->user_type_id==3)
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/buttons.html">My bookings</a></li>
-                  @endif
+                  <li class="nav-item"> <a class="nav-link" href="/my-properties">My Properties</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/add-property">Add Property</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/add-room-type">Add Room Type</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/edit-dollar-rate">Edit Dollar Rate</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/amenities">Amenities</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/photos">Photos</a></li>
                 </ul>
               </div>
             </li>
-            @if(in_array(auth()->user()->user_type_id,[1,2]))
-            <li class="nav-item nav-category">Customers</li>
+            @endif
+            @if(auth()->user()->isAdmin())
+            <li class="nav-item nav-category">Platform</li>
             <li class="nav-item">
-              <a class="nav-link" data-bs-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+              <a class="nav-link" data-bs-toggle="collapse" href="#menu-admin" aria-expanded="false" aria-controls="menu-admin">
                 <i class="menu-icon mdi mdi-floor-plan"></i>
-                <span class="menu-title">Customers</span>
+                <span class="menu-title">Manage</span>
                 <i class="menu-arrow"></i>
               </a>
-              <div class="collapse" id="ui-basic">
+              <div class="collapse" id="menu-admin">
                 <ul class="nav flex-column sub-menu">
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/buttons.html">Bookings</a></li>
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/dropdowns.html">Paymnents</a></li>
-                  <li class="nav-item"> <a class="nav-link" href="pages/ui-features/typography.html">Refunds</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/admin/properties">Properties</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/admin/owners">Property Owners</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/admin/amenities">Amenities</a></li>
                 </ul>
               </div>
             </li>
-
+            @endif
           </ul>
-          @endif
         </nav>
         <!-- partial -->
         <div class="main-panel">
@@ -269,67 +260,8 @@
             <div class="row">
               <div class="col-sm-12">
                 <div class="home-tab">
-                  <div class="d-sm-flex align-items-center justify-content-between border-bottom">
-                    <ul class="nav nav-tabs" role="tablist">
-                      <li class="nav-item">
-                        <a class="nav-link active ps-0" id="home-tab" data-bs-toggle="tab" href="#overview" role="tab" aria-controls="overview" aria-selected="true">Overview</a>
-                      </li>
-                      <li class="nav-item">
-                        <a class="nav-link" id="profile-tab" data-bs-toggle="tab" href="#audiences" role="tab" aria-selected="false">Audiences</a>
-                      </li>
-                      <li class="nav-item">
-                        <a class="nav-link" id="contact-tab" data-bs-toggle="tab" href="#demographics" role="tab" aria-selected="false">Demographics</a>
-                      </li>
-                      <li class="nav-item">
-                        <a class="nav-link border-0" id="more-tab" data-bs-toggle="tab" href="#more" role="tab" aria-selected="false">More</a>
-                      </li>
-                    </ul>
-                    <div>
-                      <div class="btn-wrapper">
-                        <a href="#" class="btn btn-otline-dark align-items-center"><i class="icon-share"></i> Share</a>
-                        <a href="#" class="btn btn-otline-dark"><i class="icon-printer"></i> Print</a>
-                        <a href="#" class="btn btn-primary text-white me-0"><i class="icon-download"></i> Export</a>
-                      </div>
-                    </div>
-                  </div>
                   <div class="tab-content tab-content-basic">
-                    <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview">
-                      <div class="row">
-                        <div class="col-sm-12">
-                          <div class="statistics-details d-flex align-items-center justify-content-between">
-                            <div>
-                              <p class="statistics-title">Bounce Rate</p>
-                              <h3 class="rate-percentage">32.53%</h3>
-                              <p class="text-danger d-flex"><i class="mdi mdi-menu-down"></i><span>-0.5%</span></p>
-                            </div>
-                            <div>
-                              <p class="statistics-title">Page Views</p>
-                              <h3 class="rate-percentage">7,682</h3>
-                              <p class="text-success d-flex"><i class="mdi mdi-menu-up"></i><span>+0.1%</span></p>
-                            </div>
-                            <div>
-                              <p class="statistics-title">New Sessions</p>
-                              <h3 class="rate-percentage">68.8</h3>
-                              <p class="text-danger d-flex"><i class="mdi mdi-menu-down"></i><span>68.8</span></p>
-                            </div>
-                            <div class="d-none d-md-block">
-                              <p class="statistics-title">Avg. Time on Site</p>
-                              <h3 class="rate-percentage">2m:35s</h3>
-                              <p class="text-success d-flex"><i class="mdi mdi-menu-down"></i><span>+0.8%</span></p>
-                            </div>
-                            <div class="d-none d-md-block">
-                              <p class="statistics-title">New Sessions</p>
-                              <h3 class="rate-percentage">68.8</h3>
-                              <p class="text-danger d-flex"><i class="mdi mdi-menu-down"></i><span>68.8</span></p>
-                            </div>
-                            <div class="d-none d-md-block">
-                              <p class="statistics-title">Avg. Time on Site</p>
-                              <h3 class="rate-percentage">2m:35s</h3>
-                              <p class="text-success d-flex"><i class="mdi mdi-menu-down"></i><span>+0.8%</span></p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                    <div class="tab-pane fade show active" id="overview" role="tabpanel">
 @if (session('success'))
     <div class="alert alert-success show-message" >
         {{ session('success') }}

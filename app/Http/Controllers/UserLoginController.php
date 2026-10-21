@@ -14,33 +14,47 @@ class UserLoginController extends Controller
         return view('login');
     }
 
-    public function authenticateUser(Request $request){
-        $credentials = $request->validate([
-        'email' => ['required', 'email'],
-        'password' => ['required'],
-    ]);
-
-    // Only active property owners may sign in to this panel
-    $credentials['status'] = 1;
-    $credentials['user_type_id'] = User::TYPE_PROPERTY_OWNER;
-
-    if (Auth::attempt($credentials)) {
-        $request->session()->regenerate(); // Prevent session fixation
-        return redirect('/dashboard');
+    public function adminLogin()
+    {
+        return view('admin.login');
     }
-    session()->flash('error', 'Invalid username or password');
-    return redirect()->back()->withInput($request->only('email'));
 
+    public function authenticateUser(Request $request){
+        return $this->attemptLogin($request, User::TYPE_PROPERTY_OWNER);
+    }
+
+    public function authenticateAdmin(Request $request){
+        return $this->attemptLogin($request, User::TYPE_ADMIN);
+    }
+
+    // Each login page only accepts active users of its own type
+    private function attemptLogin(Request $request, int $userType){
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        $credentials['status'] = 1;
+        $credentials['user_type_id'] = $userType;
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate(); // Prevent session fixation
+            return redirect(Auth::user()->dashboardUrl());
+        }
+        session()->flash('error', 'Invalid username or password');
+        return redirect()->back()->withInput($request->only('email'));
     }
 
     public function logout(Request $request){
+        $loginUrl = $request->user()?->isAdmin() ? '/admin/login' : '/login';
+
         Auth::logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect($loginUrl);
     }
 
     public function propertyOwnerSignup(){

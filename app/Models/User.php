@@ -53,6 +53,21 @@ class User extends Authenticatable
         ];
     }
 
+    public function isAdmin(): bool
+    {
+        return (int) $this->user_type_id === self::TYPE_ADMIN;
+    }
+
+    public function isOwner(): bool
+    {
+        return (int) $this->user_type_id === self::TYPE_PROPERTY_OWNER;
+    }
+
+    public function dashboardUrl(): string
+    {
+        return $this->isAdmin() ? '/admin/dashboard' : '/dashboard';
+    }
+
     public function userType(): BelongsTo
     {
         return $this->belongsTo(UserType::class);
