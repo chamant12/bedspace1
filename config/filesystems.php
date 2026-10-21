@@ -15,6 +15,10 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    // Disk for user uploads (property / room images). "public" stores on this
+    // server; set to "s3" (works with GCS's S3-compatible API too) to move to a bucket.
+    'uploads_disk' => env('UPLOADS_DISK', 'public'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

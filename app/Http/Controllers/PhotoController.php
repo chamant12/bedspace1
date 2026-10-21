@@ -9,8 +9,7 @@ use App\Models\Property;
 use App\Models\Photo;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
+use App\Services\ImageUploader;
 
 class PhotoController extends Controller
 {
@@ -33,10 +32,11 @@ class PhotoController extends Controller
     }
 
 
-        public function uploadPhotos(Request $request)
+        public function uploadPhotos(Request $request, ImageUploader $uploader)
         {
             $request->validate([
-                'photos.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
+                'photos' => 'required|array|max:20',
+                'photos.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:10240',
                 'upload_type' => 'required|in:property,roomType',
                 'type_id' => 'required|integer'
             ]);
@@ -56,28 +56,15 @@ class PhotoController extends Controller
 
                     foreach ($request->file('photos') as $index => $file) {
 
-                    $filename = uniqid().'.webp';
-                    $fullPath = storage_path('app/public'.$path.$filename);
-
-                    $fullDir = storage_path('app/public'.$path);
-
-                    if (!file_exists($fullDir)) {
-                        mkdir($fullDir, 0775, true);
-                    }
-
-                    Image::make($file)
-                        ->resize(1600, null, function ($constraint) {
-                            $constraint->aspectRatio();
-                            $constraint->upsize();
-                        })
-                        ->encode('webp', 80)
-                        ->save($fullPath);
+                    $stored = $uploader->store($file, $path);
 
                     DB::table('photos')->insert([
+                        'disk' => $stored['disk'],
                         'upload_path' => $path,
                         'upload_type' => $uploadType,
                         'type_id' => $typeId,
-                        'file_name' => $filename,
+                        'file_name' => $stored['file_name'],
+                        'has_thumbnail' => true,
                         'sort_order' => $maxOrder + $index + 1,
                         'created_at' => now(),
                         'updated_at' => now()
@@ -131,7 +118,7 @@ class PhotoController extends Controller
             return response()->json(['status' => 'success']);
         }
 
-        public function deletePhoto($photo_id)
+        public function deletePhoto($photo_id, ImageUploader $uploader)
         {
             // 🔍 Find photo
             $photo = DB::table('photos')->where('id', $photo_id)->first();
@@ -143,13 +130,8 @@ class PhotoController extends Controller
             // 🔒 Ownership check
             $this->authorizeTarget($photo->upload_type, $photo->type_id);
 
-            // 📁 Build file path
-            $filePath = 'public' . $photo->upload_path . $photo->file_name;
-
-            // 🗑 Delete file from storage
-            if (Storage::exists($filePath)) {
-                Storage::delete($filePath);
-            }
+            // 🗑 Delete files (full + thumbnail) from storage
+            $uploader->delete($photo->disk, $photo->upload_path, $photo->file_name);
 
             // ❌ Delete DB record
             DB::table('photos')->where('id', $photo_id)->delete();

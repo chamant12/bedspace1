@@ -33,8 +33,8 @@
                 <!-- DELETE -->
                 <button  class="delete-btn">&times;</button>
                 <img 
-                    src="{{ asset('storage'.$photo->upload_path.$photo->file_name) }}"
-                    data-full="{{ asset('storage'.$photo->upload_path.$photo->file_name) }}"
+                    src="{{ $photo->thumb_url }}"
+                    data-full="{{ $photo->url }}"
                     class="w-100 rounded"
                 >
             </div>
