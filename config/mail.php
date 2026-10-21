@@ -115,4 +115,7 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    // Receives new property registration notifications
+    'admin_address' => env('ADMIN_EMAIL'),
+
 ];

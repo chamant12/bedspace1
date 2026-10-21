@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\PropertyRequest;
 use App\Models\Property;
 use App\Models\Province;
 use App\Models\District;
@@ -11,6 +12,8 @@ use App\Models\RoomType;
 use App\Models\RateType;
 use App\Models\CurrencyRate;
 use App\Mail\PropertyRegisteredMail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 
 class PropertyController extends Controller
@@ -35,36 +38,34 @@ class PropertyController extends Controller
         return response()->json($cities, 200);
     }
 
-    public function createProperty(){
-        $property = new Property();
-        $property->property_name = request()->property_name;
-        $property->property_owner_id = auth()->user()->id;
-        $property->city_id = request()->city_id;
-        $property->contact_name = request()->contact_name;
-        $property->contact_number = request()->contact_number;
-        $property->contact_email = request()->contact_email;
-        $property->address = request()->address;
-        $property->location = request()->location;
-        $property->save();
+    public function createProperty(PropertyRequest $request){
+        $property = DB::transaction(function () use ($request) {
+            $property = new Property();
+            $property->fill($request->validated());
+            $property->property_owner_id = auth()->user()->id;
+            $property->save();
 
-        $rateType = new RateType();
-        $rateType->property_id = $property->id;
-        $rateType->rateType = "base_rate";
-        $rateType->save();
+            $rateType = new RateType();
+            $rateType->property_id = $property->id;
+            $rateType->rateType = "base_rate";
+            $rateType->save();
 
-        $currencyRate = new CurrencyRate();
-        $currencyRate->currency_type_id = 1;
-        $currencyRate->property_owner_id = auth()->user()->id;
-        $currencyRate->rate_date = date('Y-m-d');
-        $currencyRate->rate = 1;
-        $currencyRate->save();
+            $currencyRate = new CurrencyRate();
+            $currencyRate->currency_type_id = 1;
+            $currencyRate->property_owner_id = auth()->user()->id;
+            $currencyRate->rate_date = date('Y-m-d');
+            $currencyRate->rate = 1;
+            $currencyRate->save();
 
-        $currencyRate = new CurrencyRate();
-        $currencyRate->currency_type_id = 2;
-        $currencyRate->property_owner_id = auth()->user()->id;
-        $currencyRate->rate_date = date('Y-m-d');
-        $currencyRate->rate = 300;
-        $currencyRate->save();
+            $currencyRate = new CurrencyRate();
+            $currencyRate->currency_type_id = 2;
+            $currencyRate->property_owner_id = auth()->user()->id;
+            $currencyRate->rate_date = date('Y-m-d');
+            $currencyRate->rate = 300;
+            $currencyRate->save();
+
+            return $property;
+        });
 
         $this->sendPropertyRegistrationMail($property,auth()->user());
 
@@ -74,7 +75,8 @@ class PropertyController extends Controller
     }
 
     public function viewProperty($property_id){
-        $property = Property::with('city','city.district')->where('id',$property_id)->first();
+        $property = Property::with('city','city.district')->findOrFail($property_id);
+        Gate::authorize('view', $property);
         $provinces = Province::all();
         $districts = District::all();
         $cities = City::all();
@@ -83,16 +85,10 @@ class PropertyController extends Controller
         return view('property.editProperty', compact('property','provinces','districts','cities','roomTypes'));
     }
 
-    public function updateProperty(){
-        $property = Property::where('id',request()->property_id)->first();
-        $property->property_name = request()->property_name;
-        $property->property_owner_id = auth()->user()->id;
-        $property->city_id = request()->city_id;
-        $property->contact_name = request()->contact_name;
-        $property->contact_number = request()->contact_number;
-        $property->contact_email = request()->contact_email;
-        $property->address = request()->address;
-        $property->location = request()->location;
+    public function updateProperty(PropertyRequest $request){
+        $property = Property::findOrFail($request->property_id);
+        Gate::authorize('update', $property);
+        $property->fill($request->validated());
         $property->save();
         session()->flash('success', 'Property was updated successfully');
         return redirect('/my-properties');
@@ -105,12 +101,17 @@ class PropertyController extends Controller
                 'owner_email' => $user->email,
                 'owner_phone' => $user->phone,
                 'property_name' => $property->property_name,
-                'property_location' => $property->city()->city_name,
+                'property_location' => $property->city?->city_name,
                 'created_at' => now(),
                 'admin_url' => url('/admin/properties/'.$property->id),
             ];
 
-            Mail::to(env('ADMIN_EMAIL'))
-                ->send(new PropertyRegisteredMail($data));
+            // The property is already saved; a mail failure must not turn into an error page
+            try {
+                Mail::to(config('mail.admin_address'))
+                    ->send(new PropertyRegisteredMail($data));
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 }

@@ -57,7 +57,7 @@ $("#city_id").change(function(){
     if($(this).val()!=""){
 
         $.ajax({
-            url: '/api/get-properties-by-city/' + $(this).val()+'/{{auth()->user()->id}}',
+            url: '/api/get-properties-by-city/' + $(this).val(),
             type: 'GET',
             dataType: 'json',
             success: function(data) {

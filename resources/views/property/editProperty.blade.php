@@ -67,7 +67,7 @@
                                 <a href="/view-roomType/{{$roomType->id}}" alt="View Property Details">
                                     <i class="fa fa-eye"></i>
                                 </a>&nbsp;&nbsp;&nbsp;
-                                <a data-toggle="tooltip" style="text-decoration:none;color:red;" title="Delete Room Type with all its rooms" href="/delete-roomType/{{$roomType->id}}" onclick="return confirm('Are you sure you want to delete this room type and all its rooms?');">
+                                <a data-toggle="tooltip" style="text-decoration:none;color:red;" title="Delete Room Type with all its rooms" href="#" onclick="if(confirm('Are you sure you want to delete this room type and all its rooms?')){ var f=document.getElementById('deleteRoomTypeForm'); f.action='/delete-roomType/{{$roomType->id}}'; f.submit(); } return false;">
                                     <i class="ti-trash"></i>
                                 </a>
                             </li>
@@ -90,6 +90,10 @@
                   </div>
                 </div>
               </div>
+</form>
+<form id="deleteRoomTypeForm" method="POST" style="display:none;">
+    @csrf
+    @method('DELETE')
 </form>
 @stop
 @section('scripts')

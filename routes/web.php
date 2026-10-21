@@ -30,15 +30,28 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/update-property', [PropertyController::class, 'updateProperty']);
     Route::get('/add-room-type', [RoomTypeController::class, 'addRoomType']);
     Route::post('/create-room-type', [RoomTypeController::class, 'createRoomType']);
-    Route::get('/delete-roomType/{roomType_id}', [RoomTypeController::class, 'deleteRoomType']);
+    Route::delete('/delete-roomType/{roomType_id}', [RoomTypeController::class, 'deleteRoomType']);
     Route::get('/view-roomType/{roomType_id}', [RoomTypeController::class, 'viewRoomType']);
     Route::post('/update-room-type', [RoomTypeController::class, 'updateRoomType']);
     Route::get('/add-base-rate/{property_id}', [RateController::class, 'addBaseRate']);
-    Route::post('/update-doillar-rate', [RateController::class, 'updateDollarRate']);
+    Route::post('/update-dollar-rate', [RateController::class, 'updateDollarRate']);
     Route::get('/edit-dollar-rate', [RateController::class, 'editDollarRate']);
     Route::get('/amenities', [AmenityController::class, 'amenities']);
     Route::post('/addAmenity', [AmenityController::class, 'addAmenity']);
     Route::get('/photos', [PhotoController::class, 'selectPhotoType']);
     Route::post('/manage-photos', [PhotoController::class, 'managePhotos']);
-    
+
+    // AJAX endpoints used by the Blade pages
+    Route::prefix('api')->group(function () {
+        Route::get('/get-districts-by-province/{province_id}', [PropertyController::class, 'getDistrictsByProvince']);
+        Route::get('/get-cities-by-district/{district_id}', [PropertyController::class, 'getCitiesByDistrict']);
+        Route::get('/get-properties-by-city/{city_id}', [RoomTypeController::class, 'getPropertiesByCity']);
+        Route::get('/get-base-rates/{roomType_id}/{currency_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRates']);
+        Route::post('/update-baserate', [RateController::class, 'updateBaseRates']);
+        Route::delete('/deleteAmenity/{amenity_id}/{type_id}/{amenityType}', [AmenityController::class, 'deleteAmenity']);
+        Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
+        Route::post('/upload-photos', [PhotoController::class, 'uploadPhotos']);
+        Route::post('/update-photo-order', [PhotoController::class, 'updatePhotoOrder']);
+        Route::delete('/delete-photo/{photo_id}', [PhotoController::class, 'deletePhoto']);
+    });
 });

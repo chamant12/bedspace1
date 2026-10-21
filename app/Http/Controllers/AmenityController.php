@@ -8,11 +8,14 @@ use App\Models\PropertyAmenityXref;
 use App\Models\RoomAmenityXref;
 use App\Models\RoomType;
 use App\Models\Property;
+use Illuminate\Validation\Rule;
 use DB;
 
 class AmenityController extends Controller
 {
     public function getAmenities($amenity_type,$type_id){
+        $this->authorizeTarget($amenity_type, $type_id);
+
         $property_id = $type_id;
         $roomType_id = 0;
         if($amenity_type=="roomType"){
@@ -61,19 +64,19 @@ class AmenityController extends Controller
 
         }
 
-        
+
         $str="";
         $str2="<option value=''>Select Amenity</option>";
         $str3="<option value=''>Select Room Type</option>";
         foreach($amenities as $amenity){
-            $str .= "<li id='".$amenity->id."_".$amenity_type."'>".$amenity->amenity." <a href='#' class='btn btn-danger' deleteAmenity='".$amenity->id.",".$amenity_type."'>Delete</a></li>";
+            $str .= "<li id='".$amenity->id."_".$amenity_type."'>".e($amenity->amenity)." <a href='#' class='btn btn-danger' deleteAmenity='".$amenity->id.",".$amenity_type."'>Delete</a></li>";
         }
         foreach($allAmenities as $amenity){
-            $str2 .="<option value='".$amenity->id."'>".$amenity->amenity."</option>";
+            $str2 .="<option value='".$amenity->id."'>".e($amenity->amenity)."</option>";
         }
 
         foreach($roomTypes as $roomType){
-            $str3 .="<option value='".$roomType->id."'>".$roomType->roomType."</option>";
+            $str3 .="<option value='".$roomType->id."'>".e($roomType->roomType)."</option>";
         }
 
         return response()->json([
@@ -85,6 +88,8 @@ class AmenityController extends Controller
     }
 
     public function deleteAmenity($amenity_id,$type_id,$amenity_type){
+        $this->authorizeTarget($amenity_type, $type_id);
+
         if($amenity_type=="roomType"){
             RoomAmenityXref::where(['amenity_id'=>$amenity_id,'roomType_id'=>$type_id])->delete();
         } else {
@@ -96,18 +101,26 @@ class AmenityController extends Controller
             ]);
     }
 
-    public function addAmenity(){
+    public function addAmenity(Request $request){
+        $request->validate([
+            'amenity_type' => ['required', 'in:property,roomType'],
+            'property_id' => ['required', 'integer'],
+            'room_type_id' => ['required_if:amenity_type,roomType', 'nullable', 'integer'],
+            'amenity_id' => ['required', 'integer', Rule::exists('amenities', 'id')->where('amenity_type', $request->amenity_type)],
+        ]);
 
-        if(request()->amenity_type=="roomType"){
-            $roomAmenityXref = new RoomAmenityXref();
-            $roomAmenityXref->roomType_id = request()->room_type_id;
-            $roomAmenityXref->amenity_id = request()->amenity_id;
-            $roomAmenityXref->save();
+        if($request->amenity_type=="roomType"){
+            $this->authorizeTarget('roomType', $request->room_type_id);
+            RoomAmenityXref::firstOrCreate([
+                'roomType_id' => $request->room_type_id,
+                'amenity_id' => $request->amenity_id,
+            ]);
         } else {
-            $propertyAmenityXref = new PropertyAmenityXref();
-            $propertyAmenityXref->property_id = request()->property_id;
-            $propertyAmenityXref->amenity_id = request()->amenity_id;
-            $propertyAmenityXref->save();
+            $this->authorizeTarget('property', $request->property_id);
+            PropertyAmenityXref::firstOrCreate([
+                'property_id' => $request->property_id,
+                'amenity_id' => $request->amenity_id,
+            ]);
         }
 
         session()->flash('success', 'Amenity added successfully');

@@ -108,7 +108,7 @@ $("#amenity_type").change(function(){
                                 $('#loader-overlay').show();
                                 $.ajax({
                                     url: '/api/deleteAmenity/'+amenity_id+'/'+$("#property_id").val()+'/'+amenityType,
-                                    type: 'GET',
+                                    type: 'DELETE',
                                     dataType: 'json',
                                     success: function(response) {
                                             $(parent).remove();
@@ -155,7 +155,7 @@ $("#room_type_id").change(function(){
                             $('#loader-overlay').show();
                             $.ajax({
                                 url: '/api/deleteAmenity/'+amenity_id+'/'+roomType_id+'/'+amenityType,
-                                type: 'GET',
+                                type: 'DELETE',
                                 dataType: 'json',
                                 success: function(response) {
                                         $(parent).remove();

@@ -14,6 +14,11 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    // user_types rows seeded in create_user_types migration
+    const TYPE_ADMIN = 1;
+    const TYPE_PROPERTY_OWNER = 2;
+    const TYPE_CUSTOMER = 3;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -60,6 +65,6 @@ class User extends Authenticatable
 
     public function properties(): HasMany
     {
-        return $this->hasMany(Property::class);
+        return $this->hasMany(Property::class, 'property_owner_id');
     }
 }

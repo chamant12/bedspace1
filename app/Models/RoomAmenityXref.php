@@ -7,4 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class RoomAmenityXref extends Model
 {
     protected $table = "roomType_amenity_xrefs";
+
+    protected $fillable = ['roomType_id', 'amenity_id'];
 }

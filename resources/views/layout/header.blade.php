@@ -4,6 +4,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Bedspace</title>
     <!-- plugins:css -->
     <link rel="stylesheet" href="{{url("assets/vendors/feather/feather.css")}}">
@@ -337,5 +338,12 @@
 @if (session('error'))
     <div class="alert alert-danger show-message">
         {{ session('error') }}
+    </div>
+@endif
+@if ($errors->any())
+    <div class="alert alert-danger show-message">
+        @foreach ($errors->all() as $error)
+            <div>{{ $error }}</div>
+        @endforeach
     </div>
 @endif

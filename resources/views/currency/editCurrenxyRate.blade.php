@@ -1,6 +1,6 @@
 @extends('layout.app')
 @section('content')
-<form action="/update-doillar-rate" method="POST" class="forms-sample">
+<form action="/update-dollar-rate" method="POST" class="forms-sample">
 <div class="col-md-6 grid-margin stretch-card">
                 <div class="card">
                   <div class="card-body">

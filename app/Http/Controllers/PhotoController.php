@@ -20,10 +20,10 @@ class PhotoController extends Controller
     }
 
     public function managePhotos(){
-        $property = Property::find(request()->property_id);
+        $property = $this->authorizeTarget('property', request()->property_id);
         $upload_type = "property";
         $type_id = Request()->property_id;
-        $roomType = (isset(request()->roomType_id))?RoomType::find(request()->roomType_id):null;
+        $roomType = request()->filled('roomType_id')?$this->authorizeTarget('roomType', request()->roomType_id):null;
         if($roomType!=null){
             $upload_type = "roomType";
             $type_id = Request()->roomType_id;
@@ -43,6 +43,8 @@ class PhotoController extends Controller
 
             $uploadType = $request->upload_type;
             $typeId = $request->type_id;
+
+            $this->authorizeTarget($uploadType, $typeId);
 
             $path = "/{$uploadType}_{$typeId}/";
 
@@ -106,6 +108,8 @@ class PhotoController extends Controller
             $uploadType = $firstPhoto->upload_type;
             $typeId = $firstPhoto->type_id;
 
+            $this->authorizeTarget($uploadType, $typeId);
+
             // Validate all IDs belong to same group
             $validCount = DB::table('photos')
                 ->whereIn('id', $ids)
@@ -136,9 +140,8 @@ class PhotoController extends Controller
                 return response()->json(['error' => 'Photo not found'], 404);
             }
 
-            // 🔒 (IMPORTANT) Optional: validate ownership here
-            // Example:
-            // if ($photo->type_id != auth()->user()->property_id) { return 403; }
+            // 🔒 Ownership check
+            $this->authorizeTarget($photo->upload_type, $photo->type_id);
 
             // 📁 Build file path
             $filePath = 'public' . $photo->upload_path . $photo->file_name;

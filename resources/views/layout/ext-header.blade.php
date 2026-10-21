@@ -3,6 +3,7 @@
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Travel Home</title>
     
     <!--================================================
@@ -96,5 +97,12 @@
 @if (session('error'))
     <div class="alert alert-danger" style="margin-top: 137px;text-align: center;margin-bottom: -80px;">
         {{ session('error') }}
+    </div>
+@endif
+@if ($errors->any())
+    <div class="alert alert-danger" style="margin-top: 137px;text-align: center;margin-bottom: -80px;">
+        @foreach ($errors->all() as $error)
+            <div>{{ $error }}</div>
+        @endforeach
     </div>
 @endif
