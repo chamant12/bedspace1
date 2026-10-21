@@ -46,6 +46,11 @@ class Property extends Model
         return $this->hasMany(RateType::class);
     }
 
+    public function promotions(): HasMany
+    {
+        return $this->hasMany(Promotion::class);
+    }
+
     public function roomTypes(): HasMany
     {
         return $this->hasMany(RoomType::class);
