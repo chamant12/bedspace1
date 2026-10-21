@@ -48,15 +48,15 @@
                       </div>
                       <div class="form-group">
                         <label for="exampleInputUsername1">Contact Person<span style="color:red;">*</span></label>
-                        <input type="text" class="form-control" placeholder="Contact Person" name="contact_name" required value="{{$property->contact_name}}">
+                        <input type="text" class="form-control" placeholder="Contact Person" name="contact_name" required value="{{ old('contact_name', $property->primaryContact?->name) }}">
                       </div>
                       <div class="form-group">
-                        <label for="exampleInputUsername1">Contact Number<span style="color:red;">*</span></label>
-                        <input type="text" class="form-control" placeholder="Contact Number" name="contact_number" required value="{{$property->contact_number}}">
+                        <label for="exampleInputUsername1">Contact Mobile<span style="color:red;">*</span></label>
+                        <input type="text" class="form-control" placeholder="Contact Mobile" name="contact_number" required value="{{ old('contact_number', $property->primaryContact?->mobile) }}">
                       </div>
                       <div class="form-group">
-                        <label for="exampleInputUsername1">Contact Email<span style="color:red;">*</span></label>
-                        <input type="text" class="form-control" placeholder="Email" name="contact_email" required value="{{$property->contact_email}}">
+                        <label for="exampleInputUsername1">Contact Email</label>
+                        <input type="email" class="form-control" placeholder="Email" name="contact_email" value="{{ old('contact_email', $property->primaryContact?->email) }}">
                       </div>
                       <div class="form-group">
                         <label for="exampleInputUsername1">Available Room Types</label>

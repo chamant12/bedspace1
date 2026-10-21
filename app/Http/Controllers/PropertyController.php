@@ -41,9 +41,11 @@ class PropertyController extends Controller
     public function createProperty(PropertyRequest $request){
         $property = DB::transaction(function () use ($request) {
             $property = new Property();
-            $property->fill($request->validated());
+            $property->fill($request->propertyData());
             $property->property_owner_id = auth()->user()->id;
             $property->save();
+
+            $property->contacts()->create($request->contactData() + ['is_primary' => true]);
 
             $rateType = new RateType();
             $rateType->property_id = $property->id;
@@ -75,7 +77,7 @@ class PropertyController extends Controller
     }
 
     public function viewProperty($property_id){
-        $property = Property::with('city','city.district')->findOrFail($property_id);
+        $property = Property::with('city','city.district','primaryContact')->findOrFail($property_id);
         Gate::authorize('view', $property);
         $provinces = Province::all();
         $districts = District::all();
@@ -88,8 +90,13 @@ class PropertyController extends Controller
     public function updateProperty(PropertyRequest $request){
         $property = Property::findOrFail($request->property_id);
         Gate::authorize('update', $property);
-        $property->fill($request->validated());
-        $property->save();
+
+        DB::transaction(function () use ($request, $property) {
+            $property->fill($request->propertyData());
+            $property->save();
+
+            $property->contacts()->updateOrCreate(['is_primary' => true], $request->contactData());
+        });
         session()->flash('success', 'Property was updated successfully');
         return redirect('/my-properties');
     }

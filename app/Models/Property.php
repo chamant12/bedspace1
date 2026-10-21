@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Property extends Model
 {
@@ -12,12 +13,23 @@ class Property extends Model
     protected $fillable = [
         'property_name',
         'city_id',
-        'contact_name',
-        'contact_number',
-        'contact_email',
         'address',
         'location',
     ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(PropertyContact::class);
+    }
+
+    public function primaryContact(): HasOne
+    {
+        return $this->hasOne(PropertyContact::class)->where('is_primary', true);
+    }
 
     public function city(): BelongsTo
     {

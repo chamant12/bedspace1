@@ -45,12 +45,12 @@
                         <input type="text" class="form-control" placeholder="Contact Person" name="contact_name" required>
                       </div>
                       <div class="form-group">
-                        <label for="exampleInputUsername1">Contact Number<span style="color:red;">*</span></label>
-                        <input type="text" class="form-control" placeholder="Contact Number" name="contact_number" required>
+                        <label for="exampleInputUsername1">Contact Mobile<span style="color:red;">*</span></label>
+                        <input type="text" class="form-control" placeholder="Contact Mobile" name="contact_number" required>
                       </div>
                       <div class="form-group">
-                        <label for="exampleInputUsername1">Contact Email<span style="color:red;">*</span></label>
-                        <input type="text" class="form-control" placeholder="Email" name="contact_email" required>
+                        <label for="exampleInputUsername1">Contact Email</label>
+                        <input type="email" class="form-control" placeholder="Email" name="contact_email">
                       </div>
                       <div class="form-check form-check-flat form-check-primary">
                         <label class="form-check-label">
