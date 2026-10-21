@@ -10,8 +10,11 @@ use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin;
 
-Route::get('/', function () {
-    return view('welcome');
+// Public (guest-facing) pages
+Route::middleware('visitor.currency')->group(function () {
+    Route::get('/', function () {
+        return view('welcome');
+    });
 });
 
 

@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'user.type' => \App\Http\Middleware\EnsureUserType::class,
+            'visitor.currency' => \App\Http\Middleware\SetVisitorCurrency::class,
         ]);
 
         // Admin pages send guests to the admin login, everything else to the owner login
