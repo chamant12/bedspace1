@@ -27,7 +27,7 @@ class PhotoController extends Controller
             $upload_type = "roomType";
             $type_id = Request()->roomType_id;
         }
-        $photos = Photo::where(['upload_type'=>$upload_type,'type_id'=>$type_id])->orderBy('sort_order')->get();
+        $photos = Photo::where(['upload_type'=>$upload_type,'type_id'=>$type_id,'is_active'=>true])->orderBy('sort_order')->get();
         return view('photo.managePhotos',compact('property','roomType','photos'));
     }
 
@@ -118,7 +118,8 @@ class PhotoController extends Controller
             return response()->json(['status' => 'success']);
         }
 
-        public function deletePhoto($photo_id, ImageUploader $uploader)
+        // Photos are hidden (deactivated), never deleted; the files stay in storage
+        public function deactivatePhoto($photo_id)
         {
             // 🔍 Find photo
             $photo = DB::table('photos')->where('id', $photo_id)->first();
@@ -130,16 +131,13 @@ class PhotoController extends Controller
             // 🔒 Ownership check
             $this->authorizeTarget($photo->upload_type, $photo->type_id);
 
-            // 🗑 Delete files (full + thumbnail) from storage
-            $uploader->delete($photo->disk, $photo->upload_path, $photo->file_name);
+            DB::table('photos')->where('id', $photo_id)->update(['is_active' => false, 'updated_at' => now()]);
 
-            // ❌ Delete DB record
-            DB::table('photos')->where('id', $photo_id)->delete();
-
-            // 🔄 Reorder remaining photos (important!)
+            // 🔄 Reorder remaining active photos
             $remaining = DB::table('photos')
                 ->where('upload_type', $photo->upload_type)
                 ->where('type_id', $photo->type_id)
+                ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->get();
 

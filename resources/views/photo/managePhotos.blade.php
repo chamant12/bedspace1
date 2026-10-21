@@ -164,7 +164,7 @@ $(function () {
             return;
         }
 
-        if (!confirm('Delete this image?')) return;
+        if (!confirm('Remove this image from the gallery?')) return;
 
         el.fadeOut(200, function () {
             $(this).remove();
@@ -172,8 +172,8 @@ $(function () {
         });
 
         $.ajax({
-            url: '/api/delete-photo/' + id,
-            method: 'DELETE',
+            url: '/api/remove-photo/' + id,
+            method: 'POST',
             success: function () {
                 console.log('Deleted:', id);
             },

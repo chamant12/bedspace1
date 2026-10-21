@@ -8,7 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RoomType extends Model
 {
+    use Concerns\NeverDeleted;
+
     protected $table = 'roomtypes';
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     public function property(): BelongsTo
     {

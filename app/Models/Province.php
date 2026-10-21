@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Province extends Model
 {
+    use Concerns\NeverDeleted;
+
     public function districts(): HasMany
     {
         return $this->hasMany(District::class);

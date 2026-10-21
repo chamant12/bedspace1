@@ -6,5 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PropertyAmenityXref extends Model
 {
-    protected $fillable = ['property_id', 'amenity_id'];
+    use Concerns\NeverDeleted;
+
+    protected $fillable = ['property_id', 'amenity_id', 'is_active'];
 }

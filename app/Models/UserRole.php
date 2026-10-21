@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class UserRole extends Model
 {
+    use Concerns\NeverDeleted;
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

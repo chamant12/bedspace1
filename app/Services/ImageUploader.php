@@ -39,15 +39,6 @@ class ImageUploader
         return ['file_name' => $fileName, 'disk' => self::disk()];
     }
 
-    public function delete(string $diskName, string $directory, string $fileName): void
-    {
-        $directory = trim($directory, '/');
-        Storage::disk($diskName)->delete([
-            $directory.'/'.$fileName,
-            $directory.'/thumb_'.$fileName,
-        ]);
-    }
-
     private function encode(UploadedFile $file, int $maxDimension): string
     {
         return (string) Image::make($file)

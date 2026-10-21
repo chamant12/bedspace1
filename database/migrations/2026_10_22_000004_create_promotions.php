@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('promotions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('property_id')->constrained('properties')->cascadeOnDelete();
+            $table->foreignId('property_id')->constrained('properties')->restrictOnDelete();
             $table->string('name', 255);
             $table->string('promotion_type', 30); // App\Enums\PromotionType
             $table->string('discount_type', 20);  // percentage | fixed_amount
@@ -44,8 +44,9 @@ return new class extends Migration
         // Room types a promotion is limited to; no rows = all room types of the property
         Schema::create('promotion_room_types', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('promotion_id')->constrained('promotions')->cascadeOnDelete();
-            $table->foreignId('roomType_id')->constrained('roomtypes')->cascadeOnDelete();
+            $table->foreignId('promotion_id')->constrained('promotions')->restrictOnDelete();
+            $table->foreignId('roomType_id')->constrained('roomtypes')->restrictOnDelete();
+            $table->boolean('is_active')->default(true);
             $table->unique(['promotion_id', 'roomType_id']);
         });
     }

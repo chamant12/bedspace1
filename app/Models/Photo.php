@@ -7,8 +7,11 @@ use Illuminate\Support\Facades\Storage;
 
 class Photo extends Model
 {
+    use Concerns\NeverDeleted;
+
     protected $casts = [
         'has_thumbnail' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function getUrlAttribute(): string

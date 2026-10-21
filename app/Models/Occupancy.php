@@ -6,5 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Occupancy extends Model
 {
+    use Concerns\NeverDeleted;
+
     //
 }

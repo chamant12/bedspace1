@@ -8,8 +8,6 @@ use App\Models\Property;
 use App\Models\City;
 use App\Models\RoomType;
 use App\Models\Room;
-use App\Models\Photo;
-use App\Services\ImageUploader;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -52,26 +50,17 @@ class RoomTypeController extends Controller
         return redirect('/my-properties');
     }
 
-    public function deleteRoomType($roomType_id, ImageUploader $uploader){
+    // Room types are deactivated (no longer bookable), never deleted
+    public function toggleRoomTypeActive($roomType_id){
         $roomType = RoomType::findOrFail($roomType_id);
-        Gate::authorize('delete', $roomType);
+        Gate::authorize('update', $roomType);
 
-        $photos = Photo::where(['upload_type'=>'roomType','type_id'=>$roomType->id])->get();
+        $roomType->is_active = !$roomType->is_active;
+        $roomType->save();
 
-        DB::transaction(function () use ($roomType, $photos) {
-            Room::where('roomType_id',$roomType->id)->delete();
-            Photo::whereIn('id', $photos->pluck('id'))->delete();
-            $roomType->delete();
-        });
-
-        // Files are removed only after the database delete has committed
-        foreach ($photos as $photo) {
-            $uploader->delete($photo->disk, $photo->upload_path, $photo->file_name);
-        }
-        session()->flash('success', 'Room Type was deleted successfully');
+        session()->flash('success', 'Room Type was '.($roomType->is_active ? 'activated' : 'deactivated'));
 
         return redirect()->back();
-
     }
 
     public function viewRoomType($roomType_id){

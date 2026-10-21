@@ -18,6 +18,7 @@
                           <tr>
                             <td class="py-1">
                               {{$property->property_name}}
+                              @unless($property->is_active)<span class="badge badge-secondary">Inactive</span>@endunless
                             </td>
                             <td> {{$property->city->city_name}} </td>
                             <td>
@@ -30,6 +31,13 @@
                                 <a href="/add-base-rate/{{$property->id}}" data-toggle="tooltip" title="Add base rate" style="text-decoration:none;" class="btn btn-success">
                                 <i class="ti-tag"></i>
                                 </a>
+                                <form method="POST" action="/property/{{$property->id}}/toggle-active" style="display:inline;"
+                                      onsubmit="return confirm('{{ $property->is_active ? 'Deactivate this property? Guests will no longer see it.' : 'Activate this property?' }}');">
+                                    @csrf
+                                    <button type="submit" class="btn {{ $property->is_active ? 'btn-danger' : 'btn-success' }}" title="{{ $property->is_active ? 'Deactivate property' : 'Activate property' }}">
+                                        <i class="{{ $property->is_active ? 'ti-close' : 'ti-check' }}"></i>
+                                    </button>
+                                </form>
                             </td>
                           </tr>
                           @endforeach

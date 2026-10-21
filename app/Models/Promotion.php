@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Promotion extends Model
 {
+    use Concerns\NeverDeleted;
+
     const DISCOUNT_PERCENTAGE = 'percentage';
     const DISCOUNT_FIXED_AMOUNT = 'fixed_amount';
 
@@ -35,7 +37,8 @@ class Promotion extends Model
 
     public function roomTypes(): BelongsToMany
     {
-        return $this->belongsToMany(RoomType::class, 'promotion_room_types', 'promotion_id', 'roomType_id');
+        return $this->belongsToMany(RoomType::class, 'promotion_room_types', 'promotion_id', 'roomType_id')
+            ->wherePivot('is_active', true);
     }
 
     public function isApplicable(CarbonInterface $bookedOn, CarbonInterface $checkIn, CarbonInterface $checkOut, int $roomTypeId): bool

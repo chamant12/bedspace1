@@ -128,8 +128,8 @@ $("#amenity_type").change(function(){
                             if(confirmed){
                                 $('#loader-overlay').show();
                                 $.ajax({
-                                    url: '/api/deleteAmenity/'+amenity_id+'/'+$("#property_id").val()+'/'+amenityType,
-                                    type: 'DELETE',
+                                    url: '/api/remove-amenity/'+amenity_id+'/'+$("#property_id").val()+'/'+amenityType,
+                                    type: 'POST',
                                     dataType: 'json',
                                     success: function(response) {
                                             $(parent).remove();
@@ -175,8 +175,8 @@ $("#room_type_id").change(function(){
                             
                             $('#loader-overlay').show();
                             $.ajax({
-                                url: '/api/deleteAmenity/'+amenity_id+'/'+roomType_id+'/'+amenityType,
-                                type: 'DELETE',
+                                url: '/api/remove-amenity/'+amenity_id+'/'+roomType_id+'/'+amenityType,
+                                type: 'POST',
                                 dataType: 'json',
                                 success: function(response) {
                                         $(parent).remove();

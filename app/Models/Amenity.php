@@ -6,5 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Amenity extends Model
 {
-    //
+    use Concerns\NeverDeleted;
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 }

@@ -31,34 +31,40 @@ class AmenityController extends Controller
             $amenities = DB::table('amenities')
             ->join('property_amenity_xrefs', 'amenities.id', '=', 'property_amenity_xrefs.amenity_id')
             ->where('property_amenity_xrefs.property_id', $property_id)
+            ->where('property_amenity_xrefs.is_active', true)
             ->where('amenities.amenity_type', 'property') // Based on your 'amenity_type' filter
             ->select('amenities.*')
             ->get();
 
             $allAmenities = DB::table('amenities')
             ->where('amenities.amenity_type', 'property')
+            ->where('amenities.is_active', true)
             ->whereNotIn('amenities.id', function ($query) use ($property_id) {
                 $query->select('amenity_id')
                     ->from('property_amenity_xrefs')
-                    ->where('property_id', $property_id);
+                    ->where('property_id', $property_id)
+                    ->where('is_active', true);
             })
             ->get();
 
-            $roomTypes = RoomType::where('property_id',$property_id)->get();
+            $roomTypes = RoomType::where(['property_id'=>$property_id,'is_active'=>true])->get();
         } else {
             $amenities = DB::table('amenities')
             ->join('roomType_amenity_xrefs', 'amenities.id', '=', 'roomType_amenity_xrefs.amenity_id')
             ->where('roomType_amenity_xrefs.roomType_id', $roomType_id)
+            ->where('roomType_amenity_xrefs.is_active', true)
             ->where('amenities.amenity_type', 'roomType') // Based on your 'amenity_type' filter
             ->select('amenities.*')
             ->get();
 
             $allAmenities = DB::table('amenities')
             ->where('amenities.amenity_type', 'roomType')
+            ->where('amenities.is_active', true)
             ->whereNotIn('amenities.id', function ($query) use ($roomType_id) {
                 $query->select('amenity_id')
                     ->from('roomType_amenity_xrefs')
-                    ->where('roomType_id', $roomType_id);
+                    ->where('roomType_id', $roomType_id)
+                    ->where('is_active', true);
             })
             ->get();
 
@@ -87,13 +93,14 @@ class AmenityController extends Controller
             ]);
     }
 
-    public function deleteAmenity($amenity_id,$type_id,$amenity_type){
+    // Links are deactivated, not deleted; adding the amenity again reactivates the link
+    public function removeAmenity($amenity_id,$type_id,$amenity_type){
         $this->authorizeTarget($amenity_type, $type_id);
 
         if($amenity_type=="roomType"){
-            RoomAmenityXref::where(['amenity_id'=>$amenity_id,'roomType_id'=>$type_id])->delete();
+            RoomAmenityXref::where(['amenity_id'=>$amenity_id,'roomType_id'=>$type_id])->update(['is_active'=>false]);
         } else {
-            PropertyAmenityXref::where(['amenity_id'=>$amenity_id,'property_id'=>$type_id])->delete();
+            PropertyAmenityXref::where(['amenity_id'=>$amenity_id,'property_id'=>$type_id])->update(['is_active'=>false]);
         }
 
         return response()->json([
@@ -106,21 +113,21 @@ class AmenityController extends Controller
             'amenity_type' => ['required', 'in:property,roomType'],
             'property_id' => ['required', 'integer'],
             'room_type_id' => ['required_if:amenity_type,roomType', 'nullable', 'integer'],
-            'amenity_id' => ['required', 'integer', Rule::exists('amenities', 'id')->where('amenity_type', $request->amenity_type)],
+            'amenity_id' => ['required', 'integer', Rule::exists('amenities', 'id')->where('amenity_type', $request->amenity_type)->where('is_active', true)],
         ]);
 
         if($request->amenity_type=="roomType"){
             $this->authorizeTarget('roomType', $request->room_type_id);
-            RoomAmenityXref::firstOrCreate([
+            RoomAmenityXref::updateOrCreate([
                 'roomType_id' => $request->room_type_id,
                 'amenity_id' => $request->amenity_id,
-            ]);
+            ], ['is_active' => true]);
         } else {
             $this->authorizeTarget('property', $request->property_id);
-            PropertyAmenityXref::firstOrCreate([
+            PropertyAmenityXref::updateOrCreate([
                 'property_id' => $request->property_id,
                 'amenity_id' => $request->amenity_id,
-            ]);
+            ], ['is_active' => true]);
         }
 
         session()->flash('success', 'Amenity added successfully');

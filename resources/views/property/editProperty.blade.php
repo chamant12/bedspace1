@@ -63,12 +63,14 @@
                         @if(count($roomTypes)>0)
                             <ul style="margin-left:10%;">
                                 @foreach($roomTypes as $roomType)
-                                <li>{{$roomType->roomType}}&nbsp;&nbsp;&nbsp;
+                                <li>{{$roomType->roomType}}
+                                @unless($roomType->is_active)<span class="badge badge-secondary">Inactive</span>@endunless
+                                &nbsp;&nbsp;&nbsp;
                                 <a href="/view-roomType/{{$roomType->id}}" alt="View Property Details">
                                     <i class="fa fa-eye"></i>
                                 </a>&nbsp;&nbsp;&nbsp;
-                                <a data-toggle="tooltip" style="text-decoration:none;color:red;" title="Delete Room Type with all its rooms" href="#" onclick="if(confirm('Are you sure you want to delete this room type and all its rooms?')){ var f=document.getElementById('deleteRoomTypeForm'); f.action='/delete-roomType/{{$roomType->id}}'; f.submit(); } return false;">
-                                    <i class="ti-trash"></i>
+                                <a data-toggle="tooltip" style="text-decoration:none;color:{{ $roomType->is_active ? 'red' : 'green' }};" title="{{ $roomType->is_active ? 'Deactivate room type (stops new bookings)' : 'Activate room type' }}" href="#" onclick="if(confirm('{{ $roomType->is_active ? 'Deactivate this room type? It will no longer be bookable.' : 'Activate this room type?' }}')){ var f=document.getElementById('toggleRoomTypeForm'); f.action='/roomType/{{$roomType->id}}/toggle-active'; f.submit(); } return false;">
+                                    <i class="{{ $roomType->is_active ? 'ti-close' : 'ti-check' }}"></i>
                                 </a>
                             </li>
                                 @endforeach
@@ -91,9 +93,8 @@
                 </div>
               </div>
 </form>
-<form id="deleteRoomTypeForm" method="POST" style="display:none;">
+<form id="toggleRoomTypeForm" method="POST" style="display:none;">
     @csrf
-    @method('DELETE')
 </form>
 @stop
 @section('scripts')

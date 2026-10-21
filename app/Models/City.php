@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class City extends Model
 {
+    use Concerns\NeverDeleted;
+
     public function district(): BelongsTo
     {
         return $this->belongsTo(District::class);

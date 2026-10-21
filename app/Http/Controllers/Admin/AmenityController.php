@@ -20,8 +20,8 @@ class AmenityController extends Controller
         $amenities = Amenity::orderBy('amenity_type')->orderBy('amenity')->get();
 
         // Number of properties / room types using each amenity
-        $propertyUsage = PropertyAmenityXref::selectRaw('amenity_id, count(*) as total')->groupBy('amenity_id')->pluck('total', 'amenity_id');
-        $roomTypeUsage = RoomAmenityXref::selectRaw('amenity_id, count(*) as total')->groupBy('amenity_id')->pluck('total', 'amenity_id');
+        $propertyUsage = PropertyAmenityXref::where('is_active', true)->selectRaw('amenity_id, count(*) as total')->groupBy('amenity_id')->pluck('total', 'amenity_id');
+        $roomTypeUsage = RoomAmenityXref::where('is_active', true)->selectRaw('amenity_id, count(*) as total')->groupBy('amenity_id')->pluck('total', 'amenity_id');
         $usage = $amenities->mapWithKeys(fn ($amenity) => [
             $amenity->id => ($propertyUsage[$amenity->id] ?? 0) + ($roomTypeUsage[$amenity->id] ?? 0),
         ]);
@@ -55,20 +55,14 @@ class AmenityController extends Controller
         return redirect()->back();
     }
 
-    public function destroy($amenity_id)
+    // Inactive amenities can no longer be added to properties; existing links stay
+    public function toggleActive($amenity_id)
     {
         $amenity = Amenity::findOrFail($amenity_id);
+        $amenity->is_active = !$amenity->is_active;
+        $amenity->save();
 
-        $inUse = PropertyAmenityXref::where('amenity_id', $amenity->id)->exists()
-            || RoomAmenityXref::where('amenity_id', $amenity->id)->exists();
-
-        if ($inUse) {
-            session()->flash('error', 'This amenity is in use by one or more properties and cannot be deleted');
-            return redirect()->back();
-        }
-
-        $amenity->delete();
-        session()->flash('success', 'Amenity deleted successfully');
+        session()->flash('success', $amenity->amenity.' was '.($amenity->is_active ? 'activated' : 'deactivated'));
         return redirect()->back();
     }
 

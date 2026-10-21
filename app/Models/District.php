@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class District extends Model
 {
+    use Concerns\NeverDeleted;
+
     public function province(): BelongsTo
     {
         return $this->belongsTo(Province::class);

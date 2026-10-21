@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PropertyContact extends Model
 {
+    use Concerns\NeverDeleted;
+
     protected $fillable = ['name', 'mobile', 'email', 'is_primary'];
 
     protected $casts = [

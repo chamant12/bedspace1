@@ -101,6 +101,18 @@ class PropertyController extends Controller
         return redirect('/my-properties');
     }
 
+    // Properties are deactivated (hidden from guests), never deleted
+    public function togglePropertyActive($property_id){
+        $property = Property::findOrFail($property_id);
+        Gate::authorize('update', $property);
+
+        $property->is_active = !$property->is_active;
+        $property->save();
+
+        session()->flash('success', $property->property_name.' was '.($property->is_active ? 'activated' : 'deactivated'));
+        return redirect()->back();
+    }
+
         public function sendPropertyRegistrationMail($property, $user)
         {
             $data = [

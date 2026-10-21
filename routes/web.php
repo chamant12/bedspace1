@@ -34,7 +34,7 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::get('/amenities', [Admin\AmenityController::class, 'index']);
     Route::post('/amenities', [Admin\AmenityController::class, 'store']);
     Route::put('/amenities/{amenity_id}', [Admin\AmenityController::class, 'update']);
-    Route::delete('/amenities/{amenity_id}', [Admin\AmenityController::class, 'destroy']);
+    Route::post('/amenities/{amenity_id}/toggle-active', [Admin\AmenityController::class, 'toggleActive']);
 });
 
 // Property owner area
@@ -45,9 +45,10 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
     Route::post('/create-property', [PropertyController::class, 'createProperty']);
     Route::get('/view-property/{property_id}', [PropertyController::class, 'viewProperty']);
     Route::post('/update-property', [PropertyController::class, 'updateProperty']);
+    Route::post('/property/{property_id}/toggle-active', [PropertyController::class, 'togglePropertyActive']);
     Route::get('/add-room-type', [RoomTypeController::class, 'addRoomType']);
     Route::post('/create-room-type', [RoomTypeController::class, 'createRoomType']);
-    Route::delete('/delete-roomType/{roomType_id}', [RoomTypeController::class, 'deleteRoomType']);
+    Route::post('/roomType/{roomType_id}/toggle-active', [RoomTypeController::class, 'toggleRoomTypeActive']);
     Route::get('/view-roomType/{roomType_id}', [RoomTypeController::class, 'viewRoomType']);
     Route::post('/update-room-type', [RoomTypeController::class, 'updateRoomType']);
     Route::get('/add-base-rate/{property_id}', [RateController::class, 'addBaseRate']);
@@ -65,10 +66,10 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
         Route::get('/get-properties-by-city/{city_id}', [RoomTypeController::class, 'getPropertiesByCity']);
         Route::get('/get-base-rates/{roomType_id}/{currency_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRates']);
         Route::post('/update-baserate', [RateController::class, 'updateBaseRates']);
-        Route::delete('/deleteAmenity/{amenity_id}/{type_id}/{amenityType}', [AmenityController::class, 'deleteAmenity']);
+        Route::post('/remove-amenity/{amenity_id}/{type_id}/{amenityType}', [AmenityController::class, 'removeAmenity']);
         Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
         Route::post('/upload-photos', [PhotoController::class, 'uploadPhotos']);
         Route::post('/update-photo-order', [PhotoController::class, 'updatePhotoOrder']);
-        Route::delete('/delete-photo/{photo_id}', [PhotoController::class, 'deletePhoto']);
+        Route::post('/remove-photo/{photo_id}', [PhotoController::class, 'deactivatePhoto']);
     });
 });

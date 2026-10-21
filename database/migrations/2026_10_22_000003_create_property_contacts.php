@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('property_contacts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('property_id')->constrained('properties')->cascadeOnDelete();
+            $table->foreignId('property_id')->constrained('properties')->restrictOnDelete();
             $table->string('name', 255);
             $table->string('mobile', 50);
             $table->string('email', 255)->nullable();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->restrictOnDelete();
             $table->boolean('is_primary')->default(true);
             $table->timestamps();
 

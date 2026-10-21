@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RateType extends Model
 {
+    use Concerns\NeverDeleted;
+
     protected $table = 'ratetypes';
 
     public function property(): BelongsTo

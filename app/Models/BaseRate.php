@@ -6,5 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BaseRate extends Model
 {
+    use Concerns\NeverDeleted;
+
     //
 }
