@@ -23,7 +23,7 @@
                         <select name="" id="currency_id" required class="form-control">
                             <option value="">Select Currency</option>
                             @foreach($currencies as $currency)
-                                <option value="{{$currency->id}}">{{$currency->currency}}</option>
+                                <option value="{{$currency->id}}">{{$currency->code}} - {{$currency->currency}}</option>
                             @endforeach
                         </select>
                       </div>

@@ -228,7 +228,7 @@
                   <li class="nav-item"> <a class="nav-link" href="/my-properties">My Properties</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/add-property">Add Property</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/add-room-type">Add Room Type</a></li>
-                  <li class="nav-item"> <a class="nav-link" href="/edit-dollar-rate">Edit Dollar Rate</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/exchange-rates">Exchange Rates</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/amenities">Amenities</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/photos">Photos</a></li>
                 </ul>

@@ -52,8 +52,8 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
     Route::get('/view-roomType/{roomType_id}', [RoomTypeController::class, 'viewRoomType']);
     Route::post('/update-room-type', [RoomTypeController::class, 'updateRoomType']);
     Route::get('/add-base-rate/{property_id}', [RateController::class, 'addBaseRate']);
-    Route::post('/update-dollar-rate', [RateController::class, 'updateDollarRate']);
-    Route::get('/edit-dollar-rate', [RateController::class, 'editDollarRate']);
+    Route::post('/update-exchange-rates', [RateController::class, 'updateExchangeRates']);
+    Route::get('/exchange-rates', [RateController::class, 'editExchangeRates']);
     Route::get('/amenities', [AmenityController::class, 'amenities']);
     Route::post('/addAmenity', [AmenityController::class, 'addAmenity']);
     Route::get('/photos', [PhotoController::class, 'selectPhotoType']);

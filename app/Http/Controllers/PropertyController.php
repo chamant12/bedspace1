@@ -10,7 +10,6 @@ use App\Models\District;
 use App\Models\City;
 use App\Models\RoomType;
 use App\Models\RateType;
-use App\Models\CurrencyRate;
 use App\Mail\PropertyRegisteredMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -51,20 +50,6 @@ class PropertyController extends Controller
             $rateType->property_id = $property->id;
             $rateType->rateType = "base_rate";
             $rateType->save();
-
-            $currencyRate = new CurrencyRate();
-            $currencyRate->currency_type_id = 1;
-            $currencyRate->property_owner_id = auth()->user()->id;
-            $currencyRate->rate_date = date('Y-m-d');
-            $currencyRate->rate = 1;
-            $currencyRate->save();
-
-            $currencyRate = new CurrencyRate();
-            $currencyRate->currency_type_id = 2;
-            $currencyRate->property_owner_id = auth()->user()->id;
-            $currencyRate->rate_date = date('Y-m-d');
-            $currencyRate->rate = 300;
-            $currencyRate->save();
 
             return $property;
         });

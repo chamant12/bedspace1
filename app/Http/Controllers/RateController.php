@@ -25,7 +25,7 @@ class RateController extends Controller
         $property = Property::findOrFail($property_id);
         Gate::authorize('update', $property);
         $roomTypes = RoomType::where('property_id',$property_id)->get();
-        $currencies = CurrencyType::all();
+        $currencies = CurrencyType::active()->orderBy('id')->get();
         return view('rate.addBaseRate', compact('property','roomTypes','currencies'));
     }
 
@@ -76,7 +76,7 @@ class RateController extends Controller
                     }
             }
 
-        $symbol = ($currency_id==1)?"(Rs.)":"($)";
+        $symbol = " (".e(CurrencyType::findOrFail($currency_id)->symbol).")";
         $str = '<table class="table table-striped">
                         <thead>
                           <tr><th>Occupancy</th>';
@@ -145,33 +145,41 @@ class RateController extends Controller
             ]);
         }
 
-        public function editDollarRate(){
-            $currencyRate = CurrencyRate::where(['currency_type_id'=>2,'rate_date'=>date('Y-m-d'),'property_owner_id'=>auth()->user()->id])->orderBy('id','DESC')->first();
+        // Owner's exchange rates (LKR per 1 unit) for every active foreign currency
+        public function editExchangeRates(){
+            $currencies = CurrencyType::active()->where('is_base', false)->orderBy('id')->get();
+            $ownerId = auth()->user()->id;
 
-            if(!$currencyRate){
-                $currencyRate = new CurrencyRate();
-                $currencyRate->rate = 300;
-            }
-
-            return view('currency.editCurrenxyRate',compact('currencyRate'));
-        }
-
-        public function updateDollarRate(Request $request){
-            $request->validate([
-                'rate' => ['required', 'numeric', 'gt:0'],
+            $latest = $currencies->mapWithKeys(fn ($currency) => [
+                $currency->id => CurrencyRate::where(['property_owner_id'=>$ownerId,'currency_type_id'=>$currency->id])
+                    ->orderByDesc('rate_date')->orderByDesc('id')->first(),
             ]);
 
-            $currencyRate = CurrencyRate::where(['currency_type_id'=>2,'rate_date'=>date('Y-m-d'),'property_owner_id'=>auth()->user()->id])->orderBy('id','DESC')->first();
-            if(!$currencyRate){
-                $currencyRate = new CurrencyRate();
-                $currencyRate->currency_type_id = 2;
-                $currencyRate->rate_date = date('Y-m-d');
-                $currencyRate->property_owner_id = auth()->user()->id;
-            }
-            $currencyRate->rate = $request->rate;
-            $currencyRate->save();
+            return view('currency.exchangeRates', compact('currencies', 'latest'));
+        }
 
-            session()->flash('success', 'Dollar rate was updated successfully');
+        // Each update is a new row so the history of rates is kept
+        public function updateExchangeRates(Request $request){
+            $currencyIds = CurrencyType::active()->where('is_base', false)->pluck('id');
+
+            $request->validate([
+                'rates' => ['required', 'array'],
+                'rates.*' => ['required', 'numeric', 'gt:0', 'max:1000000'],
+            ]);
+
+            foreach ($request->rates as $currencyId => $rate) {
+                if (!$currencyIds->contains((int) $currencyId)) {
+                    continue;
+                }
+                $currencyRate = new CurrencyRate();
+                $currencyRate->currency_type_id = $currencyId;
+                $currencyRate->property_owner_id = auth()->user()->id;
+                $currencyRate->rate_date = now()->toDateString();
+                $currencyRate->rate = $rate;
+                $currencyRate->save();
+            }
+
+            session()->flash('success', 'Exchange rates were updated successfully');
 
             return redirect()->back();
         }

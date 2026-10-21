@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Services\ExchangeRates;
 
 class DashboardController extends Controller
 {
     // Owner dashboard: only the logged-in owner's properties
-    public function index()
+    public function index(ExchangeRates $exchangeRates)
     {
+        $missingRates = $exchangeRates->missingTodayFor(auth()->user()->id);
+
         $properties = auth()->user()->properties()
             ->with('city')
             ->withCount('roomTypes')
@@ -26,6 +29,6 @@ class DashboardController extends Controller
             })->count(),
         ];
 
-        return view('dashboard', compact('properties', 'stats'));
+        return view('dashboard', compact('properties', 'stats', 'missingRates'));
     }
 }

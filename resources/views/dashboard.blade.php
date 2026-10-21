@@ -1,5 +1,11 @@
 @extends('layout.app')
 @section('content')
+@if($missingRates->isNotEmpty())
+<div class="alert alert-warning">
+    You have not updated today's {{ $missingRates->pluck('code')->join(', ') }} exchange rate.
+    <a href="/exchange-rates">Update now</a>
+</div>
+@endif
 <div class="row">
     @foreach([
         'Properties' => $stats['properties'],
