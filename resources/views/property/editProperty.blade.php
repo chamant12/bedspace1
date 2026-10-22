@@ -63,7 +63,7 @@
                         @if(count($roomTypes)>0)
                             <ul style="margin-left:10%;">
                                 @foreach($roomTypes as $roomType)
-                                <li>{{$roomType->roomType}}
+                                <li>{{$roomType->roomType}} <small class="text-muted">({{ (int) ($roomCounts[$roomType->id] ?? 0) }} rooms here)</small>
                                 @unless($roomType->is_active)<span class="badge badge-secondary">Inactive</span>@endunless
                                 &nbsp;&nbsp;&nbsp;
                                 <a href="/view-roomType/{{$roomType->id}}" alt="View Property Details">

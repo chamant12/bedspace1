@@ -52,7 +52,7 @@ class RateController extends Controller
             'roomType_id' => ['required', 'integer'],
             'rates' => ['required', 'array', 'max:'.RatesCalendar::MAX_VIEW_DAYS],
         ]);
-        [$property, $roomType] = $this->resolve($request->property_id, $request->roomType_id, 'manageRates');
+        [$property, $roomType] = $this->resolvePropertyRoomType($request->property_id, $request->roomType_id, 'manageRates');
 
         $this->calendar->save($property, $roomType, $request->rates);
 
@@ -66,7 +66,7 @@ class RateController extends Controller
             'roomType_id' => ['required', 'integer'],
             'date' => ['nullable', 'date_format:Y-m-d'],
         ]);
-        [$property, $roomType] = $this->resolve($request->property_id, $request->roomType_id, 'manageRates');
+        [$property, $roomType] = $this->resolvePropertyRoomType($request->property_id, $request->roomType_id, 'manageRates');
 
         $this->calendar->reset($property, $roomType, $request->date);
 
@@ -87,7 +87,7 @@ class RateController extends Controller
             'weekdays' => ['nullable', 'array'],
             'weekdays.*' => ['integer', 'between:0,6'],
         ]);
-        [$property, $roomType] = $this->resolve($request->property_id, $request->roomType_id, 'manageRates');
+        [$property, $roomType] = $this->resolvePropertyRoomType($request->property_id, $request->roomType_id, 'manageRates');
 
         $count = $this->calendar->copy($property, $roomType, $request->source_date, $request->from_date, $request->to_date,
             array_map('intval', $request->weekdays ?? []));
@@ -101,7 +101,7 @@ class RateController extends Controller
             'to_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:from_date'],
         ])->validate();
 
-        [$property, $roomType] = $this->resolve($property_id, $roomType_id, $ability);
+        [$property, $roomType] = $this->resolvePropertyRoomType($property_id, $roomType_id, $ability);
         $calendar = $this->calendar->load($property, $roomType, $from_date, $to_date);
 
         $html = view('rate._grid', $calendar + [
@@ -116,25 +116,6 @@ class RateController extends Controller
         return response()->json(['status' => 'success', 'html' => $html]);
     }
 
-    // Room types are owner-level: any of the property owner's room types may be priced at any of their properties
-    private function resolve($property_id, $roomType_id, string $ability): array
-    {
-        $property = Property::findOrFail($property_id);
-        Gate::authorize($ability, $property);
-
-        $roomType = RoomType::with('property')->findOrFail($roomType_id);
-        abort_unless((int) $roomType->property?->property_owner_id === (int) $property->property_owner_id, 404);
-
-        return [$property, $roomType];
-    }
-
-    private function ownerRoomTypes(Property $property)
-    {
-        return RoomType::where('is_active', true)
-            ->whereIn('property_id', Property::where('property_owner_id', $property->property_owner_id)->select('id'))
-            ->orderBy('roomType')
-            ->get();
-    }
 
         // Owner's exchange rates (LKR per 1 unit) for every active foreign currency
         public function editExchangeRates(){

@@ -12,7 +12,7 @@
                             <th>Owner</th>
                             <th>City</th>
                             <th>District</th>
-                            <th>Room Types</th>
+                            <th>Rooms</th>
                             <th>Status</th>
                             <th></th>
                         </tr>
@@ -27,7 +27,7 @@
                             </td>
                             <td>{{ $property->city?->city_name }}</td>
                             <td>{{ $property->city?->district?->district_name }}</td>
-                            <td>{{ $property->room_types_count }}</td>
+                            <td>{{ (int) ($roomCounts[$property->id] ?? 0) }}</td>
                             <td>
                                 @if($property->is_active)
                                     <span class="badge badge-success">Active</span>
@@ -37,6 +37,7 @@
                             </td>
                             <td class="d-flex gap-2">
                                 <a href="/rates/{{ $property->id }}/view" class="btn btn-sm btn-outline-primary">View rates</a>
+                                <a href="/inventory/{{ $property->id }}/view" class="btn btn-sm btn-outline-primary">View inventory</a>
                                 <form method="POST" action="/admin/properties/{{ $property->id }}/toggle-active"
                                       onsubmit="return confirm('{{ $property->is_active ? 'Deactivate' : 'Activate' }} this property?');">
                                     @csrf

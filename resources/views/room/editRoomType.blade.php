@@ -1,93 +1,47 @@
 @extends('layout.app')
 @section('content')
-<form action="/update-room-type" method="POST">
 <div class="col-md-6 grid-margin stretch-card">
-                <div class="card">
-                  <div class="card-body">
-                    <h4 class="card-title">View room type</h4>
-
-                    <form class="forms-sample" method="post" action="/update-room-type">
-                    <div class="form-group">
-                        <label for="exampleInputConfirmPassword1">City<span style="color:red;">*</span></label>
-                        <select name="city_id" id="city_id" required class="form-control" style="pointer-events:none;">
-                            <option value="">Select City</option>
-                            @foreach($cities as $city)
-                                <option value="{{$city->id}}" {{($city_id==$city->id)?"selected":""}}>{{$city->city_name}}</option>
-                            @endforeach
-                        </select>
-                      </div>
-                      <div class="form-group">
-                        <label for="exampleInputEmail1">Property<span style="color:red;">*</span></label>
-                        <select name="property_id" id="property_id" required class="form-control"  style="pointer-events:none;">
-                            <option value="">Select Property</option>
-                            @foreach($properties as $property)
-                                <option value="{{$property->id}}" {{($roomType->property_id==$property->id)?"selected":""}}>{{$property->property_name}}</option>
-                            @endforeach
-                        </select>
-                      </div>
-
-                      <div class="form-group">
-                        <label for="exampleInputUsername1">Room Type<span style="color:red;">*</span></label>
-                        <input type="text" class="form-control" placeholder="Room Type" name="roomType"  required value="{{$roomType->roomType}}">
-                      </div>
-                    <div class="form-group">
-                        <label for="exampleInputUsername1">Number of Rooms<span style="color:red;">*</span></label>
-                        <input type="number" class="form-control" placeholder="Number of Rooms" name="noOfRooms"  required min="1" step="1" value="{{$noOfRooms}}" readonly>
-                      </div>
-                      <div class="form-group">
-                        <label for="exampleInputUsername1">Maximum Occupancy<span style="color:red;">*</span></label>
-                        <input type="number" class="form-control" placeholder="Max Occupancy" name="max_occupancy"  required min="1" step="1" max="10" value="{{$roomType->max_occupancy}}">
-                      </div>
-                      <input type="hidden" name="roomType_id" value="{{$roomType->id}}"/>
-                      {{csrf_field()}}
-                      <button type="submit" class="btn btn-primary">Update</button>
-                      <a class="btn btn-light" href="/dashboard">Cancel</a>
-                    </form>
-                  </div>
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Room type</h4>
+            <form class="forms-sample" method="post" action="/update-room-type">
+                <div class="form-group">
+                    <label>Room Type<span style="color:red;">*</span></label>
+                    <input type="text" class="form-control" placeholder="Room Type" name="roomType" required maxlength="255" value="{{ old('roomType', $roomType->roomType) }}">
                 </div>
-              </div>
-</form>
-@stop
-@section('scripts')
-<script>
-    $(document).ready(function(){
-        $.ajaxSetup({
-    headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    }
-});
+                <div class="form-group">
+                    <label>Maximum Occupancy<span style="color:red;">*</span></label>
+                    <input type="number" class="form-control" placeholder="Max Occupancy" name="max_occupancy" required min="1" step="1" max="10" value="{{ old('max_occupancy', $roomType->max_occupancy) }}">
+                </div>
+                <input type="hidden" name="roomType_id" value="{{$roomType->id}}"/>
+                @csrf
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a class="btn btn-light" href="/my-properties">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
 
-$("#city_id").change(function(){
-    if($(this).val()!=""){
-
-        $.ajax({
-            url: '/api/get-properties-by-city/' + $(this).val(),
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                // 1. Start with the default option
-                let str = "<option value=''>Select Property</option>";
-                
-                // 2. jQuery automatically parses JSON if dataType is 'json', 
-                // so JSON.parse(data) is usually unnecessary.
-                let data_arr = (typeof data === 'string') ? JSON.parse(data) : data;
-
-                // 3. Use $.each() for arrays or data_arr.forEach()
-                $.each(data_arr, function(index, val) {
-                    str += "<option value='" + val.id + "'>" + val.property_name + "</option>";
-                });
-
-                // 4. Use .html() instead of .append() to clear previous results
-                $("#property_id").html(str);
-            },
-            error: function(error) {
-                console.error('Error fetching districts:', error);
-            }
-        });
-    }
-});
-
-
-    });
-</script>
+<div class="col-md-6 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Rooms per property</h4>
+            <p class="card-description">This room type can be used at any of your properties. Set the number of rooms on each property's Inventory page.</p>
+            <table class="table table-striped">
+                <thead>
+                    <tr><th>Property</th><th>Rooms</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach($properties as $property)
+                    <tr>
+                        <td>{{ $property->property_name }}</td>
+                        <td>{{ $roomCounts[$property->id] ?? 0 }}</td>
+                        <td><a href="/inventory/{{ $property->id }}" class="btn btn-sm btn-outline-primary">Inventory</a></td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 @stop

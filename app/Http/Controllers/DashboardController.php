@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
+use App\Models\PropertyRoomType;
+use App\Models\RoomType;
 use App\Services\ExchangeRates;
 
 class DashboardController extends Controller
@@ -14,21 +15,24 @@ class DashboardController extends Controller
 
         $properties = auth()->user()->properties()
             ->with('city')
-            ->withCount('roomTypes')
             ->orderBy('property_name')
             ->get();
 
         $propertyIds = $properties->pluck('id');
+        $roomCounts = PropertyRoomType::whereIn('property_id', $propertyIds)
+            ->where('is_active', true)
+            ->selectRaw('property_id, SUM(total_rooms) as rooms')
+            ->groupBy('property_id')
+            ->pluck('rooms', 'property_id');
 
         $stats = [
             'properties' => $properties->count(),
             'activeProperties' => $properties->where('is_active', true)->count(),
-            'roomTypes' => $properties->sum('room_types_count'),
-            'rooms' => Room::whereIn('roomType_id', function ($query) use ($propertyIds) {
-                $query->select('id')->from('roomtypes')->whereIn('property_id', $propertyIds);
-            })->count(),
+            // Room types are owner-level
+            'roomTypes' => RoomType::whereIn('property_id', $propertyIds)->where('is_active', true)->count(),
+            'rooms' => (int) $roomCounts->sum(),
         ];
 
-        return view('dashboard', compact('properties', 'stats', 'missingRates'));
+        return view('dashboard', compact('properties', 'stats', 'missingRates', 'roomCounts'));
     }
 }

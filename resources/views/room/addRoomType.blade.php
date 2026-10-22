@@ -28,8 +28,8 @@
                         <input type="text" class="form-control" placeholder="Room Type" name="roomType"  required>
                       </div>
                     <div class="form-group">
-                        <label for="exampleInputUsername1">Number of Rooms<span style="color:red;">*</span></label>
-                        <input type="number" class="form-control" placeholder="Number of Rooms" name="noOfRooms"  required min="1" step="1">
+                        <label for="exampleInputUsername1">Number of rooms at this property<span style="color:red;">*</span></label>
+                        <input type="number" class="form-control" placeholder="Number of Rooms" name="noOfRooms"  required min="1" step="1" max="500">
                       </div>
                       <div class="form-group">
                         <label for="exampleInputUsername1">Maximum Occupancy<span style="color:red;">*</span></label>

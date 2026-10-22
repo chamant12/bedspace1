@@ -9,6 +9,7 @@ use App\Models\Province;
 use App\Models\District;
 use App\Models\City;
 use App\Models\RoomType;
+use App\Models\PropertyRoomType;
 use App\Models\RateType;
 use App\Models\CurrencyRate;
 use App\Models\CurrencyType;
@@ -86,9 +87,13 @@ class PropertyController extends Controller
         $provinces = Province::all();
         $districts = District::all();
         $cities = City::all();
-        $roomTypes = RoomType::where('property_id',$property_id)->get();
+        // Room types are owner-level: list all of the owner's room types with their room count here
+        $roomTypes = RoomType::whereIn('property_id', Property::where('property_owner_id', $property->property_owner_id)->select('id'))
+            ->orderBy('roomType')
+            ->get();
+        $roomCounts = PropertyRoomType::where('property_id', $property->id)->pluck('total_rooms', 'roomType_id');
 
-        return view('property.editProperty', compact('property','provinces','districts','cities','roomTypes'));
+        return view('property.editProperty', compact('property','provinces','districts','cities','roomTypes','roomCounts'));
     }
 
     public function updateProperty(PropertyRequest $request){

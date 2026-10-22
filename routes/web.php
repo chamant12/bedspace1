@@ -9,6 +9,7 @@ use App\Http\Controllers\AmenityController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -46,6 +47,8 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
 Route::middleware('auth')->group(function () {
     Route::get('/rates/{property_id}/view', [RateController::class, 'viewRates']);
     Route::get('/api/view-base-rates/{property_id}/{roomType_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRatesReadonly']);
+    Route::get('/inventory/{property_id}/view', [InventoryController::class, 'view']);
+    Route::get('/api/view-inventory/{property_id}/{roomType_id}/{from_date}/{to_date}', [InventoryController::class, 'gridReadonly']);
 });
 
 // Property owner area
@@ -63,6 +66,7 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
     Route::get('/view-roomType/{roomType_id}', [RoomTypeController::class, 'viewRoomType']);
     Route::post('/update-room-type', [RoomTypeController::class, 'updateRoomType']);
     Route::get('/add-base-rate/{property_id}', [RateController::class, 'addBaseRate']);
+    Route::get('/inventory/{property_id}', [InventoryController::class, 'index']);
     Route::post('/update-exchange-rates', [RateController::class, 'updateExchangeRates']);
     Route::get('/exchange-rates', [RateController::class, 'editExchangeRates']);
     Route::get('/amenities', [AmenityController::class, 'amenities']);
@@ -79,6 +83,10 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
         Route::post('/save-base-rates', [RateController::class, 'saveBaseRates']);
         Route::post('/reset-base-rates', [RateController::class, 'resetBaseRates']);
         Route::post('/copy-base-rates', [RateController::class, 'copyBaseRates']);
+        Route::get('/inventory/{property_id}/{roomType_id}/{from_date}/{to_date}', [InventoryController::class, 'grid']);
+        Route::post('/inventory/total', [InventoryController::class, 'saveTotal']);
+        Route::post('/inventory/closed', [InventoryController::class, 'saveClosed']);
+        Route::post('/inventory/close-range', [InventoryController::class, 'closeRange']);
         Route::post('/remove-amenity/{amenity_id}/{type_id}/{amenityType}', [AmenityController::class, 'removeAmenity']);
         Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
         Route::post('/upload-photos', [PhotoController::class, 'uploadPhotos']);

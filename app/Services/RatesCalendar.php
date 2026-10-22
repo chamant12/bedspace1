@@ -56,9 +56,9 @@ class RatesCalendar
      * $grid[date][occupancy_id][mealType_id][USD|LKR] = price (only prices > 0)
      * $open[date] = bool
      */
-    public function load(Property $property, RoomType $roomType, string $from, string $to): array
+    public function load(Property $property, RoomType $roomType, string $from, string $to, int $maxDays = self::MAX_VIEW_DAYS): array
     {
-        $dates = $this->dateRange($from, $to);
+        $dates = $this->dateRange($from, $to, $maxDays);
         $currencyCodes = $this->currencyIds()->flip(); // id => code
 
         $grid = [];

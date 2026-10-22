@@ -7,7 +7,7 @@ use App\Http\Requests\RoomTypeRequest;
 use App\Models\Property;
 use App\Models\City;
 use App\Models\RoomType;
-use App\Models\Room;
+use App\Models\PropertyRoomType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -31,6 +31,8 @@ class RoomTypeController extends Controller
     public function createRoomType(RoomTypeRequest $request){
         Gate::authorize('update', Property::findOrFail($request->property_id));
 
+        // The room type is owner-level; its room count is set for the chosen property
+        // (other properties get theirs on the Inventory page). Room numbers are kept separately.
         DB::transaction(function () use ($request) {
             $roomType = new RoomType();
             $roomType->property_id = $request->property_id;
@@ -38,11 +40,11 @@ class RoomTypeController extends Controller
             $roomType->max_occupancy = $request->max_occupancy;
             $roomType->save();
 
-            for($i=1;$i<=$request->noOfRooms;$i++){
-                $room = new Room();
-                $room->roomType_id = $roomType->id;
-                $room->save();
-            }
+            PropertyRoomType::create([
+                'property_id' => $request->property_id,
+                'roomType_id' => $roomType->id,
+                'total_rooms' => $request->noOfRooms,
+            ]);
         });
 
         session()->flash('success', 'Room Type was created successfully');
@@ -66,16 +68,10 @@ class RoomTypeController extends Controller
     public function viewRoomType($roomType_id){
         $roomType = RoomType::findOrFail($roomType_id);
         Gate::authorize('view', $roomType);
-        $thisProperty = $roomType->property;
-        $properties = Property::where(['property_owner_id'=>auth()->user()->id])->get();
-        $city_ids = [];
-        $city_id = $thisProperty->city_id;
-        foreach($properties as $property){
-            $city_ids[] = $property->city_id;
-        }
-        $cities = City::whereIn('id',$city_ids)->get();
-        $noOfRooms = Room::where('roomType_id',$roomType_id)->count();
-        return view('room.editRoomType', compact('cities','properties','city_id','roomType','noOfRooms'));
+        // Room counts of this room type at each of the owner's properties
+        $properties = Property::where(['property_owner_id'=>auth()->user()->id])->orderBy('property_name')->get();
+        $roomCounts = PropertyRoomType::where('roomType_id', $roomType->id)->pluck('total_rooms', 'property_id');
+        return view('room.editRoomType', compact('roomType','properties','roomCounts'));
     }
 
     public function updateRoomType(RoomTypeRequest $request){

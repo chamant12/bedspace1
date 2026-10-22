@@ -41,7 +41,7 @@
                             <tr>
                                 <th>Property</th>
                                 <th>City</th>
-                                <th>Room Types</th>
+                                <th>Rooms</th>
                                 <th>Status</th>
                                 <th></th>
                             </tr>
@@ -51,7 +51,7 @@
                             <tr>
                                 <td>{{ $property->property_name }}</td>
                                 <td>{{ $property->city?->city_name }}</td>
-                                <td>{{ $property->room_types_count }}</td>
+                                <td>{{ (int) ($roomCounts[$property->id] ?? 0) }}</td>
                                 <td>
                                     @if($property->is_active)
                                         <span class="badge badge-success">Active</span>
