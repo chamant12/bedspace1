@@ -4,11 +4,18 @@ use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Validator;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Releases rooms held by unpaid online bookings (runs every 5 minutes via the scheduler)
+Artisan::command('bedspace:expire-pending', function (App\Services\Reservations $reservations) {
+    $this->info($reservations->expirePending().' pending booking(s) expired');
+})->purpose('Expire unpaid pending bookings');
+Schedule::command('bedspace:expire-pending')->everyFiveMinutes();
 
 // Admins have no public signup; create them from the server shell
 Artisan::command('bedspace:create-admin', function () {
