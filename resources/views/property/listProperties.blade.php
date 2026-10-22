@@ -34,6 +34,9 @@
                                 <a href="/inventory/{{$property->id}}" data-toggle="tooltip" title="Inventory" style="text-decoration:none;" class="btn btn-info">
                                 <i class="ti-layout-grid2"></i>
                                 </a>
+                                <a href="/rooms/{{$property->id}}" data-toggle="tooltip" title="Room numbers" style="text-decoration:none;" class="btn btn-secondary">
+                                <i class="ti-key"></i>
+                                </a>
                                 <form method="POST" action="/property/{{$property->id}}/toggle-active" style="display:inline;"
                                       onsubmit="return confirm('{{ $property->is_active ? 'Deactivate this property? Guests will no longer see it.' : 'Activate this property?' }}');">
                                     @csrf

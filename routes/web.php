@@ -10,6 +10,7 @@ use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\RoomNumberController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -67,6 +68,10 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
     Route::post('/update-room-type', [RoomTypeController::class, 'updateRoomType']);
     Route::get('/add-base-rate/{property_id}', [RateController::class, 'addBaseRate']);
     Route::get('/inventory/{property_id}', [InventoryController::class, 'index']);
+    Route::get('/rooms/{property_id}', [RoomNumberController::class, 'index']);
+    Route::post('/rooms', [RoomNumberController::class, 'store']);
+    Route::put('/rooms/{room_id}', [RoomNumberController::class, 'update']);
+    Route::post('/rooms/{room_id}/toggle-active', [RoomNumberController::class, 'toggleActive']);
     Route::post('/update-exchange-rates', [RateController::class, 'updateExchangeRates']);
     Route::get('/exchange-rates', [RateController::class, 'editExchangeRates']);
     Route::get('/amenities', [AmenityController::class, 'amenities']);
