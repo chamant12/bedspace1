@@ -13,8 +13,8 @@ use Carbon\CarbonPeriod;
  * Prices a stay from the owner's base rates.
  *
  * Owners keep separate rates per currency (LKR for local guests, USD for
- * foreign guests). The visitor's cookie decides which price list applies
- * (the "rate currency"). For a night with no rate in that currency, the
+ * foreign guests). The visitor's selected currency decides which price list
+ * applies (the "rate currency"). For a night with no rate in that currency, the
  * rate in the other currency is converted with the owner's latest exchange
  * rate. A night with no rate in any currency cannot be priced, and a
  * property with no priceable room type is hidden from search results.
@@ -88,12 +88,6 @@ class RoomPricing
             'total' => round(array_sum($nights), 2),
             'converted_nights' => $converted,
         ];
-    }
-
-    // Converts a price for display when the visitor switched currency
-    public function forDisplay(float $amount, CurrencyType $rateCurrency, CurrencyType $displayCurrency, Property $property): ?float
-    {
-        return $this->exchangeRates->convert($amount, $rateCurrency, $displayCurrency, (int) $property->property_owner_id);
     }
 
     /**

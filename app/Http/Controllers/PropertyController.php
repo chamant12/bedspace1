@@ -10,6 +10,9 @@ use App\Models\District;
 use App\Models\City;
 use App\Models\RoomType;
 use App\Models\RateType;
+use App\Models\CurrencyRate;
+use App\Models\CurrencyType;
+use App\Services\ExchangeRates;
 use App\Mail\PropertyRegisteredMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -22,9 +25,14 @@ class PropertyController extends Controller
         return view('property.listProperties',compact('properties'));
     }
 
-    public function addProperty(){
+    public function addProperty(ExchangeRates $exchangeRates){
         $provinces = Province::all();
-        return view('property.addProperty',compact('provinces'));
+        $foreignCurrencies = CurrencyType::active()->where('is_base', false)->orderBy('id')->get();
+        // Pre-fill with the owner's current rate (or the latest on the platform)
+        $currentRates = $foreignCurrencies->mapWithKeys(fn ($currency) => [
+            $currency->id => $exchangeRates->latestRate(auth()->user()->id, $currency),
+        ]);
+        return view('property.addProperty',compact('provinces','foreignCurrencies','currentRates'));
     }
 
     public function getDistrictsByProvince($province_id){
@@ -50,6 +58,16 @@ class PropertyController extends Controller
             $rateType->property_id = $property->id;
             $rateType->rateType = "base_rate";
             $rateType->save();
+
+            // Exchange rates are per owner; this guarantees one exists from day one
+            foreach ($request->exchangeRates() as $currencyId => $rate) {
+                $currencyRate = new CurrencyRate();
+                $currencyRate->currency_type_id = $currencyId;
+                $currencyRate->property_owner_id = auth()->user()->id;
+                $currencyRate->rate_date = now()->toDateString();
+                $currencyRate->rate = $rate;
+                $currencyRate->save();
+            }
 
             return $property;
         });

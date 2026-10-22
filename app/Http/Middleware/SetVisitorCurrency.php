@@ -11,22 +11,20 @@ use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Public pages: decides which prices the visitor sees.
+ * Public pages: decides which currency's rates the visitor sees.
  *
- * - Rate currency: which price list applies (LKR local rates or USD
- *   foreign rates). Decided by the cookie: visitors detected outside the
- *   home country get a USD cookie; everyone without a foreign cookie gets
- *   local rates. The visitor cannot change this.
- * - Display currency: the currency prices are shown in. Defaults to the
- *   rate currency; the visitor may switch it (kept in the session), which
- *   only converts the same price, it does not change the price list.
+ * The cookie sets the default: visitors detected outside the home country
+ * get a USD cookie, everyone without a foreign cookie sees LKR. A visitor
+ * may switch currency (kept in the session); the selected currency's own
+ * price list is then shown. Foreign guests paying local rates is handled
+ * by the hotel's ID check at check-in.
  *
- * Views receive $rateCurrency and $displayCurrency (CurrencyType); controllers
- * read them from $request->attributes.
+ * Views receive $visitorCurrency (CurrencyType); controllers read it from
+ * $request->attributes->get('visitorCurrency').
  */
 class SetVisitorCurrency
 {
-    const DISPLAY_SESSION_KEY = 'display_currency';
+    const SESSION_KEY = 'visitor_currency';
 
     public function __construct(private VisitorCountry $visitorCountry)
     {
@@ -34,20 +32,17 @@ class SetVisitorCurrency
 
     public function handle(Request $request, Closure $next): Response
     {
-        $rateCurrency = $this->rateCurrency($request);
+        $selected = $request->session()->get(self::SESSION_KEY);
+        $visitorCurrency = ($selected ? CurrencyType::active()->where('code', $selected)->first() : null)
+            ?? $this->defaultCurrency($request);
 
-        $displayCode = $request->session()->get(self::DISPLAY_SESSION_KEY);
-        $displayCurrency = ($displayCode ? CurrencyType::active()->where('code', $displayCode)->first() : null)
-            ?? $rateCurrency;
-
-        $request->attributes->set('rateCurrency', $rateCurrency);
-        $request->attributes->set('displayCurrency', $displayCurrency);
-        View::share(compact('rateCurrency', 'displayCurrency'));
+        $request->attributes->set('visitorCurrency', $visitorCurrency);
+        View::share('visitorCurrency', $visitorCurrency);
 
         return $next($request);
     }
 
-    private function rateCurrency(Request $request): CurrencyType
+    private function defaultCurrency(Request $request): CurrencyType
     {
         $cookieName = config('bedspace.currency_cookie');
         $local = CurrencyType::byCode(config('bedspace.local_currency'));
@@ -61,7 +56,7 @@ class SetVisitorCurrency
             return $local;
         }
 
-        // No cookie yet: detect once and remember. Unknown country = local rates, not remembered.
+        // No cookie yet: detect once and remember. Unknown country = local, not remembered.
         $country = $this->visitorCountry->detect($request);
         if ($country === null) {
             return $local;

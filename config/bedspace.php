@@ -4,9 +4,9 @@ return [
 
     /*
     | Visitor currency: visitors detected outside the home country get a
-    | foreign-currency cookie and see foreign (USD) rates; everyone without
-    | that cookie sees local (LKR) rates. Visitors can switch the display
-    | currency, but the cookie decides which price list applies.
+    | foreign-currency cookie and see foreign (USD) rates by default; everyone
+    | without that cookie sees local (LKR) rates. Visitors may switch currency
+    | for the session; the cookie decides the default on every visit.
     */
     'home_country' => env('BEDSPACE_HOME_COUNTRY', 'LK'),
     'local_currency' => 'LKR',

@@ -16,7 +16,7 @@ Route::middleware('visitor.currency')->group(function () {
     Route::get('/', function () {
         return view('welcome');
     });
-    Route::post('/display-currency', [CurrencyController::class, 'switchDisplay']);
+    Route::post('/currency', [CurrencyController::class, 'switchCurrency']);
 });
 
 
