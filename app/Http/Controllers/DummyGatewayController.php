@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Payments\DummyGateway;
 use App\Services\Payments;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -29,6 +30,7 @@ class DummyGatewayController extends Controller
 
     public function result(Request $request, Payment $payment){
         abort_unless($payment->gateway === 'dummy', 404);
+        DummyGateway::ensureAllowed();
         $request->validate(['result' => ['required', 'in:approve,decline']]);
 
         if ($payment->status === Payment::PENDING) {

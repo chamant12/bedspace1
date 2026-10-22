@@ -13,13 +13,6 @@ use RuntimeException;
  */
 class DummyGateway implements PaymentGateway
 {
-    public function __construct()
-    {
-        if (app()->isProduction() && !config('bedspace.allow_dummy_gateway_in_production')) {
-            throw new RuntimeException('The dummy payment gateway is disabled in production.');
-        }
-    }
-
     public function name(): string
     {
         return 'dummy';
@@ -27,6 +20,16 @@ class DummyGateway implements PaymentGateway
 
     public function checkoutUrl(Payment $payment): string
     {
+        self::ensureAllowed();
         return URL::temporarySignedRoute('payments.dummy', now()->addMinutes(30), ['payment' => $payment->id]);
+    }
+
+    // Checked when a test payment starts or completes, not when the class is built,
+    // so offline (pay at hotel) payments keep working in production
+    public static function ensureAllowed(): void
+    {
+        if (app()->isProduction() && !config('bedspace.allow_dummy_gateway_in_production')) {
+            throw new RuntimeException('The dummy payment gateway is disabled in production.');
+        }
     }
 }

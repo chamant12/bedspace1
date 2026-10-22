@@ -15,9 +15,13 @@ enum PaymentMethod: string
         };
     }
 
-    // Methods guests can choose
+    // Methods guests can choose (no online option while only the blocked test gateway exists)
     public static function available(): array
     {
-        return [self::Online, self::PayAtHotel];
+        $onlineUsable = config('bedspace.payment_gateway') !== 'dummy'
+            || !app()->isProduction()
+            || config('bedspace.allow_dummy_gateway_in_production');
+
+        return $onlineUsable ? [self::Online, self::PayAtHotel] : [self::PayAtHotel];
     }
 }
