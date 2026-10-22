@@ -4,16 +4,15 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Property;
-use App\Models\City;
 use App\Models\RoomType;
 use App\Models\BaseRate;
 use App\Models\MealType;
-use DateTime;
-use DateInterval; // Add this
-use DatePeriod;
+use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use App\Models\Occupancy;
 use App\Models\CurrencyType;
 use App\Models\RateType;
@@ -21,129 +20,149 @@ use App\Models\CurrencyRate;
 
 class RateController extends Controller
 {
+    // Rates calendar holds a USD (required) and an LKR price per cell
+    const RATE_CURRENCIES = [CurrencyType::USD, CurrencyType::LKR];
+    const MAX_DAYS = 31;
+
     public function addBaseRate($property_id){
         $property = Property::findOrFail($property_id);
         Gate::authorize('update', $property);
-        $roomTypes = RoomType::where('property_id',$property_id)->get();
-        $currencies = CurrencyType::active()->orderBy('id')->get();
-        return view('rate.addBaseRate', compact('property','roomTypes','currencies'));
+        $roomTypes = RoomType::where(['property_id'=>$property_id,'is_active'=>true])->get();
+        return view('rate.addBaseRate', compact('property','roomTypes'));
     }
 
-    public function getBaseRates($roomType_id,$currency_id,$from_date,$to_date){
-        Validator::make(compact('currency_id','from_date','to_date'), [
-            'currency_id' => ['required', 'integer', 'exists:currency_types,id'],
+    public function getBaseRates($roomType_id,$from_date,$to_date){
+        Validator::make(compact('from_date','to_date'), [
             'from_date' => ['required', 'date_format:Y-m-d'],
-            'to_date' => ['required', 'date_format:Y-m-d', 'after:from_date', 'before_or_equal:'.date('Y-m-d', strtotime($from_date.' +92 days'))],
+            'to_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:from_date', 'before:'.date('Y-m-d', strtotime($from_date.' +'.self::MAX_DAYS.' days'))],
         ], [
-            'to_date.before_or_equal' => 'Please select a range of up to 3 months.',
+            'to_date.before' => 'Please select a range of up to '.self::MAX_DAYS.' days.',
         ])->validate();
 
-        Gate::authorize('update', RoomType::findOrFail($roomType_id));
+        $roomType = RoomType::findOrFail($roomType_id);
+        Gate::authorize('update', $roomType);
 
-        $baseRates = BaseRate::where(['roomType_id'=>$roomType_id,'currency_type_id'=>$currency_id])
+        $currencies = CurrencyType::whereIn('code', self::RATE_CURRENCIES)->pluck('code', 'id');
+        $dates = collect(CarbonPeriod::create($from_date, $to_date))->map(fn ($date) => $date->toDateString())->all();
+
+        // $grid[date][occupancy_id][mealType_id][currency code] = rate (only rates that are set)
+        $grid = [];
+        BaseRate::where('roomType_id', $roomType->id)
+            ->whereIn('currency_type_id', $currencies->keys())
             ->whereBetween('rate_for', [$from_date, $to_date])
-            ->get();
-        $mealtypes = MealType::all();
-        $occupancies = Occupancy::all();
-        $dates = [];
-        $data = [];
-        $start = new DateTime($from_date);
-        $end   = new DateTime($to_date); // Note: The end date is excluded by default
+            ->where('rate', '>', 0)
+            ->get()
+            ->each(function ($rate) use (&$grid, $currencies) {
+                $grid[substr($rate->rate_for, 0, 10)][$rate->occupancy_id][$rate->mealType_id][$currencies[$rate->currency_type_id]] = (float) $rate->rate;
+            });
 
-        $interval = new DateInterval('P1D'); // P1D represents a period of 1 Day
-        $period   = new DatePeriod($start, $interval, $end);
+        $html = view('rate._grid', [
+            'roomType' => $roomType,
+            'dates' => $dates,
+            'grid' => $grid,
+            'mealTypes' => MealType::orderBy('id')->get(),
+            'occupancies' => Occupancy::where('occupancy', '<=', $roomType->max_occupancy)->orderBy('occupancy')->get(),
+        ])->render();
 
-        foreach ($period as $date) {
-                // Convert the object to a string format (Y-m-d)
-                $formattedDate = $date->format('Y-m-d');
-
-                foreach($baseRates as $baseRate){
-                    // Use the string $formattedDate instead of the object $date
-                    if($formattedDate == $baseRate->rate_for){
-                        $data[$formattedDate][$baseRate->occupancy_id][$baseRate->mealType_id] = $baseRate->rate;
-                    }
-
-
-                }
-
-                foreach($occupancies as $occupancy){
-
-                    foreach($mealtypes as $mealtype){
-                            if(!isset($data[$formattedDate])||!isset($data[$formattedDate][$occupancy->id])||!isset($data[$formattedDate][$occupancy->id][$mealtype->id])){
-                                $data[$formattedDate][$occupancy->id][$mealtype->id] = 0;
-                    }
-                    }
-                    }
-            }
-
-        $symbol = " (".e(CurrencyType::findOrFail($currency_id)->symbol).")";
-        $str = '<table class="table table-striped">
-                        <thead>
-                          <tr><th>Occupancy</th>';
-                          foreach ($period as $date) {
-                            $formattedDate = $date->format('Y-m-d');
-                            foreach($mealtypes as $mealtype){
-                            $str .= '<th>'.e($mealtype->mealType).'<br/>('.$formattedDate.') </th>';
-                            }
-                          }
-                          $str .= '</tr>
-                        </thead>
-                        <tbody>';
-                            foreach($occupancies as $occupancy){
-                          $str .= '<tr><td class="py-1">'.e($occupancy->occupancy_name).$symbol.'</td>';
-                          foreach ($data as $formattedDate => $vals) {
-
-                            foreach($mealtypes as $mealtype){
-                            $str .= '<td>
-                                <input type="number" step="0.01" min="0" value="'.e($vals[$occupancy->id][$mealtype->id]).'" mealtype_id="'.$mealtype->id.'" occupancy_id="'.$occupancy->id.'" rate_for="'.$formattedDate.'" currency_type_id="'.(int)$currency_id.'" roomType_id="'.(int)$roomType_id.'" class="form-control rate_field" style="width:100px;"/>
-                                <div class="spinner-border text-success" role="status" style="display:none">
-                                <span class="sr-only">Loading...</span>
-                                </div>
-                                </td>';
-                            }}
-                          $str .= '</tr>';
-                            }
-
-                        $str .= '</tbody>
-                      </table>';
-
-                return response()->json([
-                'status' => 'success',
-                'html' => $str,
-            ]);
-
+        return response()->json(['status' => 'success', 'html' => $html]);
     }
 
-    public function updateBaseRates(Request $request){
+    /**
+     * Saves the whole grid. Input: roomType_id, rates[date][occupancy_id][mealType_id][USD|LKR].
+     * A combination may be left empty; if it has any price, the USD price is required.
+     * Clearing a price sets it to 0 ("not offered"); rates are never deleted.
+     */
+    public function saveBaseRates(Request $request){
         $request->validate([
-            'occupancy_id' => ['required', 'integer', 'exists:occupancies,id'],
-            'mealtype_id' => ['required', 'integer', 'exists:mealtypes,id'],
             'roomType_id' => ['required', 'integer'],
-            'currency_type_id' => ['required', 'integer', 'exists:currency_types,id'],
-            'rate_for' => ['required', 'date_format:Y-m-d'],
-            'rate' => ['required', 'numeric', 'min:0', 'max:99999999'],
+            'rates' => ['required', 'array', 'max:'.self::MAX_DAYS],
         ]);
 
         $roomType = RoomType::findOrFail($request->roomType_id);
         Gate::authorize('update', $roomType);
 
-        $baseRate_id = RateType::where(['property_id'=>$roomType->property_id,'rateType'=>'base_rate'])->firstOrFail()->id;
-        $baseRate = BaseRate::where(['roomType_id'=>$roomType->id,'rateType_id'=>$baseRate_id,'mealType_id'=>$request->mealtype_id,'occupancy_id'=>$request->occupancy_id,'currency_type_id'=>$request->currency_type_id,'rate_for'=>$request->rate_for])->first();
-        if(!$baseRate){
-             $baseRate = new BaseRate();
-             $baseRate->roomType_id = $roomType->id;
-             $baseRate->rateType_id = $baseRate_id;
-             $baseRate->mealType_id = $request->mealtype_id;
-             $baseRate->occupancy_id = $request->occupancy_id;
-             $baseRate->currency_type_id = $request->currency_type_id;
-             $baseRate->rate_for = $request->rate_for;
+        $currencies = CurrencyType::whereIn('code', self::RATE_CURRENCIES)->pluck('id', 'code');
+        $occupancyNames = Occupancy::pluck('occupancy_name', 'id');
+        $mealTypeNames = MealType::pluck('mealType', 'id');
+
+        // Validate every cell and collect the values to save
+        $errors = [];
+        $values = []; // [date][occupancy][meal][code] = float|null
+        foreach ($request->rates as $date => $occupancies) {
+            if (!is_string($date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !strtotime($date) || !is_array($occupancies)) {
+                $errors[] = 'Invalid date in rates.';
+                continue;
+            }
+            foreach ($occupancies as $occupancyId => $meals) {
+                foreach ((array) $meals as $mealTypeId => $prices) {
+                    if (!isset($occupancyNames[$occupancyId], $mealTypeNames[$mealTypeId])) {
+                        $errors[] = 'Invalid occupancy or meal plan in rates.';
+                        continue;
+                    }
+                    $label = "$date, {$occupancyNames[$occupancyId]} / {$mealTypeNames[$mealTypeId]}";
+                    $cell = [];
+                    foreach (self::RATE_CURRENCIES as $code) {
+                        $raw = trim((string) ($prices[$code] ?? ''));
+                        if ($raw === '' || (is_numeric($raw) && (float) $raw == 0)) {
+                            $cell[$code] = null;
+                        } elseif (!is_numeric($raw) || (float) $raw < 0 || (float) $raw > 99999999) {
+                            $errors[] = "$label: $code price must be a positive amount.";
+                        } else {
+                            $cell[$code] = round((float) $raw, 2);
+                        }
+                    }
+                    if (($cell['LKR'] ?? null) !== null && ($cell['USD'] ?? null) === null) {
+                        $errors[] = "$label: the USD price is required.";
+                    }
+                    $values[$date][(int) $occupancyId][(int) $mealTypeId] = $cell;
+                }
+            }
         }
-        $baseRate->rate = $request->rate;
-        $baseRate->save();
-        return response()->json([
-                'status' => 'success'
-            ]);
+
+        if ($errors) {
+            throw ValidationException::withMessages(['rates' => array_values(array_unique($errors))]);
         }
+
+        $rateTypeId = RateType::where(['property_id'=>$roomType->property_id,'rateType'=>'base_rate'])->firstOrFail()->id;
+
+        DB::transaction(function () use ($values, $roomType, $rateTypeId, $currencies) {
+            $existing = BaseRate::where(['roomType_id'=>$roomType->id,'rateType_id'=>$rateTypeId])
+                ->whereIn('rate_for', array_keys($values))
+                ->whereIn('currency_type_id', $currencies->values())
+                ->get()
+                ->keyBy(fn ($rate) => substr($rate->rate_for, 0, 10).'|'.$rate->occupancy_id.'|'.$rate->mealType_id.'|'.$rate->currency_type_id);
+
+            foreach ($values as $date => $occupancies) {
+                foreach ($occupancies as $occupancyId => $meals) {
+                    foreach ($meals as $mealTypeId => $cell) {
+                        foreach ($cell as $code => $amount) {
+                            $baseRate = $existing["$date|$occupancyId|$mealTypeId|{$currencies[$code]}"] ?? null;
+
+                            if (!$baseRate) {
+                                if ($amount === null) {
+                                    continue; // nothing to store
+                                }
+                                $baseRate = new BaseRate();
+                                $baseRate->roomType_id = $roomType->id;
+                                $baseRate->rateType_id = $rateTypeId;
+                                $baseRate->mealType_id = $mealTypeId;
+                                $baseRate->occupancy_id = $occupancyId;
+                                $baseRate->currency_type_id = $currencies[$code];
+                                $baseRate->rate_for = $date;
+                            } elseif ((float) $baseRate->rate === (float) ($amount ?? 0)) {
+                                continue; // unchanged
+                            }
+
+                            $baseRate->rate = $amount ?? 0;
+                            $baseRate->save();
+                        }
+                    }
+                }
+            }
+        });
+
+        return response()->json(['status' => 'success', 'message' => 'Rates were saved successfully']);
+    }
 
         // Owner's exchange rates (LKR per 1 unit) for every active foreign currency
         public function editExchangeRates(){

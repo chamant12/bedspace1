@@ -57,7 +57,7 @@
                         <label>{{ $currency->code }} exchange rate (LKR for 1 {{ $currency->code }})<span style="color:red;">*</span></label>
                         <input type="number" step="0.01" min="0.01" class="form-control" name="exchange_rates[{{ $currency->id }}]" required
                                value="{{ old('exchange_rates.'.$currency->id, $currentRates[$currency->id]) }}">
-                        <small class="text-muted">Used to convert prices when a room has no {{ $currency->code }} rate. Keep it up to date daily under Exchange Rates.</small>
+                        <small class="text-muted">Used to total your {{ $currency->code }} income in rupees. Keep it up to date daily under Exchange Rates.</small>
                       </div>
                       @endforeach
                       <div class="form-check form-check-flat form-check-primary">

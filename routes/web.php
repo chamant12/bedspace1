@@ -69,8 +69,8 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
         Route::get('/get-districts-by-province/{province_id}', [PropertyController::class, 'getDistrictsByProvince']);
         Route::get('/get-cities-by-district/{district_id}', [PropertyController::class, 'getCitiesByDistrict']);
         Route::get('/get-properties-by-city/{city_id}', [RoomTypeController::class, 'getPropertiesByCity']);
-        Route::get('/get-base-rates/{roomType_id}/{currency_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRates']);
-        Route::post('/update-baserate', [RateController::class, 'updateBaseRates']);
+        Route::get('/get-base-rates/{roomType_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRates']);
+        Route::post('/save-base-rates', [RateController::class, 'saveBaseRates']);
         Route::post('/remove-amenity/{amenity_id}/{type_id}/{amenityType}', [AmenityController::class, 'removeAmenity']);
         Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
         Route::post('/upload-photos', [PhotoController::class, 'uploadPhotos']);

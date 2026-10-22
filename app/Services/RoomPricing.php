@@ -10,89 +10,63 @@ use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
 
 /**
- * Prices a stay from the owner's base rates.
+ * Prices a stay from the owner's rates calendar.
  *
- * Owners keep separate rates per currency (LKR for local guests, USD for
- * foreign guests). The visitor's selected currency decides which price list
- * applies (the "rate currency"). For a night with no rate in that currency, the
- * rate in the other currency is converted with the owner's latest exchange
- * rate. A night with no rate in any currency cannot be priced, and a
- * property with no priceable room type is hidden from search results.
+ * Every offered combination (date x occupancy x meal plan) has a USD price,
+ * which is compulsory, and usually an LKR price. A stay is priced in the
+ * visitor's currency; if any night has no price in that currency the whole
+ * stay is priced in USD instead. Prices are never converted between
+ * currencies (exchange rates are only for income reports).
  *
- * A rate of 0 counts as "not set" (the rate grid shows 0 for empty cells).
+ * A rate of 0 means "not offered".
  */
 class RoomPricing
 {
-    public function __construct(private ExchangeRates $exchangeRates)
-    {
-    }
-
     /**
-     * Returns null if any night cannot be priced, otherwise:
-     * ['currency' => CurrencyType, 'nights' => [Y-m-d => amount], 'total' => float,
-     *  'converted_nights' => [Y-m-d, ...]]  (nights priced by conversion)
+     * Returns null if the combination is not offered for every night, otherwise:
+     * ['currency' => CurrencyType, 'nights' => [Y-m-d => amount], 'total' => float]
      */
     public function stayPrice(RoomType $roomType, int $occupancyId, int $mealTypeId,
-                              CarbonInterface $checkIn, CarbonInterface $checkOut, CurrencyType $rateCurrency): ?array
+                              CarbonInterface $checkIn, CarbonInterface $checkOut, CurrencyType $visitorCurrency): ?array
     {
         $dates = $this->nights($checkIn, $checkOut);
         if (!$dates) {
             return null;
         }
 
-        $ownerId = (int) $roomType->property->property_owner_id;
-        $currencies = CurrencyType::all()->keyBy('id');
+        $usd = CurrencyType::byCode(CurrencyType::USD);
 
-        // [date][currency_type_id] => rate
+        // [currency_type_id][date] => rate
         $rates = [];
         $this->baseRates()
             ->where('roomType_id', $roomType->id)
             ->where('occupancy_id', $occupancyId)
             ->where('mealType_id', $mealTypeId)
+            ->whereIn('currency_type_id', array_unique([$visitorCurrency->id, $usd->id]))
             ->whereIn('rate_for', $dates)
             ->get(['rate_for', 'currency_type_id', 'rate'])
             ->each(function ($row) use (&$rates) {
-                $rates[substr($row->rate_for, 0, 10)][$row->currency_type_id] = (float) $row->rate;
+                $rates[$row->currency_type_id][substr($row->rate_for, 0, 10)] = (float) $row->rate;
             });
 
-        $nights = [];
-        $converted = [];
-        foreach ($dates as $date) {
-            $available = $rates[$date] ?? [];
-
-            if (isset($available[$rateCurrency->id])) {
-                $nights[$date] = $available[$rateCurrency->id];
-                continue;
+        foreach ([$visitorCurrency, $usd] as $currency) {
+            $nights = array_intersect_key($rates[$currency->id] ?? [], array_flip($dates));
+            if (count($nights) === count($dates)) {
+                ksort($nights);
+                return [
+                    'currency' => $currency,
+                    'nights' => $nights,
+                    'total' => round(array_sum($nights), 2),
+                ];
             }
-
-            // Prefer converting from the base currency (LKR), then any other
-            uksort($available, fn ($a, $b) => ($currencies[$b]->is_base ?? false) <=> ($currencies[$a]->is_base ?? false));
-            $amount = null;
-            foreach ($available as $currencyId => $rate) {
-                $amount = $this->exchangeRates->convert($rate, $currencies[$currencyId], $rateCurrency, $ownerId);
-                if ($amount !== null) {
-                    break;
-                }
-            }
-
-            if ($amount === null) {
-                return null;
-            }
-            $nights[$date] = $amount;
-            $converted[] = $date;
         }
 
-        return [
-            'currency' => $rateCurrency,
-            'nights' => $nights,
-            'total' => round(array_sum($nights), 2),
-            'converted_nights' => $converted,
-        ];
+        return null;
     }
 
     /**
-     * Search visibility: true if at least one active room type has a rate
-     * (in any currency) for every night, for some occupancy and meal plan.
+     * Search visibility: true if at least one active room type has a USD price
+     * for every night, for some occupancy and meal plan.
      */
     public function isPriceable(Property $property, CarbonInterface $checkIn, CarbonInterface $checkOut): bool
     {
@@ -102,6 +76,7 @@ class RoomPricing
         }
 
         $nightsPriced = $this->baseRates()
+            ->where('currency_type_id', CurrencyType::byCode(CurrencyType::USD)->id)
             ->whereIn('roomType_id', $property->roomTypes()->where('is_active', true)->select('id'))
             ->whereIn('rate_for', $dates)
             ->selectRaw('roomType_id, occupancy_id, mealType_id, COUNT(DISTINCT rate_for) as nights')

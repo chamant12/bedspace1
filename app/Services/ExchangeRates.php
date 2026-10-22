@@ -14,13 +14,16 @@ use RuntimeException;
  * Every money transaction (booking, payment, refund) must store
  * snapshot() alongside its amount, so reports can total income in LKR
  * using the rate that applied when the transaction happened.
+ *
+ * Exchange rates are never used to convert room prices; owners enter
+ * USD and LKR prices separately in the rates calendar.
  */
 class ExchangeRates
 {
     /**
      * LKR per 1 unit of the currency: the latest rate the owner set on or
-     * before the given day; if the owner never set one, the latest rate any
-     * owner set. Null only if no rate exists at all.
+     * before the given day. Every owner sets one when creating a property,
+     * so this is only null for owners with no properties.
      */
     public function latestRate(int $ownerId, CurrencyType $currency, ?CarbonInterface $on = null): ?float
     {
@@ -28,31 +31,14 @@ class ExchangeRates
             return 1.0;
         }
 
-        $query = fn () => CurrencyRate::where('currency_type_id', $currency->id)
+        $rate = CurrencyRate::where('property_owner_id', $ownerId)
+            ->where('currency_type_id', $currency->id)
             ->whereDate('rate_date', '<=', ($on ?? now())->toDateString())
             ->orderByDesc('rate_date')
-            ->orderByDesc('id');
-
-        $rate = $query()->where('property_owner_id', $ownerId)->first() ?? $query()->first();
+            ->orderByDesc('id')
+            ->first();
 
         return $rate ? (float) $rate->rate : null;
-    }
-
-    // Converts an amount between currencies via LKR; null if a rate is missing
-    public function convert(float $amount, CurrencyType $from, CurrencyType $to, int $ownerId): ?float
-    {
-        if ($from->id === $to->id) {
-            return $amount;
-        }
-
-        $fromRate = $this->latestRate($ownerId, $from);
-        $toRate = $this->latestRate($ownerId, $to);
-
-        if ($fromRate === null || $toRate === null) {
-            return null;
-        }
-
-        return round($amount * $fromRate / $toRate, 2);
     }
 
     /**
