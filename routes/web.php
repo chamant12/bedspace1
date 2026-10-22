@@ -11,6 +11,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\RoomNumberController;
+use App\Http\Controllers\PublicBookingController;
+use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -19,17 +21,31 @@ Route::middleware('visitor.currency')->group(function () {
         return view('welcome');
     });
     Route::post('/currency', [CurrencyController::class, 'switchCurrency']);
+
+    // Booking engine
+    Route::get('/search', [PublicBookingController::class, 'search']);
+    Route::get('/stay/{property_id}', [PublicBookingController::class, 'property']);
+    Route::get('/book', [PublicBookingController::class, 'checkout']);
+    Route::post('/book', [PublicBookingController::class, 'book'])->middleware('throttle:10,1');
+    Route::get('/booking/find', [PublicBookingController::class, 'findBookingForm']);
+    Route::post('/booking/find', [PublicBookingController::class, 'findBooking'])->middleware('throttle:10,1');
+    Route::get('/booking/{reference}', [PublicBookingController::class, 'booking'])->name('booking.show');
+
+    // Optional guest accounts
+    Route::get('/account/login', [UserLoginController::class, 'customerLogin']);
+    Route::post('/account/login', [UserLoginController::class, 'authenticateCustomer'])->middleware('throttle:10,1');
+    Route::get('/account/bookings', [PublicBookingController::class, 'myBookings'])->middleware(['auth', 'user.type:customer']);
 });
 
 
 Route::get('/login', [UserLoginController::class, 'login'])->name('login');
 Route::post('/logout', [UserLoginController::class, 'logout'])->middleware('auth');
-Route::post('login', [UserLoginController::class, 'authenticateUser']);
+Route::post('login', [UserLoginController::class, 'authenticateUser'])->middleware('throttle:10,1');
 Route::get('/signup', [UserLoginController::class, 'propertyOwnerSignup']);
 Route::post('/create-property-owner', [UserLoginController::class, 'createPropertyOwner']);
 
 Route::get('/admin/login', [UserLoginController::class, 'adminLogin'])->name('admin.login');
-Route::post('/admin/login', [UserLoginController::class, 'authenticateAdmin']);
+Route::post('/admin/login', [UserLoginController::class, 'authenticateAdmin'])->middleware('throttle:10,1');
 
 // Platform admin area
 Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function () {

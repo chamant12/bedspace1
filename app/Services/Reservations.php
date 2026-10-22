@@ -133,7 +133,8 @@ class Reservations
             return $reservation;
         });
 
-        $this->sendInvoice($reservation);
+        // Only once the booking is really saved (also when called inside an outer transaction)
+        DB::afterCommit(fn () => $this->sendInvoice($reservation));
 
         return $reservation;
     }

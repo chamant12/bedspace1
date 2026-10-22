@@ -65,9 +65,18 @@ class User extends Authenticatable
         return (int) $this->user_type_id === self::TYPE_PROPERTY_OWNER;
     }
 
+    public function isCustomer(): bool
+    {
+        return (int) $this->user_type_id === self::TYPE_CUSTOMER;
+    }
+
     public function dashboardUrl(): string
     {
-        return $this->isAdmin() ? '/admin/dashboard' : '/dashboard';
+        return match (true) {
+            $this->isAdmin() => '/admin/dashboard',
+            $this->isCustomer() => '/account/bookings',
+            default => '/dashboard',
+        };
     }
 
     public function userType(): BelongsTo

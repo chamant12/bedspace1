@@ -27,6 +27,15 @@ class UserLoginController extends Controller
         return $this->attemptLogin($request, User::TYPE_ADMIN);
     }
 
+    public function customerLogin()
+    {
+        return view('account.login');
+    }
+
+    public function authenticateCustomer(Request $request){
+        return $this->attemptLogin($request, User::TYPE_CUSTOMER);
+    }
+
     // Each login page only accepts active users of its own type
     private function attemptLogin(Request $request, int $userType){
         $credentials = $request->validate([
@@ -46,7 +55,11 @@ class UserLoginController extends Controller
     }
 
     public function logout(Request $request){
-        $loginUrl = $request->user()?->isAdmin() ? '/admin/login' : '/login';
+        $loginUrl = match (true) {
+            (bool) $request->user()?->isAdmin() => '/admin/login',
+            (bool) $request->user()?->isCustomer() => '/',
+            default => '/login',
+        };
 
         Auth::logout();
 

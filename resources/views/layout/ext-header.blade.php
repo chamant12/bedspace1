@@ -85,7 +85,16 @@
                 </div>
             </div>
         </nav>
-        <div class="container text-end">@include('partials.currency-switcher')</div>
+        <div class="container text-right py-1">
+            <a href="/search" class="mr-3">Find a stay</a>
+            <a href="/booking/find" class="mr-3">Find my booking</a>
+            @auth
+                @if(auth()->user()->isCustomer())<a href="/account/bookings" class="mr-3">My bookings</a>@endif
+            @else
+                <a href="/account/login" class="mr-3">Sign in</a>
+            @endauth
+            @include('partials.currency-switcher')
+        </div>
     </header>
     <!--================================================
                        MENU PART END

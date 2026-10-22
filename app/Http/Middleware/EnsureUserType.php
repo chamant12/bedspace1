@@ -17,6 +17,7 @@ class EnsureUserType
     const TYPES = [
         'admin' => User::TYPE_ADMIN,
         'owner' => User::TYPE_PROPERTY_OWNER,
+        'customer' => User::TYPE_CUSTOMER,
     ];
 
     public function handle(Request $request, Closure $next, string $type): Response
