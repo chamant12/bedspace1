@@ -8,6 +8,7 @@ use App\Http\Controllers\RateController;
 use App\Http\Controllers\AmenityController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -15,6 +16,7 @@ Route::middleware('visitor.currency')->group(function () {
     Route::get('/', function () {
         return view('welcome');
     });
+    Route::post('/display-currency', [CurrencyController::class, 'switchDisplay']);
 });
 
 

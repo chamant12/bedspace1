@@ -85,6 +85,7 @@
                 </div>
             </div>
         </nav>
+        <div class="container text-end">@include('partials.currency-switcher')</div>
     </header>
     <!--================================================
                        MENU PART END

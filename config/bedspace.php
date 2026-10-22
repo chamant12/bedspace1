@@ -3,16 +3,14 @@
 return [
 
     /*
-    | Visitor currency: guests from the home country see local-currency
-    | prices, everyone else sees the foreign currency. The choice is kept in
-    | a cookie so it stays the same on later visits.
+    | Visitor currency: visitors detected outside the home country get a
+    | foreign-currency cookie and see foreign (USD) rates; everyone without
+    | that cookie sees local (LKR) rates. Visitors can switch the display
+    | currency, but the cookie decides which price list applies.
     */
     'home_country' => env('BEDSPACE_HOME_COUNTRY', 'LK'),
     'local_currency' => 'LKR',
     'foreign_currency' => 'USD',
-
-    // Used while the visitor's country cannot be determined (not stored in the cookie)
-    'fallback_currency' => env('BEDSPACE_FALLBACK_CURRENCY', 'LKR'),
 
     'currency_cookie' => 'bedspace_currency',
     'currency_cookie_minutes' => 60 * 24 * 365 * 2,
