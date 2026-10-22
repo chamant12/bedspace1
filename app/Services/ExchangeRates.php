@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CurrencyRate;
 use App\Models\CurrencyType;
+use App\Support\BusinessDate;
 use Carbon\CarbonInterface;
 use RuntimeException;
 
@@ -33,7 +34,7 @@ class ExchangeRates
 
         $rate = CurrencyRate::where('property_owner_id', $ownerId)
             ->where('currency_type_id', $currency->id)
-            ->whereDate('rate_date', '<=', ($on ?? now())->toDateString())
+            ->whereDate('rate_date', '<=', $on ? $on->toDateString() : BusinessDate::today())
             ->orderByDesc('rate_date')
             ->orderByDesc('id')
             ->first();
@@ -64,7 +65,7 @@ class ExchangeRates
     public function missingTodayFor(int $ownerId): \Illuminate\Support\Collection
     {
         $setToday = CurrencyRate::where('property_owner_id', $ownerId)
-            ->whereDate('rate_date', now()->toDateString())
+            ->whereDate('rate_date', BusinessDate::today())
             ->pluck('currency_type_id');
 
         return CurrencyType::active()

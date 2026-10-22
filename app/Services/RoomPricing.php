@@ -10,23 +10,24 @@ use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
 
 /**
- * Prices a stay from the owner's rates calendar.
+ * Prices stays from the rates calendar (see RatesCalendar for the rules).
  *
- * Every offered combination (date x occupancy x meal plan) has a USD price,
- * which is compulsory, and usually an LKR price. A stay is priced in the
- * visitor's currency; if any night has no price in that currency the whole
- * stay is priced in USD instead. Prices are never converted between
- * currencies (exchange rates are only for income reports).
- *
- * A rate of 0 means "not offered".
+ * A room type can be booked at a property for a stay only if the chosen
+ * occupancy + meal plan combination is complete (USD and LKR) on every
+ * night. The guest is charged in their currency; prices are never
+ * converted (exchange rates are only for income reports).
  */
 class RoomPricing
 {
+    public function __construct(private RatesCalendar $calendar)
+    {
+    }
+
     /**
-     * Returns null if the combination is not offered for every night, otherwise:
+     * Returns null if the combination is not complete on every night, otherwise:
      * ['currency' => CurrencyType, 'nights' => [Y-m-d => amount], 'total' => float]
      */
-    public function stayPrice(RoomType $roomType, int $occupancyId, int $mealTypeId,
+    public function stayPrice(Property $property, RoomType $roomType, int $occupancyId, int $mealTypeId,
                               CarbonInterface $checkIn, CarbonInterface $checkOut, CurrencyType $visitorCurrency): ?array
     {
         $dates = $this->nights($checkIn, $checkOut);
@@ -34,39 +35,40 @@ class RoomPricing
             return null;
         }
 
-        $usd = CurrencyType::byCode(CurrencyType::USD);
+        $currencyIds = CurrencyType::whereIn('code', RatesCalendar::CURRENCIES)->pluck('id');
 
-        // [currency_type_id][date] => rate
+        // [date][currency_type_id] => rate
         $rates = [];
-        $this->baseRates()
+        $this->baseRates($property)
             ->where('roomType_id', $roomType->id)
             ->where('occupancy_id', $occupancyId)
             ->where('mealType_id', $mealTypeId)
-            ->whereIn('currency_type_id', array_unique([$visitorCurrency->id, $usd->id]))
+            ->whereIn('currency_type_id', $currencyIds)
             ->whereIn('rate_for', $dates)
             ->get(['rate_for', 'currency_type_id', 'rate'])
             ->each(function ($row) use (&$rates) {
-                $rates[$row->currency_type_id][substr($row->rate_for, 0, 10)] = (float) $row->rate;
+                $rates[substr($row->rate_for, 0, 10)][$row->currency_type_id] = (float) $row->rate;
             });
 
-        foreach ([$visitorCurrency, $usd] as $currency) {
-            $nights = array_intersect_key($rates[$currency->id] ?? [], array_flip($dates));
-            if (count($nights) === count($dates)) {
-                ksort($nights);
-                return [
-                    'currency' => $currency,
-                    'nights' => $nights,
-                    'total' => round(array_sum($nights), 2),
-                ];
+        $nights = [];
+        foreach ($dates as $date) {
+            $complete = count(array_intersect_key($rates[$date] ?? [], $currencyIds->flip()->all())) === $currencyIds->count();
+            if (!$complete || !isset($rates[$date][$visitorCurrency->id])) {
+                return null;
             }
+            $nights[$date] = $rates[$date][$visitorCurrency->id];
         }
 
-        return null;
+        return [
+            'currency' => $visitorCurrency,
+            'nights' => $nights,
+            'total' => round(array_sum($nights), 2),
+        ];
     }
 
     /**
-     * Search visibility: true if at least one active room type has a USD price
-     * for every night, for some occupancy and meal plan.
+     * Search visibility: true if at least one of the owner's active room types
+     * has one combination that is complete (USD + LKR) on every night.
      */
     public function isPriceable(Property $property, CarbonInterface $checkIn, CarbonInterface $checkOut): bool
     {
@@ -75,15 +77,20 @@ class RoomPricing
             return false;
         }
 
-        $nightsPriced = $this->baseRates()
-            ->where('currency_type_id', CurrencyType::byCode(CurrencyType::USD)->id)
-            ->whereIn('roomType_id', $property->roomTypes()->where('is_active', true)->select('id'))
-            ->whereIn('rate_for', $dates)
-            ->selectRaw('roomType_id, occupancy_id, mealType_id, COUNT(DISTINCT rate_for) as nights')
-            ->groupBy('roomType_id', 'occupancy_id', 'mealType_id')
-            ->get();
+        $currencyIds = CurrencyType::whereIn('code', RatesCalendar::CURRENCIES)->pluck('id');
 
-        return $nightsPriced->contains(fn ($row) => (int) $row->nights === count($dates));
+        // Nights per combination on which every currency has a price
+        $completeNights = $this->baseRates($property)
+            ->whereIn('currency_type_id', $currencyIds)
+            ->whereIn('roomType_id', RoomType::where('is_active', true)->select('id'))
+            ->whereIn('rate_for', $dates)
+            ->selectRaw('roomType_id, occupancy_id, mealType_id, rate_for')
+            ->groupBy('roomType_id', 'occupancy_id', 'mealType_id', 'rate_for')
+            ->havingRaw('COUNT(DISTINCT currency_type_id) = ?', [$currencyIds->count()])
+            ->get()
+            ->groupBy(fn ($row) => $row->roomType_id.'|'.$row->occupancy_id.'|'.$row->mealType_id);
+
+        return $completeNights->contains(fn ($nights) => $nights->count() === count($dates));
     }
 
     // Y-m-d of every night from check-in up to (not including) check-out
@@ -98,12 +105,11 @@ class RoomPricing
             ->all();
     }
 
-    private function baseRates()
+    // Prices set for this property (rates are keyed by the property's base rate type)
+    private function baseRates(Property $property)
     {
         return BaseRate::query()
             ->where('rate', '>', 0)
-            ->whereIn('rateType_id', function ($query) {
-                $query->select('id')->from('ratetypes')->where('rateType', 'base_rate');
-            });
+            ->where('rateType_id', $this->calendar->rateTypeId($property));
     }
 }

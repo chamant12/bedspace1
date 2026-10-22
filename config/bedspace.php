@@ -2,6 +2,10 @@
 
 return [
 
+    // Business day boundary: "today" / "past dates" for rates and bookings.
+    // The app itself stays on UTC so stored timestamps are unaffected.
+    'timezone' => env('BEDSPACE_TIMEZONE', 'Asia/Colombo'),
+
     /*
     | Visitor currency: visitors detected outside the home country get a
     | foreign-currency cookie and see foreign (USD) rates by default; everyone

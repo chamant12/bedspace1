@@ -13,6 +13,7 @@ use App\Models\RateType;
 use App\Models\CurrencyRate;
 use App\Models\CurrencyType;
 use App\Services\ExchangeRates;
+use App\Support\BusinessDate;
 use App\Mail\PropertyRegisteredMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -64,7 +65,7 @@ class PropertyController extends Controller
                 $currencyRate = new CurrencyRate();
                 $currencyRate->currency_type_id = $currencyId;
                 $currencyRate->property_owner_id = auth()->user()->id;
-                $currencyRate->rate_date = now()->toDateString();
+                $currencyRate->rate_date = BusinessDate::today();
                 $currencyRate->rate = $rate;
                 $currencyRate->save();
             }

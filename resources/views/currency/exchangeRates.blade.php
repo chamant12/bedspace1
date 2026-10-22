@@ -17,7 +17,7 @@
                 <small class="text-muted">
                     @if($latest[$currency->id])
                         Last updated {{ $latest[$currency->id]->rate_date->format('Y-m-d') }}
-                        @unless($latest[$currency->id]->rate_date->isToday())
+                        @unless($latest[$currency->id]->rate_date->toDateString() === \App\Support\BusinessDate::today())
                             <span class="text-danger">(not updated today)</span>
                         @endunless
                     @else

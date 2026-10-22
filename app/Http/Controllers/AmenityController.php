@@ -47,7 +47,12 @@ class AmenityController extends Controller
             })
             ->get();
 
-            $roomTypes = RoomType::where(['property_id'=>$property_id,'is_active'=>true])->get();
+            // Room types are owner-level: list all of the property owner's room types
+            $ownerId = Property::findOrFail($property_id)->property_owner_id;
+            $roomTypes = RoomType::where('is_active', true)
+                ->whereIn('property_id', Property::where('property_owner_id', $ownerId)->select('id'))
+                ->orderBy('roomType')
+                ->get();
         } else {
             $amenities = DB::table('amenities')
             ->join('roomType_amenity_xrefs', 'amenities.id', '=', 'roomType_amenity_xrefs.amenity_id')

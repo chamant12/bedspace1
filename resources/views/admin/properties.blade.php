@@ -35,7 +35,8 @@
                                     <span class="badge badge-secondary">Inactive</span>
                                 @endif
                             </td>
-                            <td>
+                            <td class="d-flex gap-2">
+                                <a href="/rates/{{ $property->id }}/view" class="btn btn-sm btn-outline-primary">View rates</a>
                                 <form method="POST" action="/admin/properties/{{ $property->id }}/toggle-active"
                                       onsubmit="return confirm('{{ $property->is_active ? 'Deactivate' : 'Activate' }} this property?');">
                                     @csrf

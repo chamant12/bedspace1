@@ -42,6 +42,12 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::post('/amenities/{amenity_id}/toggle-active', [Admin\AmenityController::class, 'toggleActive']);
 });
 
+// Pages shared by several user types; access is decided by policies (admin passes all)
+Route::middleware('auth')->group(function () {
+    Route::get('/rates/{property_id}/view', [RateController::class, 'viewRates']);
+    Route::get('/api/view-base-rates/{property_id}/{roomType_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRatesReadonly']);
+});
+
 // Property owner area
 Route::middleware(['auth', 'user.type:owner'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -69,8 +75,10 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
         Route::get('/get-districts-by-province/{province_id}', [PropertyController::class, 'getDistrictsByProvince']);
         Route::get('/get-cities-by-district/{district_id}', [PropertyController::class, 'getCitiesByDistrict']);
         Route::get('/get-properties-by-city/{city_id}', [RoomTypeController::class, 'getPropertiesByCity']);
-        Route::get('/get-base-rates/{roomType_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRates']);
+        Route::get('/get-base-rates/{property_id}/{roomType_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRates']);
         Route::post('/save-base-rates', [RateController::class, 'saveBaseRates']);
+        Route::post('/reset-base-rates', [RateController::class, 'resetBaseRates']);
+        Route::post('/copy-base-rates', [RateController::class, 'copyBaseRates']);
         Route::post('/remove-amenity/{amenity_id}/{type_id}/{amenityType}', [AmenityController::class, 'removeAmenity']);
         Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
         Route::post('/upload-photos', [PhotoController::class, 'uploadPhotos']);

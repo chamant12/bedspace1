@@ -28,7 +28,7 @@
                                 <a href="/view-property/{{$property->id}}" data-toggle="tooltip" title="View Property Details" class="btn btn-primary">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <a href="/add-base-rate/{{$property->id}}" data-toggle="tooltip" title="Add base rate" style="text-decoration:none;" class="btn btn-success">
+                                <a href="/add-base-rate/{{$property->id}}" data-toggle="tooltip" title="Rates calendar" style="text-decoration:none;" class="btn btn-success">
                                 <i class="ti-tag"></i>
                                 </a>
                                 <form method="POST" action="/property/{{$property->id}}/toggle-active" style="display:inline;"
