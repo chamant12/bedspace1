@@ -65,6 +65,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/rates/{property_id}/view', [RateController::class, 'viewRates']);
     Route::get('/api/view-base-rates/{property_id}/{roomType_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRatesReadonly']);
     Route::get('/inventory/{property_id}/view', [InventoryController::class, 'view']);
+
+    // Reservations: owners see their properties', admins all
+    Route::middleware('user.type:admin,owner')->group(function () {
+        Route::get('/reservations', [ReservationController::class, 'index']);
+        Route::get('/reservations/new', [ReservationController::class, 'create'])->middleware('user.type:owner');
+        Route::post('/reservations', [ReservationController::class, 'store'])->middleware('user.type:owner');
+        Route::get('/reservations/{reference}', [ReservationController::class, 'show']);
+        Route::post('/reservations/{reference}/status', [ReservationController::class, 'changeStatus']);
+        Route::post('/reservations/{reference}/check-in', [ReservationController::class, 'checkIn']);
+    });
     Route::get('/api/view-inventory/{property_id}/{roomType_id}/{from_date}/{to_date}', [InventoryController::class, 'gridReadonly']);
 });
 

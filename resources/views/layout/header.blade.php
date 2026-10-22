@@ -215,6 +215,14 @@
                 <span class="menu-title">Dashboard</span>
               </a>
             </li>
+            @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
+            <li class="nav-item">
+              <a class="nav-link" href="/reservations">
+                <i class="mdi mdi-calendar-check menu-icon"></i>
+                <span class="menu-title">Reservations</span>
+              </a>
+            </li>
+            @endif
             @if(auth()->user()->isOwner())
             <li class="nav-item nav-category">Properties</li>
             <li class="nav-item">

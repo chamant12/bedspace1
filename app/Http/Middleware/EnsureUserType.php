@@ -20,11 +20,13 @@ class EnsureUserType
         'customer' => User::TYPE_CUSTOMER,
     ];
 
-    public function handle(Request $request, Closure $next, string $type): Response
+    // ->middleware('user.type:admin,owner') allows either type
+    public function handle(Request $request, Closure $next, string ...$types): Response
     {
         $user = $request->user();
+        $allowed = array_map(fn ($type) => self::TYPES[$type], $types);
 
-        if (!$user || (int) $user->user_type_id !== self::TYPES[$type]) {
+        if (!$user || !in_array((int) $user->user_type_id, $allowed, true)) {
             if ($request->expectsJson()) {
                 abort(403);
             }
