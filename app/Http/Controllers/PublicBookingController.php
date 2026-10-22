@@ -13,6 +13,7 @@ use App\Models\Reservation;
 use App\Models\RoomType;
 use App\Models\User;
 use App\Services\BookingQuotes;
+use App\Services\Payments;
 use App\Services\Reservations;
 use App\Support\BusinessDate;
 use Carbon\CarbonImmutable;
@@ -30,8 +31,14 @@ use Illuminate\Validation\ValidationException;
  */
 class PublicBookingController extends Controller
 {
-    public function __construct(private BookingQuotes $quotes, private Reservations $reservations)
+    public function __construct(private BookingQuotes $quotes, private Reservations $reservations, private Payments $payments)
     {
+    }
+
+    // Retry / continue an online payment for a pending booking (signed link from the booking page)
+    public function pay(string $reference){
+        $reservation = Reservation::where('reference', $reference)->firstOrFail();
+        return redirect()->away($this->payments->startOnline($reservation));
     }
 
     public function search(Request $request){
@@ -167,6 +174,11 @@ class PublicBookingController extends Controller
             $request->session()->regenerate();
         }
 
+        // Online: rooms are held while the guest pays; the booking is confirmed by the payment
+        if ($reservation->payment_method === PaymentMethod::Online) {
+            return redirect()->away($this->payments->startOnline($reservation));
+        }
+
         return redirect($this->bookingUrl($reservation))->with('success', 'Your booking is confirmed. A confirmation has been emailed to '.$reservation->guest_email.'.');
     }
 
@@ -178,7 +190,12 @@ class PublicBookingController extends Controller
         $ownAccount = Auth::check() && $reservation->user_id && (int) $reservation->user_id === (int) Auth::id();
         abort_unless($request->hasValidSignature() || $ownAccount, 403);
 
-        return view('public.booking', compact('reservation'));
+        // Pending online booking that can still be paid
+        $payUrl = ($reservation->status === \App\Enums\ReservationStatus::Pending && $reservation->expires_at?->isFuture())
+            ? URL::temporarySignedRoute('booking.pay', $reservation->expires_at, ['reference' => $reservation->reference])
+            : null;
+
+        return view('public.booking', compact('reservation', 'payUrl'));
     }
 
     // Guest account: their bookings

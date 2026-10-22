@@ -13,6 +13,8 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\RoomNumberController;
 use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\DummyGatewayController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -30,6 +32,11 @@ Route::middleware('visitor.currency')->group(function () {
     Route::get('/booking/find', [PublicBookingController::class, 'findBookingForm']);
     Route::post('/booking/find', [PublicBookingController::class, 'findBooking'])->middleware('throttle:10,1');
     Route::get('/booking/{reference}', [PublicBookingController::class, 'booking'])->name('booking.show');
+    Route::post('/booking/{reference}/pay', [PublicBookingController::class, 'pay'])->name('booking.pay')->middleware('signed');
+
+    // Dummy payment gateway (test page until Sampath Bank IPG)
+    Route::get('/payments/dummy/{payment}', [DummyGatewayController::class, 'show'])->name('payments.dummy')->middleware('signed');
+    Route::post('/payments/dummy/{payment}/result', [DummyGatewayController::class, 'result'])->name('payments.dummy.result')->middleware('signed');
 
     // Optional guest accounts
     Route::get('/account/login', [UserLoginController::class, 'customerLogin']);
@@ -52,6 +59,8 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::get('/dashboard', [Admin\DashboardController::class, 'index']);
     Route::get('/properties', [Admin\PropertyController::class, 'index']);
     Route::post('/properties/{property_id}/toggle-active', [Admin\PropertyController::class, 'toggleActive']);
+    Route::post('/properties/{property_id}/commission', [Admin\PropertyController::class, 'updateCommission']);
+    Route::get('/reports/income', [ReportController::class, 'adminIncome']);
     Route::get('/owners', [Admin\OwnerController::class, 'index']);
     Route::post('/owners/{user_id}/toggle-status', [Admin\OwnerController::class, 'toggleStatus']);
     Route::get('/amenities', [Admin\AmenityController::class, 'index']);
@@ -74,6 +83,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/reservations/{reference}', [ReservationController::class, 'show']);
         Route::post('/reservations/{reference}/status', [ReservationController::class, 'changeStatus']);
         Route::post('/reservations/{reference}/check-in', [ReservationController::class, 'checkIn']);
+        Route::post('/reservations/{reference}/payments', [ReservationController::class, 'recordPayment']);
     });
     Route::get('/api/view-inventory/{property_id}/{roomType_id}/{from_date}/{to_date}', [InventoryController::class, 'gridReadonly']);
 });
@@ -94,6 +104,7 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
     Route::post('/update-room-type', [RoomTypeController::class, 'updateRoomType']);
     Route::get('/add-base-rate/{property_id}', [RateController::class, 'addBaseRate']);
     Route::get('/inventory/{property_id}', [InventoryController::class, 'index']);
+    Route::get('/reports/income', [ReportController::class, 'ownerIncome']);
     Route::get('/rooms/{property_id}', [RoomNumberController::class, 'index']);
     Route::post('/rooms', [RoomNumberController::class, 'store']);
     Route::put('/rooms/{room_id}', [RoomNumberController::class, 'update']);

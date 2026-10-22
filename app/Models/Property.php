@@ -21,7 +21,14 @@ class Property extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'commission_rate' => 'decimal:2',
     ];
+
+    // Platform commission % for new bookings: the admin's rate for this property, or the platform default
+    public function effectiveCommissionRate(): float
+    {
+        return (float) ($this->commission_rate ?? config('bedspace.default_commission_rate'));
+    }
 
     public function contacts(): HasMany
     {

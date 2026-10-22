@@ -101,6 +101,7 @@ class Reservations
             $reservation->total = $total;
             $reservation->exchange_rate = $snapshot['exchange_rate'];
             $reservation->total_lkr = $snapshot['amount_lkr'];
+            $reservation->commission_rate = $property->effectiveCommissionRate(); // fixed for this booking
             $reservation->expires_at = $status === ReservationStatus::Pending ? now()->addMinutes(self::PENDING_MINUTES) : null;
             $reservation->created_by_user_id = $createdBy?->id;
             $reservation->save();
@@ -133,8 +134,11 @@ class Reservations
             return $reservation;
         });
 
-        // Only once the booking is really saved (also when called inside an outer transaction)
-        DB::afterCommit(fn () => $this->sendInvoice($reservation));
+        // Only once the booking is really saved (also when called inside an outer transaction).
+        // Online bookings get their invoice when the payment completes (see Payments).
+        if ($reservation->status === ReservationStatus::Confirmed) {
+            DB::afterCommit(fn () => $this->sendInvoice($reservation));
+        }
 
         return $reservation;
     }

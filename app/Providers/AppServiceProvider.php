@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Payments\DummyGateway;
+use App\Payments\PaymentGateway;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -14,7 +16,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(PaymentGateway::class, fn () => match (config('bedspace.payment_gateway')) {
+            'dummy' => new DummyGateway(),
+            default => throw new \RuntimeException('Unknown payment gateway: '.config('bedspace.payment_gateway')),
+        });
     }
 
     /**

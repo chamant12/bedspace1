@@ -222,6 +222,12 @@
                 <span class="menu-title">Reservations</span>
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ auth()->user()->isAdmin() ? '/admin/reports/income' : '/reports/income' }}">
+                <i class="mdi mdi-chart-line menu-icon"></i>
+                <span class="menu-title">Income report</span>
+              </a>
+            </li>
             @endif
             @if(auth()->user()->isOwner())
             <li class="nav-item nav-category">Properties</li>

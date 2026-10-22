@@ -16,6 +16,14 @@ return [
     'local_currency' => 'LKR',
     'foreign_currency' => 'USD',
 
+    // Platform commission (%) on each payment, unless the admin set a rate for the property
+    'default_commission_rate' => (float) env('BEDSPACE_COMMISSION_RATE', 10),
+
+    // Online payment gateway: "dummy" (test page, no real money) until Sampath Bank IPG is integrated.
+    // The dummy gateway refuses to run in production unless explicitly allowed.
+    'payment_gateway' => env('PAYMENT_GATEWAY', 'dummy'),
+    'allow_dummy_gateway_in_production' => (bool) env('ALLOW_DUMMY_GATEWAY_IN_PRODUCTION', false),
+
     'currency_cookie' => 'bedspace_currency',
     'currency_cookie_minutes' => 60 * 24 * 365 * 2,
 

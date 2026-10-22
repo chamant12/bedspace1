@@ -58,6 +58,67 @@
         </table>
     </div></div>
 
+    <div class="card grid-margin"><div class="card-body">
+        <h4 class="card-title">Payments
+            <span class="badge badge-secondary">{{ ucfirst(str_replace('_', ' ', $r->payment_status)) }}</span>
+        </h4>
+        <p class="mb-2">Paid {{ $r->money($r->amount_paid) }} of {{ $r->money($r->total) }} &middot;
+            <strong>Outstanding {{ $r->money($r->outstanding()) }}</strong> &middot;
+            Platform commission {{ number_format($r->commission_rate, 2) }}%</p>
+
+        @if($r->payments->isNotEmpty())
+        <table class="table table-sm">
+            <thead><tr><th>Date</th><th>Method</th><th>Status</th><th class="text-end">Amount</th><th class="text-end">LKR</th><th class="text-end">Commission (LKR)</th><th>Reference</th><th>By</th></tr></thead>
+            <tbody>
+            @foreach($r->payments as $payment)
+                <tr>
+                    <td>{{ ($payment->paid_at ?? $payment->created_at)->timezone(config('bedspace.timezone'))->format('Y-m-d H:i') }}</td>
+                    <td>{{ $payment->method->label() }}</td>
+                    <td>{{ ucfirst($payment->status) }}</td>
+                    <td class="text-end">{{ $r->money($payment->amount) }}</td>
+                    <td class="text-end">{{ $payment->amount_lkr !== null ? number_format($payment->amount_lkr, 2) : '–' }}</td>
+                    <td class="text-end">{{ $payment->commission_lkr !== null ? number_format($payment->commission_lkr, 2) : '–' }}</td>
+                    <td>{{ $payment->gateway_reference ?? $payment->reference }}@if($payment->notes)<br/><small class="text-muted">{{ $payment->notes }}</small>@endif</td>
+                    <td>{{ $payment->recordedBy?->name ?? ($payment->gateway ? 'Gateway' : '') }}</td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+        @endif
+
+        @if($canManage && $r->outstanding() > 0 && !in_array($r->status, [\App\Enums\ReservationStatus::Cancelled, \App\Enums\ReservationStatus::Expired, \App\Enums\ReservationStatus::Pending]))
+            <form method="POST" action="/reservations/{{ $r->reference }}/payments" class="row g-2 align-items-end mt-2"
+                  onsubmit="return confirm('Record this payment received at the property?');">
+                @csrf
+                <input type="hidden" name="idempotency_key" value="{{ $idempotencyKey }}">
+                <div class="col-md-2">
+                    <label>Amount ({{ $r->currency->code }})</label>
+                    <input type="number" name="amount" step="0.01" min="0.01" max="{{ $r->outstanding() }}" class="form-control" value="{{ $r->outstanding() }}" required>
+                </div>
+                <div class="col-md-2">
+                    <label>Method</label>
+                    <select name="method" class="form-control" required>
+                        @foreach($offlineChannels as $channel)
+                            <option value="{{ $channel->value }}">{{ $channel->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Receipt / reference</label>
+                    <input type="text" name="reference" class="form-control" maxlength="100">
+                </div>
+                <div class="col-md-3">
+                    <label>Note</label>
+                    <input type="text" name="notes" class="form-control" maxlength="500">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-success">Record payment</button>
+                </div>
+            </form>
+            <small class="text-muted">The full outstanding amount marks the booking as paid.</small>
+        @endif
+    </div></div>
+
     @if($canManage)
     <div class="card grid-margin"><div class="card-body">
         <h4 class="card-title">Actions</h4>

@@ -3,7 +3,20 @@
 @php($r = $reservation)
 <div class="container bs-page">
     <h2 class="mb-1">Booking {{ $r->reference }}</h2>
-    <p><span class="badge badge-primary">{{ $r->status->label() }}</span></p>
+    <p>
+        <span class="badge badge-primary">{{ $r->status->label() }}</span>
+        <span class="badge badge-secondary">{{ ucfirst(str_replace('_', ' ', $r->payment_status)) }}</span>
+    </p>
+    @if($payUrl)
+        <div class="alert alert-warning">
+            Your rooms are held until {{ $r->expires_at->timezone(config('bedspace.timezone'))->format('H:i') }} (Sri Lanka time).
+            Complete the payment to confirm the booking.
+            <form method="POST" action="{{ $payUrl }}" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-primary btn-sm ml-2">Pay now</button>
+            </form>
+        </div>
+    @endif
 
     <div class="row">
         <div class="col-md-7">
@@ -36,8 +49,11 @@
                     @endforeach
                     <tr><th>Total</th><th class="text-end">{{ $r->money($r->total) }}</th></tr>
                 </table>
-                @if($r->payment_method === \App\Enums\PaymentMethod::PayAtHotel)
-                    <p class="bs-muted small mb-0">Payable at the property.</p>
+                @if((float) $r->amount_paid > 0)
+                    <p class="mb-1">Paid: {{ $r->money($r->amount_paid) }}</p>
+                @endif
+                @if($r->payment_method === \App\Enums\PaymentMethod::PayAtHotel && $r->outstanding() > 0)
+                    <p class="bs-muted small mb-0">{{ $r->money($r->outstanding()) }} payable at the property.</p>
                 @endif
             </div>
         </div>

@@ -26,6 +26,8 @@ class Reservation extends Model
         'total' => 'decimal:2',
         'exchange_rate' => 'decimal:4',
         'total_lkr' => 'decimal:2',
+        'commission_rate' => 'decimal:2',
+        'amount_paid' => 'decimal:2',
         'expires_at' => 'datetime',
         'cancelled_at' => 'datetime',
     ];
@@ -58,6 +60,16 @@ class Reservation extends Model
     public function statusHistory(): HasMany
     {
         return $this->hasMany(ReservationStatusHistory::class)->orderBy('id');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->orderBy('id');
+    }
+
+    public function outstanding(): float
+    {
+        return max(0, round((float) $this->total - (float) $this->amount_paid, 2));
     }
 
     public function money(float|string $amount): string

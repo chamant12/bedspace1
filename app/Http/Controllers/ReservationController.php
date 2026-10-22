@@ -14,6 +14,9 @@ use App\Models\RoomAssignment;
 use App\Models\RoomType;
 use App\Services\BookingQuotes;
 use App\Services\Reservations;
+use App\Services\Payments;
+use App\Enums\PaymentChannel;
+use Illuminate\Support\Str;
 use App\Support\BusinessDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -24,7 +27,7 @@ use Illuminate\Validation\Rule;
  */
 class ReservationController extends Controller
 {
-    public function __construct(private Reservations $reservations, private BookingQuotes $quotes)
+    public function __construct(private Reservations $reservations, private BookingQuotes $quotes, private Payments $payments)
     {
     }
 
@@ -58,7 +61,7 @@ class ReservationController extends Controller
 
     public function show($reference){
         $reservation = Reservation::with('property', 'currency', 'guestProfile', 'rooms.roomType', 'rooms.occupancy', 'rooms.mealType',
-            'rooms.discounts', 'rooms.activeAssignments.room', 'statusHistory.user')
+            'rooms.discounts', 'rooms.activeAssignments.room', 'statusHistory.user', 'payments.recordedBy')
             ->where('reference', $reference)->firstOrFail();
         Gate::authorize('view', $reservation);
 
@@ -85,6 +88,8 @@ class ReservationController extends Controller
             'previousStays' => $previousStays,
             'canManage' => Gate::allows('manage', $reservation),
             'today' => BusinessDate::today(),
+            'offlineChannels' => PaymentChannel::offline(),
+            'idempotencyKey' => (string) Str::uuid(), // one per form render: a double submit records once
         ]);
     }
 
@@ -104,6 +109,25 @@ class ReservationController extends Controller
         $this->reservations->transition($reservation, $to, $request->user(), $request->note);
 
         return redirect()->back()->with('success', "Booking {$reservation->reference} is now {$to->label()}.");
+    }
+
+    // Hotel staff record a payment taken at the property (cash, card, transfer)
+    public function recordPayment(Request $request, $reference){
+        $reservation = Reservation::where('reference', $reference)->firstOrFail();
+        Gate::authorize('manage', $reservation);
+
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'method' => ['required', Rule::in(array_map(fn ($c) => $c->value, PaymentChannel::offline()))],
+            'reference' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:500'],
+            'idempotency_key' => ['required', 'uuid'],
+        ]);
+
+        $this->payments->recordOffline($reservation, (float) $data['amount'], PaymentChannel::from($data['method']),
+            $data['reference'] ?? null, $data['notes'] ?? null, $data['idempotency_key'], $request->user());
+
+        return redirect()->back()->with('success', 'Payment recorded.');
     }
 
     public function checkIn(Request $request, $reference){
