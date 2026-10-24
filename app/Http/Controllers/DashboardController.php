@@ -7,6 +7,7 @@ use App\Models\RoomType;
 use App\Services\ExchangeRates;
 use App\Services\CommissionDues;
 use App\Models\Reservation;
+use App\Services\HotelPayouts;
 use App\Enums\PaymentChannel;
 use App\Enums\PaymentMethod;
 use App\Enums\ReservationStatus;
@@ -15,7 +16,7 @@ use App\Support\BusinessDate;
 class DashboardController extends Controller
 {
     // Owner dashboard: only the logged-in owner's properties
-    public function index(ExchangeRates $exchangeRates, CommissionDues $commissionDues)
+    public function index(ExchangeRates $exchangeRates, CommissionDues $commissionDues, HotelPayouts $hotelPayouts)
     {
         $missingRates = $exchangeRates->missingTodayFor(auth()->user()->id);
 
@@ -50,9 +51,10 @@ class DashboardController extends Controller
             ->get();
 
         $commissionDue = round($commissionDues->byProperty(auth()->id())->sum('due_lkr'), 2);
+        $payoutDue = round($hotelPayouts->byProperty(auth()->id())->sum('payable_lkr'), 2);
         $offlineChannels = PaymentChannel::offline();
         $today = BusinessDate::today();
 
-        return view('dashboard', compact('properties', 'stats', 'missingRates', 'roomCounts', 'offlineToSettle', 'commissionDue', 'offlineChannels', 'today'));
+        return view('dashboard', compact('properties', 'stats', 'missingRates', 'roomCounts', 'offlineToSettle', 'commissionDue', 'payoutDue', 'offlineChannels', 'today'));
     }
 }

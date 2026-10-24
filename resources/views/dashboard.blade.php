@@ -24,6 +24,11 @@
     @endforeach
 </div>
 
+@if($payoutDue > 0)
+<div class="alert alert-success">
+    Bedspace owes you <strong>LKR {{ number_format($payoutDue, 2) }}</strong> for online payments (after commission), to be paid out.
+</div>
+@endif
 @if($commissionDue > 0)
 <div class="alert alert-info">
     Commission due to Bedspace on payments collected at your properties: <strong>LKR {{ number_format($commissionDue, 2) }}</strong>.

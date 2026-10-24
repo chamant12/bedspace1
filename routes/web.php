@@ -64,6 +64,9 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::get('/commission-dues', [Admin\CommissionDueController::class, 'index']);
     Route::get('/commission-dues/{property_id}', [Admin\CommissionDueController::class, 'show']);
     Route::post('/commission-dues/{property_id}/settle', [Admin\CommissionDueController::class, 'settle']);
+    Route::get('/payouts', [Admin\HotelPayoutController::class, 'index']);
+    Route::get('/payouts/{property_id}', [Admin\HotelPayoutController::class, 'show']);
+    Route::post('/payouts/{property_id}/pay', [Admin\HotelPayoutController::class, 'pay']);
     Route::get('/owners', [Admin\OwnerController::class, 'index']);
     Route::post('/owners/{user_id}/toggle-status', [Admin\OwnerController::class, 'toggleStatus']);
     Route::get('/amenities', [Admin\AmenityController::class, 'index']);
