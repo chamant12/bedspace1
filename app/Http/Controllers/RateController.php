@@ -120,7 +120,7 @@ class RateController extends Controller
         // Owner's exchange rates (LKR per 1 unit) for every active foreign currency
         public function editExchangeRates(){
             $currencies = CurrencyType::active()->where('is_base', false)->orderBy('id')->get();
-            $ownerId = auth()->user()->id;
+            $ownerId = auth()->user()->ownerId();
 
             $latest = $currencies->mapWithKeys(fn ($currency) => [
                 $currency->id => CurrencyRate::where(['property_owner_id'=>$ownerId,'currency_type_id'=>$currency->id])
@@ -145,7 +145,7 @@ class RateController extends Controller
                 }
                 $currencyRate = new CurrencyRate();
                 $currencyRate->currency_type_id = $currencyId;
-                $currencyRate->property_owner_id = auth()->user()->id;
+                $currencyRate->property_owner_id = auth()->user()->ownerId();
                 $currencyRate->rate_date = BusinessDate::today();
                 $currencyRate->rate = $rate;
                 $currencyRate->save();

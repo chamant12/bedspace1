@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Mail;
 class PropertyController extends Controller
 {
     public function listMyProperties(){
-        $properties = Property::with('city','city.district')->where(['property_owner_id'=>auth()->user()->id])->get();
+        $properties = Property::with('city','city.district')->whereIn('id', auth()->user()->accessiblePropertyIds())->orderBy('property_name')->get();
         return view('property.listProperties',compact('properties'));
     }
 
@@ -32,7 +32,7 @@ class PropertyController extends Controller
         $foreignCurrencies = CurrencyType::active()->where('is_base', false)->orderBy('id')->get();
         // Pre-fill with the owner's current rate (or the latest on the platform)
         $currentRates = $foreignCurrencies->mapWithKeys(fn ($currency) => [
-            $currency->id => $exchangeRates->latestRate(auth()->user()->id, $currency),
+            $currency->id => $exchangeRates->latestRate(auth()->user()->ownerId(), $currency),
         ]);
         return view('property.addProperty',compact('provinces','foreignCurrencies','currentRates'));
     }
@@ -83,7 +83,7 @@ class PropertyController extends Controller
 
     public function viewProperty($property_id){
         $property = Property::with('city','city.district','primaryContact')->findOrFail($property_id);
-        Gate::authorize('view', $property);
+        Gate::authorize('update', $property); // edit form
         $provinces = Province::all();
         $districts = District::all();
         $cities = City::all();

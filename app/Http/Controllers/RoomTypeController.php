@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Gate;
 class RoomTypeController extends Controller
 {
     public function addRoomType(){
-        $properties = Property::where('property_owner_id',auth()->user()->id)->get();
+        $properties = Property::whereIn('id', auth()->user()->accessiblePropertyIds())->get();
         $city_ids = [];
         foreach($properties as $property){
             $city_ids[] = $property->city_id;
@@ -24,7 +24,7 @@ class RoomTypeController extends Controller
     }
 
     public function getPropertiesByCity($city_id){
-        $properties = Property::where(['city_id'=>$city_id,'property_owner_id'=>auth()->user()->id])->get();
+        $properties = Property::where('city_id', $city_id)->whereIn('id', auth()->user()->accessiblePropertyIds())->get();
         return response()->json($properties, 200);
     }
 
@@ -69,7 +69,7 @@ class RoomTypeController extends Controller
         $roomType = RoomType::findOrFail($roomType_id);
         Gate::authorize('view', $roomType);
         // Room counts of this room type at each of the owner's properties
-        $properties = Property::where(['property_owner_id'=>auth()->user()->id])->orderBy('property_name')->get();
+        $properties = Property::whereIn('id', auth()->user()->accessiblePropertyIds())->orderBy('property_name')->get();
         $roomCounts = PropertyRoomType::where('roomType_id', $roomType->id)->pluck('total_rooms', 'property_id');
         return view('room.editRoomType', compact('roomType','properties','roomCounts'));
     }

@@ -5,7 +5,7 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start">
                 <h4 class="card-title">Reservations</h4>
-                @if(auth()->user()->isOwner())
+                @if(auth()->user()->isPartner())
                     <a href="/reservations/new" class="btn btn-primary btn-sm text-white">New booking</a>
                 @endif
             </div>

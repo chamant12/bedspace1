@@ -109,7 +109,7 @@
             <div class="card-body">
                 <div class="d-sm-flex justify-content-between align-items-start">
                     <h4 class="card-title card-title-dash">My Properties</h4>
-                    <a href="/add-property" class="btn btn-primary btn-sm text-white">Add Property</a>
+                    @if(auth()->user()->isOwner())<a href="/add-property" class="btn btn-primary btn-sm text-white">Add Property</a>@endif
                 </div>
                 @if($properties->isEmpty())
                     <p class="mt-3">You have not added any properties yet.</p>

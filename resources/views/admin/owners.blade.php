@@ -3,7 +3,11 @@
 <div class="col-lg-12 grid-margin stretch-card">
     <div class="card">
         <div class="card-body">
-            <h4 class="card-title">Property Owners</h4>
+            <div class="d-flex justify-content-between align-items-start">
+                <h4 class="card-title">Property Owners</h4>
+                <a href="/admin/owners/new" class="btn btn-primary btn-sm text-white">New owner</a>
+            </div>
+            <p class="card-description">Owners who signed up themselves must be approved before they can add properties, staff, room types or rates.</p>
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
@@ -26,13 +30,22 @@
                             <td>{{ $owner->properties_count }}</td>
                             <td>{{ $owner->created_at?->format('Y-m-d') }}</td>
                             <td>
-                                @if($owner->status)
+                                @if(!$owner->approved_at)
+                                    <span class="badge badge-warning">Awaiting approval</span>
+                                @elseif($owner->status)
                                     <span class="badge badge-success">Active</span>
                                 @else
                                     <span class="badge badge-secondary">Inactive</span>
                                 @endif
                             </td>
-                            <td>
+                            <td class="d-flex gap-2">
+                                @if(!$owner->approved_at)
+                                    <form method="POST" action="/admin/owners/{{ $owner->id }}/approve"
+                                          onsubmit="return confirm('Approve {{ $owner->name }}? They will be able to add properties, staff and rates.');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                    </form>
+                                @endif
                                 <form method="POST" action="/admin/owners/{{ $owner->id }}/toggle-status"
                                       onsubmit="return confirm('{{ $owner->status ? 'Deactivate' : 'Activate' }} this owner? Inactive owners cannot sign in.');">
                                     @csrf

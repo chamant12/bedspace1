@@ -1,5 +1,10 @@
 @extends('layout.app')
 @section('content')
+@if($stats['pendingOwners'] > 0)
+<div class="alert alert-warning">
+    {{ $stats['pendingOwners'] }} property owner(s) awaiting approval. <a href="/admin/owners">Review</a>
+</div>
+@endif
 <div class="row">
     @foreach([
         'Property Owners' => $stats['owners'],

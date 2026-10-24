@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Property;
 use App\Models\PropertyRoomType;
 use App\Models\RoomType;
 use App\Services\ExchangeRates;
@@ -15,13 +16,20 @@ use App\Support\BusinessDate;
 
 class DashboardController extends Controller
 {
-    // Owner dashboard: only the logged-in owner's properties
+    // Owner / staff dashboard: only the properties the user may access
     public function index(ExchangeRates $exchangeRates, CommissionDues $commissionDues, HotelPayouts $hotelPayouts)
     {
-        $missingRates = $exchangeRates->missingTodayFor(auth()->user()->id);
+        $user = auth()->user();
 
-        $properties = auth()->user()->properties()
-            ->with('city')
+        // Owners awaiting approval only see a notice
+        if (!$user->isApproved()) {
+            return view('dashboardPending');
+        }
+
+        $missingRates = $user->canEditProperties() ? $exchangeRates->missingTodayFor($user->ownerId()) : collect();
+
+        $properties = Property::with('city')
+            ->whereIn('id', $user->accessiblePropertyIds())
             ->orderBy('property_name')
             ->get();
 
@@ -36,7 +44,7 @@ class DashboardController extends Controller
             'properties' => $properties->count(),
             'activeProperties' => $properties->where('is_active', true)->count(),
             // Room types are owner-level
-            'roomTypes' => RoomType::whereIn('property_id', $propertyIds)->where('is_active', true)->count(),
+            'roomTypes' => RoomType::whereIn('property_id', Property::where('property_owner_id', $user->ownerId())->select('id'))->where('is_active', true)->count(),
             'rooms' => (int) $roomCounts->sum(),
         ];
 
@@ -50,8 +58,9 @@ class DashboardController extends Controller
             ->take(50)
             ->get();
 
-        $commissionDue = round($commissionDues->byProperty(auth()->id())->sum('due_lkr'), 2);
-        $payoutDue = round($hotelPayouts->byProperty(auth()->id())->sum('payable_lkr'), 2);
+        // Money owed between the owner and the platform: owners only
+        $commissionDue = $user->isOwner() ? round($commissionDues->byProperty($user->id)->sum('due_lkr'), 2) : 0;
+        $payoutDue = $user->isOwner() ? round($hotelPayouts->byProperty($user->id)->sum('payable_lkr'), 2) : 0;
         $offlineChannels = PaymentChannel::offline();
         $today = BusinessDate::today();
 

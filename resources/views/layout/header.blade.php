@@ -215,21 +215,24 @@
                 <span class="menu-title">Dashboard</span>
               </a>
             </li>
-            @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
+            @php($navUser = auth()->user())
+            @if($navUser->isAdmin() || ($navUser->isPartner() && $navUser->isApproved()))
             <li class="nav-item">
               <a class="nav-link" href="/reservations">
                 <i class="mdi mdi-calendar-check menu-icon"></i>
                 <span class="menu-title">Reservations</span>
               </a>
             </li>
+            @endif
+            @if($navUser->isAdmin() || ($navUser->isOwner() && $navUser->isApproved()))
             <li class="nav-item">
-              <a class="nav-link" href="{{ auth()->user()->isAdmin() ? '/admin/reports/income' : '/reports/income' }}">
+              <a class="nav-link" href="{{ $navUser->isAdmin() ? '/admin/reports/income' : '/reports/income' }}">
                 <i class="mdi mdi-chart-line menu-icon"></i>
                 <span class="menu-title">Income report</span>
               </a>
             </li>
             @endif
-            @if(auth()->user()->isOwner())
+            @if($navUser->isPartner() && $navUser->isApproved())
             <li class="nav-item nav-category">Properties</li>
             <li class="nav-item">
               <a class="nav-link" data-bs-toggle="collapse" href="#menu-properties" aria-expanded="false" aria-controls="menu-properties">
@@ -240,11 +243,18 @@
               <div class="collapse" id="menu-properties">
                 <ul class="nav flex-column sub-menu">
                   <li class="nav-item"> <a class="nav-link" href="/my-properties">My Properties</a></li>
+                  @if($navUser->isOwner())
                   <li class="nav-item"> <a class="nav-link" href="/add-property">Add Property</a></li>
+                  @endif
+                  @if($navUser->canEditProperties())
                   <li class="nav-item"> <a class="nav-link" href="/add-room-type">Add Room Type</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/exchange-rates">Exchange Rates</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/amenities">Amenities</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/photos">Photos</a></li>
+                  @endif
+                  @if($navUser->isOwner())
+                  <li class="nav-item"> <a class="nav-link" href="/staff">Staff accounts</a></li>
+                  @endif
                 </ul>
               </div>
             </li>

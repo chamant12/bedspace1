@@ -171,7 +171,7 @@ class ReservationController extends Controller
             'special_requests' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        [$property, $roomType] = $this->resolvePropertyRoomType($data['property_id'], $data['roomType_id'], 'update');
+        [$property, $roomType] = $this->resolvePropertyRoomType($data['property_id'], $data['roomType_id'], 'view'); // any staff of the property may enter bookings
 
         $reservation = $this->reservations->create(
             $property,
@@ -199,7 +199,7 @@ class ReservationController extends Controller
     // Owner: their properties; admin: all properties
     private function visibleProperties()
     {
-        return Property::when(!auth()->user()->isAdmin(), fn ($q) => $q->where('property_owner_id', auth()->id()))
+        return Property::whereIn('id', auth()->user()->accessiblePropertyIds())
             ->orderBy('property_name')
             ->get();
     }

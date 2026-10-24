@@ -28,6 +28,7 @@
                                 <a href="/properties/{{$property->id}}/details" data-toggle="tooltip" title="Property details" class="btn btn-primary">
                                     <i class="fa fa-eye"></i>
                                 </a>
+                                @if(auth()->user()->canEditProperties())
                                 <a href="/view-property/{{$property->id}}" data-toggle="tooltip" title="Edit property" class="btn btn-outline-primary">
                                     <i class="ti-pencil"></i>
                                 </a>
@@ -39,6 +40,8 @@
                                 </a>
                                 <a href="/rooms/{{$property->id}}" data-toggle="tooltip" title="Room numbers" style="text-decoration:none;" class="btn btn-secondary">
                                 <i class="ti-key"></i>
+                                @endif
+                                @if(auth()->user()->isOwner())
                                 </a>
                                 <form method="POST" action="/property/{{$property->id}}/toggle-active" style="display:inline;"
                                       onsubmit="return confirm('{{ $property->is_active ? 'Deactivate this property? Guests will no longer see it.' : 'Activate this property?' }}');">
@@ -47,6 +50,7 @@
                                         <i class="{{ $property->is_active ? 'ti-close' : 'ti-check' }}"></i>
                                     </button>
                                 </form>
+                                @endif
                             </td>
                           </tr>
                           @endforeach

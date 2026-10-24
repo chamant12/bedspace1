@@ -18,6 +18,7 @@ class EnsureUserType
         'admin' => User::TYPE_ADMIN,
         'owner' => User::TYPE_PROPERTY_OWNER,
         'customer' => User::TYPE_CUSTOMER,
+        'staff' => User::TYPE_STAFF,
     ];
 
     // ->middleware('user.type:admin,owner') allows either type

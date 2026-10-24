@@ -14,7 +14,7 @@ use App\Services\ImageUploader;
 class PhotoController extends Controller
 {
     public function selectPhotoType(){
-        $properties = Property::with('city','city.district')->where(['property_owner_id'=>auth()->user()->id])->get();
+        $properties = Property::with('city','city.district')->whereIn('id', auth()->user()->accessiblePropertyIds())->orderBy('property_name')->get();
         return view('photo.phototype',compact('properties'));
     }
 

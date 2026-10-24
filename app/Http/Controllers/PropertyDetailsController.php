@@ -80,7 +80,7 @@ class PropertyDetailsController extends Controller
             'roomTypes' => $roomTypes,
             'photos' => $photos,
             'amenities' => $amenities,
-            'canEdit' => Gate::allows('update', $property) && auth()->user()->isOwner(),
+            'canEdit' => Gate::allows('update', $property) && auth()->user()->isPartner(),
         ]);
     }
 }

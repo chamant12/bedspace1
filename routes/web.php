@@ -16,6 +16,7 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\DummyGatewayController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PropertyDetailsController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -69,6 +70,9 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::get('/payouts/{property_id}', [Admin\HotelPayoutController::class, 'show']);
     Route::post('/payouts/{property_id}/pay', [Admin\HotelPayoutController::class, 'pay']);
     Route::get('/owners', [Admin\OwnerController::class, 'index']);
+    Route::get('/owners/new', [Admin\OwnerController::class, 'create']);
+    Route::post('/owners', [Admin\OwnerController::class, 'store']);
+    Route::post('/owners/{user_id}/approve', [Admin\OwnerController::class, 'approve']);
     Route::post('/owners/{user_id}/toggle-status', [Admin\OwnerController::class, 'toggleStatus']);
     Route::get('/amenities', [Admin\AmenityController::class, 'index']);
     Route::post('/amenities', [Admin\AmenityController::class, 'store']);
@@ -76,35 +80,54 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::post('/amenities/{amenity_id}/toggle-active', [Admin\AmenityController::class, 'toggleActive']);
 });
 
+// Owner / staff dashboard (also shown while the owner awaits approval)
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'user.type:owner,staff']);
+
 // Pages shared by several user types; access is decided by policies (admin passes all)
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'partner.approved'])->group(function () {
     Route::get('/properties/{property_id}/details', [PropertyDetailsController::class, 'show']);
     Route::get('/rates/{property_id}/view', [RateController::class, 'viewRates']);
     Route::get('/api/view-base-rates/{property_id}/{roomType_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRatesReadonly']);
     Route::get('/inventory/{property_id}/view', [InventoryController::class, 'view']);
+    Route::get('/api/view-inventory/{property_id}/{roomType_id}/{from_date}/{to_date}', [InventoryController::class, 'gridReadonly']);
 
-    // Reservations: owners see their properties', admins all
-    Route::middleware('user.type:admin,owner')->group(function () {
+    // Reservations: owners and staff see their properties', admins all
+    Route::middleware('user.type:admin,owner,staff')->group(function () {
         Route::get('/reservations', [ReservationController::class, 'index']);
-        Route::get('/reservations/new', [ReservationController::class, 'create'])->middleware('user.type:owner');
-        Route::post('/reservations', [ReservationController::class, 'store'])->middleware('user.type:owner');
+        Route::get('/reservations/new', [ReservationController::class, 'create'])->middleware('user.type:owner,staff');
+        Route::post('/reservations', [ReservationController::class, 'store'])->middleware('user.type:owner,staff');
         Route::get('/reservations/{reference}', [ReservationController::class, 'show']);
         Route::post('/reservations/{reference}/status', [ReservationController::class, 'changeStatus']);
         Route::post('/reservations/{reference}/check-in', [ReservationController::class, 'checkIn']);
         Route::post('/reservations/{reference}/payments', [ReservationController::class, 'recordPayment']);
+        Route::post('/reservations/{reference}/refunds', [ReservationController::class, 'refund']);
     });
-    Route::get('/api/view-inventory/{property_id}/{roomType_id}/{from_date}/{to_date}', [InventoryController::class, 'gridReadonly']);
 });
 
-// Property owner area
-Route::middleware(['auth', 'user.type:owner'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+// Owner and staff: every partner may see their properties
+Route::middleware(['auth', 'user.type:owner,staff', 'partner.approved'])->group(function () {
     Route::get('/my-properties', [PropertyController::class, 'listMyProperties']);
+});
+
+// Owner only: properties, staff accounts and income
+Route::middleware(['auth', 'user.type:owner', 'partner.approved'])->group(function () {
     Route::get('/add-property', [PropertyController::class, 'addProperty']);
     Route::post('/create-property', [PropertyController::class, 'createProperty']);
+    Route::post('/property/{property_id}/toggle-active', [PropertyController::class, 'togglePropertyActive']);
+    Route::get('/reports/income', [ReportController::class, 'ownerIncome']);
+
+    Route::get('/staff', [StaffController::class, 'index']);
+    Route::get('/staff/new', [StaffController::class, 'create']);
+    Route::post('/staff', [StaffController::class, 'store']);
+    Route::get('/staff/{user_id}', [StaffController::class, 'edit']);
+    Route::put('/staff/{user_id}', [StaffController::class, 'update']);
+    Route::post('/staff/{user_id}/toggle-status', [StaffController::class, 'toggleStatus']);
+});
+
+// Owner and staff with the "edit property details" permission
+Route::middleware(['auth', 'user.type:owner,staff', 'partner.approved', 'can.edit'])->group(function () {
     Route::get('/view-property/{property_id}', [PropertyController::class, 'viewProperty']);
     Route::post('/update-property', [PropertyController::class, 'updateProperty']);
-    Route::post('/property/{property_id}/toggle-active', [PropertyController::class, 'togglePropertyActive']);
     Route::get('/add-room-type', [RoomTypeController::class, 'addRoomType']);
     Route::post('/create-room-type', [RoomTypeController::class, 'createRoomType']);
     Route::post('/roomType/{roomType_id}/toggle-active', [RoomTypeController::class, 'toggleRoomTypeActive']);
@@ -112,7 +135,6 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
     Route::post('/update-room-type', [RoomTypeController::class, 'updateRoomType']);
     Route::get('/add-base-rate/{property_id}', [RateController::class, 'addBaseRate']);
     Route::get('/inventory/{property_id}', [InventoryController::class, 'index']);
-    Route::get('/reports/income', [ReportController::class, 'ownerIncome']);
     Route::get('/rooms/{property_id}', [RoomNumberController::class, 'index']);
     Route::post('/rooms', [RoomNumberController::class, 'store']);
     Route::put('/rooms/{room_id}', [RoomNumberController::class, 'update']);
@@ -126,8 +148,6 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
 
     // AJAX endpoints used by the Blade pages
     Route::prefix('api')->group(function () {
-        Route::get('/get-districts-by-province/{province_id}', [PropertyController::class, 'getDistrictsByProvince']);
-        Route::get('/get-cities-by-district/{district_id}', [PropertyController::class, 'getCitiesByDistrict']);
         Route::get('/get-properties-by-city/{city_id}', [RoomTypeController::class, 'getPropertiesByCity']);
         Route::get('/get-base-rates/{property_id}/{roomType_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRates']);
         Route::post('/save-base-rates', [RateController::class, 'saveBaseRates']);
@@ -143,4 +163,10 @@ Route::middleware(['auth', 'user.type:owner'])->group(function () {
         Route::post('/update-photo-order', [PhotoController::class, 'updatePhotoOrder']);
         Route::post('/remove-photo/{photo_id}', [PhotoController::class, 'deactivatePhoto']);
     });
+});
+
+// Location lookups for the property forms (owners and editing staff)
+Route::middleware(['auth', 'user.type:owner,staff', 'partner.approved'])->prefix('api')->group(function () {
+    Route::get('/get-districts-by-province/{province_id}', [PropertyController::class, 'getDistrictsByProvince']);
+    Route::get('/get-cities-by-district/{district_id}', [PropertyController::class, 'getCitiesByDistrict']);
 });

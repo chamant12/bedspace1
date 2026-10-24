@@ -5,43 +5,43 @@ namespace App\Policies;
 use App\Models\Property;
 use App\Models\User;
 
+/**
+ * Owners: their own properties. Staff: the properties they are assigned to;
+ * editing needs the "edit property details" permission. Admins pass every
+ * check (Gate::before). Unapproved owners are stopped earlier by the
+ * owner.approved middleware.
+ */
 class PropertyPolicy
 {
-    // Property details page. Add the property's staff here when staff roles are added.
+    // Property details page, read-only rates and inventory
     public function view(User $user, Property $property): bool
     {
-        return $this->owns($user, $property);
+        return $user->isPartner() && $user->canAccessProperty($property);
     }
 
+    // Edit property info, amenities, photos (the "edit property details" permission)
     public function update(User $user, Property $property): bool
     {
-        return $this->owns($user, $property);
+        return $user->canEditProperties() && $user->canAccessProperty($property);
     }
 
-    // Read-only rates calendar. Extend here when staff roles are added.
     public function viewRates(User $user, Property $property): bool
     {
-        return $this->owns($user, $property);
+        return $this->view($user, $property);
     }
 
     public function manageRates(User $user, Property $property): bool
     {
-        return $this->owns($user, $property);
+        return $this->update($user, $property);
     }
 
-    // Read-only inventory. Extend here when staff roles are added.
     public function viewInventory(User $user, Property $property): bool
     {
-        return $this->owns($user, $property);
+        return $this->view($user, $property);
     }
 
     public function manageInventory(User $user, Property $property): bool
     {
-        return $this->owns($user, $property);
-    }
-
-    private function owns(User $user, Property $property): bool
-    {
-        return (int) $property->property_owner_id === (int) $user->id;
+        return $this->update($user, $property);
     }
 }

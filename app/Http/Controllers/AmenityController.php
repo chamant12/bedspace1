@@ -140,7 +140,7 @@ class AmenityController extends Controller
     }
 
     public function amenities(){
-        $properties = Property::with('city','city.district')->where(['property_owner_id'=>auth()->user()->id])->get();
+        $properties = Property::with('city','city.district')->whereIn('id', auth()->user()->accessiblePropertyIds())->orderBy('property_name')->get();
         return view('amenity.amenity',compact('properties'));
     }
 }

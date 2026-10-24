@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OwnerSignedUpMail;
 
 use Illuminate\Http\Request;
 
@@ -19,8 +21,9 @@ class UserLoginController extends Controller
         return view('admin.login');
     }
 
+    // Partner login: property owners and their hotel staff
     public function authenticateUser(Request $request){
-        return $this->attemptLogin($request, User::TYPE_PROPERTY_OWNER);
+        return $this->attemptLogin($request, [User::TYPE_PROPERTY_OWNER, User::TYPE_STAFF]);
     }
 
     public function authenticateAdmin(Request $request){
@@ -36,8 +39,8 @@ class UserLoginController extends Controller
         return $this->attemptLogin($request, User::TYPE_CUSTOMER);
     }
 
-    // Each login page only accepts active users of its own type
-    private function attemptLogin(Request $request, int $userType){
+    // Each login page only accepts active users of its own type(s)
+    private function attemptLogin(Request $request, int|array $userType){
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -91,8 +94,16 @@ class UserLoginController extends Controller
         $propertyOwner->password = Hash::make($request->password);
         $propertyOwner->user_role_id = 1;
         $propertyOwner->user_type_id = User::TYPE_PROPERTY_OWNER;
+        $propertyOwner->approved_at = null; // an admin approves new owners
         $propertyOwner->save();
-        session()->flash('success', 'Signup succesfull! Please login to continue');
+
+        try {
+            Mail::to(config('mail.admin_address'))->send(new OwnerSignedUpMail($propertyOwner));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        session()->flash('success', 'Signup successful! You can sign in now; you can add your properties once the Bedspace team has approved your account.');
         return redirect('/login');
     }
 }
