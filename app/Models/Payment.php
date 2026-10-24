@@ -19,6 +19,15 @@ class Payment extends Model
     const COMPLETED = 'completed';
     const FAILED = 'failed';
 
+    // kind: refunds carry negative amount, amount_lkr and commission
+    const KIND_PAYMENT = 'payment';
+    const KIND_REFUND = 'refund';
+
+    public function isRefund(): bool
+    {
+        return $this->kind === self::KIND_REFUND;
+    }
+
     protected $casts = [
         'method' => PaymentChannel::class,
         'amount' => 'decimal:2',

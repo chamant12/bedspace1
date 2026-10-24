@@ -77,7 +77,7 @@
             @foreach($r->payments as $payment)
                 <tr>
                     <td>{{ ($payment->paid_at ?? $payment->created_at)->timezone(config('bedspace.timezone'))->format('Y-m-d H:i') }}</td>
-                    <td>{{ $payment->method->label() }}</td>
+                    <td>{{ $payment->isRefund() ? "Refund · " : "" }}{{ $payment->method->label() }}</td>
                     <td>{{ ucfirst($payment->status) }}</td>
                     <td class="text-end">{{ $r->money($payment->amount) }}</td>
                     <td class="text-end">{{ $payment->amount_lkr !== null ? number_format($payment->amount_lkr, 2) : '–' }}</td>
@@ -88,6 +88,54 @@
             @endforeach
             </tbody>
         </table>
+        @endif
+
+        @if($r->refund_status === 'due')
+            <div class="alert alert-warning mt-3">
+                <strong>Refund due: {{ $r->money($r->refundRemaining()) }}</strong>
+                (cancelled within the free-cancellation period)
+                @if((float) $r->amount_refunded > 0) &middot; already refunded {{ $r->money($r->amount_refunded) }} @endif
+            </div>
+            @foreach(['platform' => 'Online payment (held by Bedspace)', 'property' => 'Paid at the hotel'] as $collector => $label)
+                @php($refundable = min($heldBy[$collector], $r->refundRemaining()))
+                @continue($refundable <= 0)
+                @if($collector === 'platform' && !auth()->user()->isAdmin())
+                    <p class="text-muted">{{ $label }}: {{ $r->money($refundable) }} will be refunded to the guest's card by Bedspace.</p>
+                    @continue
+                @endif
+                @if($collector === 'property' && !$canManage)
+                    @continue
+                @endif
+                <form method="POST" action="/reservations/{{ $r->reference }}/refunds" class="row g-2 align-items-end mb-3"
+                      onsubmit="return confirm('{{ $collector === 'platform' ? 'Refund this amount to the guest\'s card through the payment gateway?' : 'Record that the hotel refunded this amount to the guest?' }}');">
+                    @csrf
+                    <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
+                    <input type="hidden" name="collected_by" value="{{ $collector }}">
+                    <div class="col-md-3">
+                        <label>{{ $label }}: refund ({{ $r->currency->code }})</label>
+                        <input type="number" name="amount" step="0.01" min="0.01" max="{{ $refundable }}" value="{{ $refundable }}" class="form-control" required>
+                    </div>
+                    @if($collector === 'property')
+                        <div class="col-md-2">
+                            <label>Refunded by</label>
+                            <select name="method" class="form-control" required>
+                                @foreach($offlineChannels as $channel)
+                                    <option value="{{ $channel->value }}">{{ $channel->label() }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+                    <div class="col-md-3">
+                        <label>Reference</label>
+                        <input type="text" name="reference" class="form-control" maxlength="100">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-warning">{{ $collector === 'platform' ? 'Refund via gateway' : 'Record refund' }}</button>
+                    </div>
+                </form>
+            @endforeach
+        @elseif($r->refund_status === 'refunded')
+            <p class="text-success mt-2 mb-0">Refunded {{ $r->money($r->amount_refunded) }} to the guest.</p>
         @endif
 
         @if($canManage && $r->outstanding() > 0 && !in_array($r->status, [\App\Enums\ReservationStatus::Cancelled, \App\Enums\ReservationStatus::Expired, \App\Enums\ReservationStatus::Pending]))

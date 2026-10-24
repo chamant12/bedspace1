@@ -1,5 +1,10 @@
 @extends('layout.app')
 @section('content')
+@if($stats['refundsDue'] > 0)
+<div class="alert alert-warning">
+    {{ $stats['refundsDue'] }} cancelled booking(s) have a refund due. <a href="/reservations?refund=due">Review</a>
+</div>
+@endif
 @if($stats['pendingOwners'] > 0)
 <div class="alert alert-warning">
     {{ $stats['pendingOwners'] }} property owner(s) awaiting approval. <a href="/admin/owners">Review</a>

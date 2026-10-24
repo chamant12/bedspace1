@@ -28,7 +28,8 @@
                         <th class="text-end">Bookings</th>
                         <th class="text-end">Paid online</th>
                         <th class="text-end">Paid at hotel</th>
-                        <th class="text-end">Gross</th>
+                        <th class="text-end">Refunds</th>
+                        <th class="text-end">Gross (net)</th>
                         <th class="text-end">Commission</th>
                         <th class="text-end">Net income</th>
                         <th class="text-end">Settlement</th>
@@ -41,6 +42,7 @@
                         <td class="text-end">{{ $row->bookings }}</td>
                         <td class="text-end">{{ $fmt($row->online_lkr) }}</td>
                         <td class="text-end">{{ $fmt($row->hotel_lkr) }}</td>
+                        <td class="text-end">{{ $row->refunds_lkr > 0 ? "− ".$fmt($row->refunds_lkr) : "–" }}</td>
                         <td class="text-end">{{ $fmt($row->gross_lkr) }}</td>
                         <td class="text-end">{{ $fmt($row->commission_lkr) }}</td>
                         <td class="text-end"><strong>{{ $fmt($row->net_to_hotel_lkr) }}</strong></td>
@@ -53,7 +55,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="8">No payments in this month.</td></tr>
+                    <tr><td colspan="9">No payments in this month.</td></tr>
                     @endforelse
                 </tbody>
                 @if($rows->isNotEmpty())
@@ -63,6 +65,7 @@
                         <th class="text-end">{{ $totals->bookings }}</th>
                         <th class="text-end">{{ $fmt($totals->online_lkr) }}</th>
                         <th class="text-end">{{ $fmt($totals->hotel_lkr) }}</th>
+                        <th class="text-end">{{ $totals->refunds_lkr > 0 ? "− ".$fmt($totals->refunds_lkr) : "–" }}</th>
                         <th class="text-end">{{ $fmt($totals->gross_lkr) }}</th>
                         <th class="text-end">{{ $fmt($totals->commission_lkr) }}</th>
                         <th class="text-end">{{ $fmt($totals->net_to_hotel_lkr) }}</th>

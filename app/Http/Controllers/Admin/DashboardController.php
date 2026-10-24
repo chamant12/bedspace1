@@ -15,6 +15,7 @@ class DashboardController extends Controller
         $stats = [
             'owners' => User::where('user_type_id', User::TYPE_PROPERTY_OWNER)->count(),
             'pendingOwners' => User::where('user_type_id', User::TYPE_PROPERTY_OWNER)->whereNull('approved_at')->count(),
+            'refundsDue' => \App\Models\Reservation::where('refund_status', 'due')->count(),
             'properties' => Property::count(),
             'activeProperties' => Property::where('is_active', true)->count(),
             'roomTypes' => RoomType::where('is_active', true)->count(),

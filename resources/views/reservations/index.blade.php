@@ -44,6 +44,9 @@
                 <div class="col-md-1">
                     <button type="submit" class="btn btn-success">Filter</button>
                 </div>
+                <div class="col-md-12">
+                    <label><input type="checkbox" name="refund" value="due" @checked(request('refund') === 'due')> Only bookings with a refund due</label>
+                </div>
             </form>
 
             <div class="table-responsive">

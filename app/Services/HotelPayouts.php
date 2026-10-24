@@ -24,7 +24,7 @@ class HotelPayouts
             ->where('payments.status', Payment::COMPLETED)
             ->where('payments.collected_by', 'platform')
             ->whereNull('payments.hotel_payout_id')
-            ->whereIn('payments.reservation_id', fn ($q) => $q->select('id')->from('reservations')->where('refund_status', 'none'));
+            ->whereIn('payments.reservation_id', fn ($q) => $q->select('id')->from('reservations')->where('refund_status', '!=', 'due'));
     }
 
     // Amount owed to the hotel for one payment
@@ -50,7 +50,7 @@ class HotelPayouts
             'property' => $properties[$row->property_id],
             'payments' => (int) $row->payments,
             'payable_lkr' => round((float) $row->payable_lkr, 2),
-        ])->filter(fn ($row) => $row->payable_lkr > 0)->sortBy(fn ($row) => $row->property->property_name)->values();
+        ])->filter(fn ($row) => $row->payable_lkr != 0)->sortBy(fn ($row) => $row->property->property_name)->values();
     }
 
     public function paymentsFor(Property $property): Collection

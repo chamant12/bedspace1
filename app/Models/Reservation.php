@@ -31,6 +31,7 @@ class Reservation extends Model
         'cancellation_days' => 'integer',
         'free_cancellation_until' => 'date',
         'refund_due' => 'decimal:2',
+        'amount_refunded' => 'decimal:2',
         'expires_at' => 'datetime',
         'cancelled_at' => 'datetime',
     ];
@@ -68,6 +69,12 @@ class Reservation extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class)->orderBy('id');
+    }
+
+    // Refund still to be paid back to the guest
+    public function refundRemaining(): float
+    {
+        return max(0, round((float) $this->refund_due - (float) $this->amount_refunded, 2));
     }
 
     public function outstanding(): float

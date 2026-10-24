@@ -17,4 +17,10 @@ interface PaymentGateway
     public function name(): string;
 
     public function checkoutUrl(Payment $payment): string;
+
+    /**
+     * Refunds $amount of a completed online payment back to the guest's card.
+     * Returns the gateway's refund reference; throws if the gateway refuses.
+     */
+    public function refund(Payment $payment, float $amount): string;
 }

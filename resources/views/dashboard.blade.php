@@ -24,6 +24,11 @@
     @endforeach
 </div>
 
+@if($refundsDue > 0)
+<div class="alert alert-warning">
+    {{ $refundsDue }} cancelled booking(s) have a refund due. <a href="/reservations?refund=due">Review</a>
+</div>
+@endif
 @if($payoutDue > 0)
 <div class="alert alert-success">
     Bedspace owes you <strong>LKR {{ number_format($payoutDue, 2) }}</strong> for online payments (after commission), to be paid out.

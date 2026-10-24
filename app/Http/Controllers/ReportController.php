@@ -41,10 +41,10 @@ class ReportController extends Controller
     {
         $columns = $forAdmin
             ? ['property_name' => 'Property', 'owner_name' => 'Owner', 'bookings' => 'Bookings', 'online_lkr' => 'Collected online (LKR)',
-               'hotel_lkr' => 'Collected at hotel (LKR)', 'gross_lkr' => 'Gross (LKR)', 'commission_lkr' => 'Commission (LKR)',
+               'hotel_lkr' => 'Collected at hotel (LKR)', 'refunds_lkr' => 'Refunds (LKR)', 'gross_lkr' => 'Gross after refunds (LKR)', 'commission_lkr' => 'Commission (LKR)',
                'settlement_lkr' => 'Settlement: platform pays hotel (LKR)']
             : ['property_name' => 'Property', 'bookings' => 'Bookings', 'online_lkr' => 'Paid online (LKR)', 'hotel_lkr' => 'Paid at hotel (LKR)',
-               'gross_lkr' => 'Gross income (LKR)', 'commission_lkr' => 'Platform commission (LKR)', 'net_to_hotel_lkr' => 'Net income (LKR)',
+               'refunds_lkr' => 'Refunds (LKR)', 'gross_lkr' => 'Gross income after refunds (LKR)', 'commission_lkr' => 'Platform commission (LKR)', 'net_to_hotel_lkr' => 'Net income (LKR)',
                'settlement_lkr' => 'Settlement: platform pays you (LKR)'];
 
         return response()->streamDownload(function () use ($rows, $columns) {

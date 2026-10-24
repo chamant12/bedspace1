@@ -24,6 +24,13 @@ class DummyGateway implements PaymentGateway
         return URL::temporarySignedRoute('payments.dummy', now()->addMinutes(30), ['payment' => $payment->id]);
     }
 
+    // Test refunds always succeed
+    public function refund(Payment $payment, float $amount): string
+    {
+        self::ensureAllowed();
+        return 'DUMMY-RF-'.strtoupper(\Illuminate\Support\Str::random(10));
+    }
+
     // Checked when a test payment starts or completes, not when the class is built,
     // so offline (pay at hotel) payments keep working in production
     public static function ensureAllowed(): void

@@ -39,6 +39,7 @@ class ReservationController extends Controller
             ->whereIn('property_id', $properties->pluck('id'))
             ->when($request->filled('property_id'), fn ($q) => $q->where('property_id', $request->property_id))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
+            ->when($request->query('refund') === 'due', fn ($q) => $q->where('refund_status', 'due'))
             ->when($request->filled('from'), fn ($q) => $q->where('check_in', '>=', $request->from))
             ->when($request->filled('to'), fn ($q) => $q->where('check_in', '<=', $request->to))
             ->when($request->filled('q'), function ($q) use ($request) {
@@ -89,6 +90,11 @@ class ReservationController extends Controller
             'canManage' => Gate::allows('manage', $reservation),
             'today' => BusinessDate::today(),
             'offlineChannels' => PaymentChannel::offline(),
+            // Money still held per collector, for refunds
+            'heldBy' => [
+                'platform' => round((float) $reservation->payments->where('status', 'completed')->where('collected_by', 'platform')->sum('amount'), 2),
+                'property' => round((float) $reservation->payments->where('status', 'completed')->where('collected_by', 'property')->sum('amount'), 2),
+            ],
             'idempotencyKey' => (string) Str::uuid(), // one per form render: a double submit records once
         ]);
     }
@@ -128,6 +134,34 @@ class ReservationController extends Controller
             $data['reference'] ?? null, $data['notes'] ?? null, $data['idempotency_key'], $request->user());
 
         return redirect()->back()->with('success', 'Payment recorded.');
+    }
+
+    /**
+     * Refund of a cancelled booking (cancellation policy).
+     * Online money: the admin refunds it through the payment gateway.
+     * Money taken at the hotel: the hotel refunds the guest and records it here.
+     */
+    public function refund(Request $request, $reference){
+        $reservation = Reservation::where('reference', $reference)->firstOrFail();
+
+        $data = $request->validate([
+            'collected_by' => ['required', Rule::in(['platform', 'property'])],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'method' => ['nullable', Rule::in(array_map(fn ($c) => $c->value, PaymentChannel::offline()))],
+            'reference' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:500'],
+            'idempotency_key' => ['required', 'uuid'],
+        ]);
+
+        $data['collected_by'] === 'platform'
+            ? abort_unless($request->user()->isAdmin(), 403)
+            : Gate::authorize('manage', $reservation);
+
+        $this->payments->refund($reservation, $data['collected_by'], (float) $data['amount'],
+            isset($data['method']) ? PaymentChannel::from($data['method']) : null,
+            $data['reference'] ?? null, $data['notes'] ?? null, $data['idempotency_key'], $request->user());
+
+        return redirect()->back()->with('success', 'Refund recorded.');
     }
 
     public function checkIn(Request $request, $reference){

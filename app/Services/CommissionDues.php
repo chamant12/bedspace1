@@ -24,7 +24,7 @@ class CommissionDues
             ->where('payments.status', Payment::COMPLETED)
             ->where('payments.collected_by', 'property')
             ->whereNull('payments.commission_settlement_id')
-            ->where('payments.commission_lkr', '>', 0);
+            ->where('payments.commission_lkr', '!=', 0); // refunds carry negative commission
     }
 
     // [property_id => ['property', 'payments', 'due_lkr']] for all properties with dues

@@ -163,6 +163,86 @@ class Payments
         });
     }
 
+    /**
+     * Refunds money to the guest of a cancelled booking that has a refund due
+     * (cancellation policy). $collectedBy says whose money is refunded:
+     * - platform: online payments, refunded through the gateway (admin)
+     * - property: payments taken at the hotel, refunded by the hotel ($channel)
+     * The refund row reverses the LKR amount and the commission, so every
+     * report, the commission dues and the payouts are reduced accordingly.
+     */
+    public function refund(Reservation $reservation, string $collectedBy, float $amount, ?PaymentChannel $channel,
+                           ?string $reference, ?string $notes, string $idempotencyKey, User $by): Payment
+    {
+        return DB::transaction(function () use ($reservation, $collectedBy, $amount, $channel, $reference, $notes, $idempotencyKey, $by) {
+            $existing = Payment::where('idempotency_key', $idempotencyKey)->first();
+            if ($existing) {
+                return $existing;
+            }
+
+            $reservation = Reservation::with('property')->lockForUpdate()->findOrFail($reservation->id);
+            if ($reservation->refund_status !== 'due') {
+                throw ValidationException::withMessages(['amount' => 'This booking has no refund due.']);
+            }
+
+            // Money of this collector still held (payments less earlier refunds)
+            $rows = Payment::where(['reservation_id' => $reservation->id, 'status' => Payment::COMPLETED, 'collected_by' => $collectedBy])->get();
+            $held = round((float) $rows->sum('amount'), 2);
+            $maximum = min($held, $reservation->refundRemaining());
+
+            $amount = round($amount, 2);
+            if ($amount <= 0 || $amount > $maximum) {
+                throw ValidationException::withMessages(['amount' => 'The refund must be between 0.01 and '.$reservation->money($maximum).'.']);
+            }
+
+            $originals = $rows->where('kind', Payment::KIND_PAYMENT);
+            // Same LKR rate as the money received, so the refund exactly reverses it
+            $rate = (float) $originals->sum('amount') > 0 ? (float) $originals->sum('amount_lkr') / (float) $originals->sum('amount') : 1.0;
+
+            $refund = new Payment();
+            $refund->reservation_id = $reservation->id;
+            $refund->kind = Payment::KIND_REFUND;
+            $refund->idempotency_key = $idempotencyKey;
+            $refund->collected_by = $collectedBy;
+            $refund->currency_type_id = $reservation->currency_type_id;
+            $refund->amount = -$amount;
+            $refund->exchange_rate = round($rate, 4);
+            $refund->amount_lkr = -round($amount * $rate, 2);
+            $refund->commission_rate = $reservation->commission_rate;
+            $refund->commission_amount = -round($amount * (float) $reservation->commission_rate / 100, 2);
+            $refund->commission_lkr = -round($amount * $rate * (float) $reservation->commission_rate / 100, 2);
+            $refund->reference = $reference;
+            $refund->notes = $notes;
+            $refund->recorded_by_user_id = $by->id;
+
+            if ($collectedBy === 'platform') {
+                $original = $originals->sortByDesc('id')->first();
+                $refund->method = PaymentChannel::OnlineCard;
+                $refund->gateway = $this->gateway->name();
+                $refund->gateway_reference = $this->gateway->refund($original, $amount);
+            } else {
+                if (!$channel || $channel === PaymentChannel::OnlineCard) {
+                    throw ValidationException::withMessages(['method' => 'Choose how the hotel refunded the guest.']);
+                }
+                $refund->method = $channel;
+            }
+
+            $refund->status = Payment::COMPLETED;
+            $refund->paid_at = now();
+            $refund->save();
+
+            $reservation->amount_refunded = round((float) $reservation->amount_refunded + $amount, 2);
+            $reservation->amount_paid = round((float) Payment::where(['reservation_id' => $reservation->id, 'status' => Payment::COMPLETED])->sum('amount'), 2);
+            if ($reservation->refundRemaining() <= 0) {
+                $reservation->refund_status = 'refunded';
+            }
+            $reservation->payment_status = $reservation->amount_paid <= 0 ? 'refunded' : 'partially_refunded';
+            $reservation->save();
+
+            return $refund;
+        });
+    }
+
     // Completes a payment: exchange-rate snapshot, commission, reservation totals
     private function markCompleted(Payment $payment, Reservation $reservation, ?User $by): void
     {

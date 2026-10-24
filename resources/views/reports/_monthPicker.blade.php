@@ -8,5 +8,5 @@
         <a href="?month={{ $month }}&format=csv" class="btn btn-outline-primary">Download CSV</a>
     </div>
 </form>
-<p class="text-muted">Completed payments received in {{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }} (Sri Lanka time),
+<p class="text-muted">Completed payments received, less refunds made, in {{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }} (Sri Lanka time),
     converted to LKR at the exchange rate recorded with each payment.</p>

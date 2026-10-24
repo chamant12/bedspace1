@@ -61,9 +61,10 @@ class DashboardController extends Controller
         // Money owed between the owner and the platform: owners only
         $commissionDue = $user->isOwner() ? round($commissionDues->byProperty($user->id)->sum('due_lkr'), 2) : 0;
         $payoutDue = $user->isOwner() ? round($hotelPayouts->byProperty($user->id)->sum('payable_lkr'), 2) : 0;
+        $refundsDue = Reservation::whereIn('property_id', $propertyIds)->where('refund_status', 'due')->count();
         $offlineChannels = PaymentChannel::offline();
         $today = BusinessDate::today();
 
-        return view('dashboard', compact('properties', 'stats', 'missingRates', 'roomCounts', 'offlineToSettle', 'commissionDue', 'payoutDue', 'offlineChannels', 'today'));
+        return view('dashboard', compact('properties', 'stats', 'missingRates', 'roomCounts', 'offlineToSettle', 'commissionDue', 'payoutDue', 'refundsDue', 'offlineChannels', 'today'));
     }
 }

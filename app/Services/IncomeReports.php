@@ -17,6 +17,9 @@ use Illuminate\Support\Collection;
  * - payments at the hotel are collected by the hotel, which owes the
  *   platform the commission.
  * settlement > 0: platform pays the hotel; < 0: the hotel pays the platform.
+ *
+ * Refunds are negative payment rows: they reduce the collected amounts and
+ * the commission in the month they are made.
  */
 class IncomeReports
 {
@@ -54,7 +57,8 @@ class IncomeReports
                 properties.id as property_id,
                 properties.property_name,
                 users.name as owner_name,
-                COUNT(payments.id) as payments,
+                SUM(CASE WHEN payments.kind = 'payment' THEN 1 ELSE 0 END) as payments,
+                SUM(CASE WHEN payments.kind = 'refund' THEN payments.amount_lkr ELSE 0 END) as refunds_lkr,
                 COUNT(DISTINCT payments.reservation_id) as bookings,
                 SUM(CASE WHEN payments.collected_by = 'platform' THEN payments.amount_lkr ELSE 0 END) as online_lkr,
                 SUM(CASE WHEN payments.collected_by = 'property' THEN payments.amount_lkr ELSE 0 END) as hotel_lkr,
@@ -75,6 +79,7 @@ class IncomeReports
                 'owner_name' => $row->owner_name,
                 'bookings' => (int) $row->bookings,
                 'payments' => (int) $row->payments,
+                'refunds_lkr' => round(-(float) $row->refunds_lkr, 2), // shown as a positive amount
                 'online_lkr' => round($online, 2),
                 'hotel_lkr' => round($hotel, 2),
                 'gross_lkr' => round($online + $hotel, 2),
@@ -93,6 +98,7 @@ class IncomeReports
         return (object) [
             'bookings' => $rows->sum('bookings'),
             'payments' => $rows->sum('payments'),
+            'refunds_lkr' => $sum('refunds_lkr'),
             'online_lkr' => $sum('online_lkr'),
             'hotel_lkr' => $sum('hotel_lkr'),
             'gross_lkr' => $sum('gross_lkr'),
