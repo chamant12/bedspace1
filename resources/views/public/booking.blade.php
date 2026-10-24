@@ -32,6 +32,20 @@
                     <p class="bs-muted mt-2">Property contact: {{ $r->property->primaryContact->name }}, {{ $r->property->primaryContact->mobile }}</p>
                 @endif
             </div>
+            <div class="bs-card">
+                <h5>Cancellation policy</h5>
+                <p class="mb-2">{{ $cancellationPolicy }}</p>
+                @if($r->status === \App\Enums\ReservationStatus::Cancelled)
+                    <p class="mb-0">Cancelled{{ (float) $r->refund_due > 0 ? ' · refund due '.$r->money($r->refund_due) : '' }}.</p>
+                @elseif($cancelUrl)
+                    <form method="POST" action="{{ $cancelUrl }}"
+                          onsubmit="return confirm('{{ $refundableNow ? 'Cancel this booking? Any amount paid will be refunded.' : 'Cancel this booking? Under the cancellation policy it will NOT be refunded.' }}');">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Cancel booking</button>
+                        <small class="bs-muted ml-2">{{ $refundableNow ? 'Free cancellation applies today.' : 'No refund applies if you cancel now.' }}</small>
+                    </form>
+                @endif
+            </div>
         </div>
         <div class="col-md-5">
             <div class="bs-card">

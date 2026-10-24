@@ -53,6 +53,8 @@
         <p>The total is payable at the property.</p>
     @endif
 
+    <p><strong>Cancellation policy:</strong> {{ app(\App\Services\CancellationPolicy::class)->statementForReservation($r) }}</p>
+
     <p style="color:#666; font-size:12px; margin-top:24px;">
         Questions about this booking? Contact {{ $r->property->property_name }}
         @if($r->property->primaryContact) on {{ $r->property->primaryContact->mobile }} @endif

@@ -17,17 +17,18 @@ class Property extends Model
         'city_id',
         'address',
         'location',
+        'cancellation_days',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'commission_rate' => 'decimal:2',
+        'cancellation_days' => 'integer',
     ];
 
-    // Platform commission % for new bookings: the admin's rate for this property, or the platform default
-    public function effectiveCommissionRate(): float
+    // Non-refundable window before check-in: the owner's setting, or the platform default
+    public function effectiveCancellationDays(): int
     {
-        return (float) ($this->commission_rate ?? config('bedspace.default_commission_rate'));
+        return (int) ($this->cancellation_days ?? config('bedspace.free_cancellation_days'));
     }
 
     public function contacts(): HasMany

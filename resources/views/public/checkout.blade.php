@@ -61,6 +61,22 @@
                     <p class="bs-muted small">Already have an account? <a href="/account/login">Sign in</a></p>
                 @endunless
 
+                <h5 class="mt-3">Terms and conditions</h5>
+                <div class="border rounded p-3 mb-2" style="max-height:220px; overflow-y:auto; background:#fafafa;">
+                    <p class="mb-2"><strong>Cancellation policy.</strong> {{ $cancellationPolicy }}
+                        Refunds are made to the original payment method.</p>
+                    <p class="mb-2"><strong>Payment.</strong> Online payments are taken when you book. If you choose to pay at the
+                        hotel, the full amount is payable at the property.</p>
+                    <p class="mb-2"><strong>Rates.</strong> Prices are for the rooms, guests and meal plan shown and include all
+                        nights of the stay. Local (LKR) rates may require a Sri Lankan NIC at check-in.</p>
+                    <p class="mb-0"><strong>Changes.</strong> To change or cancel a booking, use your booking page or contact the property,
+                        quoting your booking reference.</p>
+                </div>
+                <label class="d-block">
+                    <input type="checkbox" name="accept_terms" value="1" required @checked(old('accept_terms'))>
+                    I have read and accept the terms and the cancellation policy<span class="text-danger">*</span>
+                </label>
+
                 <button type="submit" class="btn btn-primary btn-lg mt-2">Confirm booking</button>
             </form>
         </div>

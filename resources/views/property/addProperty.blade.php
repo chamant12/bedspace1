@@ -41,6 +41,12 @@
                         <input type="text" class="form-control" placeholder="Google location" name="location">
                       </div>
                       <div class="form-group">
+                        <label>Cancellation policy: no refund within (days before check-in)<span style="color:red;">*</span></label>
+                        <input type="number" class="form-control" name="cancellation_days" min="0" max="365" step="1" required
+                               value="{{ old('cancellation_days', config('bedspace.free_cancellation_days')) }}">
+                        <small class="text-muted">Guests who cancel earlier are refunded in full. Shown to guests in the booking terms.</small>
+                      </div>
+                      <div class="form-group">
                         <label for="exampleInputUsername1">Contact Person<span style="color:red;">*</span></label>
                         <input type="text" class="form-control" placeholder="Contact Person" name="contact_name" required>
                       </div>

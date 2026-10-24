@@ -14,6 +14,8 @@ use App\Models\RoomType;
 use App\Models\User;
 use App\Services\BookingQuotes;
 use App\Services\Payments;
+use App\Services\CancellationPolicy;
+use App\Enums\ReservationStatus;
 use App\Services\Reservations;
 use App\Support\BusinessDate;
 use Carbon\CarbonImmutable;
@@ -31,8 +33,33 @@ use Illuminate\Validation\ValidationException;
  */
 class PublicBookingController extends Controller
 {
-    public function __construct(private BookingQuotes $quotes, private Reservations $reservations, private Payments $payments)
+    public function __construct(
+        private BookingQuotes $quotes,
+        private Reservations $reservations,
+        private Payments $payments,
+        private CancellationPolicy $cancellationPolicy,
+    ) {
+    }
+
+    // Guest cancels their own booking (signed link from the booking page); the policy decides any refund
+    public function cancel(Request $request, string $reference){
+        $reservation = Reservation::where('reference', $reference)->firstOrFail();
+        abort_unless($this->guestCanCancel($reservation), 403);
+
+        $this->reservations->transition($reservation, ReservationStatus::Cancelled, Auth::user(), 'Cancelled by the guest');
+        $reservation->refresh();
+
+        $message = $reservation->refund_due > 0
+            ? 'Your booking was cancelled. A refund of '.$reservation->money($reservation->refund_due).' is due under the cancellation policy.'
+            : 'Your booking was cancelled.';
+
+        return redirect($this->bookingUrl($reservation))->with('success', $message);
+    }
+
+    private function guestCanCancel(Reservation $reservation): bool
     {
+        return in_array($reservation->status, [ReservationStatus::Pending, ReservationStatus::Confirmed], true)
+            && $reservation->check_in->toDateString() >= BusinessDate::today();
     }
 
     // Retry / continue an online payment for a pending booking (signed link from the booking page)
@@ -94,6 +121,9 @@ class PublicBookingController extends Controller
 
         return view('public.property', compact('property', 'stay', 'error', 'offers', 'photos', 'amenities') + [
             'occupancies' => Occupancy::orderBy('occupancy')->get(),
+            'cancellationSummary' => $error
+                ? $this->cancellationPolicy->summary($property)
+                : $this->cancellationPolicy->statementForStay($property, $stay['check_in']),
         ]);
     }
 
@@ -110,6 +140,7 @@ class PublicBookingController extends Controller
             'quote' => $quote,
             'account' => $this->customer(),
             'paymentMethods' => PaymentMethod::available(),
+            'cancellationPolicy' => $this->cancellationPolicy->statementForStay($choice['property'], $choice['check_in']),
         ]);
     }
 
@@ -125,8 +156,11 @@ class PublicBookingController extends Controller
             'guest_country' => ['nullable', 'string', 'max:100'],
             'special_requests' => ['nullable', 'string', 'max:1000'],
             'payment_method' => ['required', Rule::in(array_map(fn ($m) => $m->value, PaymentMethod::available()))],
+            'accept_terms' => ['accepted'],
             'create_account' => ['nullable', 'boolean'],
             'password' => ['nullable', 'required_if:create_account,1', 'string', 'min:8'],
+        ], [
+            'accept_terms.accepted' => 'Please accept the booking terms and cancellation policy.',
         ]);
 
         $reservation = DB::transaction(function () use ($request, $choice, $data, &$account) {
@@ -191,11 +225,17 @@ class PublicBookingController extends Controller
         abort_unless($request->hasValidSignature() || $ownAccount, 403);
 
         // Pending online booking that can still be paid
-        $payUrl = ($reservation->status === \App\Enums\ReservationStatus::Pending && $reservation->expires_at?->isFuture())
+        $payUrl = ($reservation->status === ReservationStatus::Pending && $reservation->expires_at?->isFuture())
             ? URL::temporarySignedRoute('booking.pay', $reservation->expires_at, ['reference' => $reservation->reference])
             : null;
 
-        return view('public.booking', compact('reservation', 'payUrl'));
+        $cancelUrl = $this->guestCanCancel($reservation)
+            ? URL::temporarySignedRoute('booking.cancel', now()->addHours(2), ['reference' => $reservation->reference])
+            : null;
+        $cancellationPolicy = $this->cancellationPolicy->statementForReservation($reservation);
+        $refundableNow = $this->cancellationPolicy->isRefundable($reservation);
+
+        return view('public.booking', compact('reservation', 'payUrl', 'cancelUrl', 'cancellationPolicy', 'refundableNow'));
     }
 
     // Guest account: their bookings

@@ -47,6 +47,12 @@
                         <input type="text" class="form-control" placeholder="Google location" name="location" value="{{$property->location}}">
                       </div>
                       <div class="form-group">
+                        <label>Cancellation policy: no refund within (days before check-in)<span style="color:red;">*</span></label>
+                        <input type="number" class="form-control" name="cancellation_days" min="0" max="365" step="1" required
+                               value="{{ old('cancellation_days', $property->effectiveCancellationDays()) }}">
+                        <small class="text-muted">Applies to new bookings; existing bookings keep the policy they were booked under.</small>
+                      </div>
+                      <div class="form-group">
                         <label for="exampleInputUsername1">Contact Person<span style="color:red;">*</span></label>
                         <input type="text" class="form-control" placeholder="Contact Person" name="contact_name" required value="{{ old('contact_name', $property->primaryContact?->name) }}">
                       </div>

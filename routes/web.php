@@ -33,6 +33,7 @@ Route::middleware('visitor.currency')->group(function () {
     Route::post('/booking/find', [PublicBookingController::class, 'findBooking'])->middleware('throttle:10,1');
     Route::get('/booking/{reference}', [PublicBookingController::class, 'booking'])->name('booking.show');
     Route::post('/booking/{reference}/pay', [PublicBookingController::class, 'pay'])->name('booking.pay')->middleware('signed');
+    Route::post('/booking/{reference}/cancel', [PublicBookingController::class, 'cancel'])->name('booking.cancel')->middleware('signed');
 
     // Dummy payment gateway (test page until Sampath Bank IPG)
     Route::get('/payments/dummy/{payment}', [DummyGatewayController::class, 'show'])->name('payments.dummy')->middleware('signed');
@@ -59,8 +60,10 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::get('/dashboard', [Admin\DashboardController::class, 'index']);
     Route::get('/properties', [Admin\PropertyController::class, 'index']);
     Route::post('/properties/{property_id}/toggle-active', [Admin\PropertyController::class, 'toggleActive']);
-    Route::post('/properties/{property_id}/commission', [Admin\PropertyController::class, 'updateCommission']);
     Route::get('/reports/income', [ReportController::class, 'adminIncome']);
+    Route::get('/commission-dues', [Admin\CommissionDueController::class, 'index']);
+    Route::get('/commission-dues/{property_id}', [Admin\CommissionDueController::class, 'show']);
+    Route::post('/commission-dues/{property_id}/settle', [Admin\CommissionDueController::class, 'settle']);
     Route::get('/owners', [Admin\OwnerController::class, 'index']);
     Route::post('/owners/{user_id}/toggle-status', [Admin\OwnerController::class, 'toggleStatus']);
     Route::get('/amenities', [Admin\AmenityController::class, 'index']);

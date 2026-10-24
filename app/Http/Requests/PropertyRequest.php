@@ -14,6 +14,8 @@ class PropertyRequest extends FormRequest
             'city_id' => ['required', 'integer', 'exists:cities,id'],
             'address' => ['required', 'string', 'max:255'],
             'location' => ['nullable', 'string', 'max:255'],
+            // Cancellation policy: no refund within this many days of check-in
+            'cancellation_days' => ['required', 'integer', 'min:0', 'max:365'],
             // Primary contact person (stored in property_contacts)
             'contact_name' => ['required', 'string', 'max:255'],
             'contact_number' => ['required', 'string', 'max:50'],
@@ -46,7 +48,7 @@ class PropertyRequest extends FormRequest
 
     public function propertyData(): array
     {
-        return $this->safe()->only(['property_name', 'city_id', 'address', 'location']);
+        return $this->safe()->only(['property_name', 'city_id', 'address', 'location', 'cancellation_days']);
     }
 
     public function contactData(): array

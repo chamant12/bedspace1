@@ -36,6 +36,7 @@ class Reservations
         private Inventory $inventory,
         private GuestMatcher $guests,
         private ExchangeRates $exchangeRates,
+        private CancellationPolicy $cancellationPolicy,
     ) {
     }
 
@@ -101,7 +102,10 @@ class Reservations
             $reservation->total = $total;
             $reservation->exchange_rate = $snapshot['exchange_rate'];
             $reservation->total_lkr = $snapshot['amount_lkr'];
-            $reservation->commission_rate = $property->effectiveCommissionRate(); // fixed for this booking
+            $reservation->commission_rate = config('bedspace.commission_rate'); // fixed for this booking
+            // Cancellation policy in force when booked
+            $reservation->cancellation_days = $property->effectiveCancellationDays();
+            $reservation->free_cancellation_until = $this->cancellationPolicy->freeCancellationUntil($checkIn, $reservation->cancellation_days);
             $reservation->expires_at = $status === ReservationStatus::Pending ? now()->addMinutes(self::PENDING_MINUTES) : null;
             $reservation->created_by_user_id = $createdBy?->id;
             $reservation->save();
@@ -179,6 +183,14 @@ class Reservations
             if ($to === ReservationStatus::Cancelled) {
                 $reservation->cancelled_at = now();
                 $reservation->cancellation_reason = $note;
+
+                // Cancellation policy: paid money is refunded only up to the free-cancellation date
+                $refundable = $this->cancellationPolicy->isRefundable($reservation);
+                $reservation->refund_due = $refundable ? (float) $reservation->amount_paid : 0;
+                $reservation->refund_status = $reservation->refund_due > 0 ? 'due' : 'none';
+                $note = trim(($note ? $note.' · ' : '').($refundable
+                    ? ((float) $reservation->amount_paid > 0 ? 'Within free cancellation: refund due '.$reservation->money($reservation->amount_paid) : 'Within free cancellation')
+                    : 'Non-refundable under the cancellation policy'));
             }
 
             $reservation->status = $to;

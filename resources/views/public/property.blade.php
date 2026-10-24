@@ -14,6 +14,11 @@
         </div>
     @endif
 
+    <div class="bs-card">
+        <h5>Cancellation policy</h5>
+        <div>{{ $cancellationSummary }}</div>
+    </div>
+
     @if($amenities->isNotEmpty())
         <div class="bs-card">
             <h5>Amenities</h5>

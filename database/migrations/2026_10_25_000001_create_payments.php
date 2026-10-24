@@ -15,13 +15,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Admin-set commission per property; null = platform default (config bedspace.default_commission_rate)
-        Schema::table('properties', function (Blueprint $table) {
-            $table->decimal('commission_rate', 5, 2)->nullable()->after('is_active');
-        });
-
         Schema::table('reservations', function (Blueprint $table) {
-            $table->decimal('commission_rate', 5, 2)->default(0)->after('total_lkr'); // fixed at booking time
+            // config('bedspace.commission_rate') when booked; later .env changes do not affect it
+            $table->decimal('commission_rate', 5, 2)->default(0)->after('total_lkr');
             $table->decimal('amount_paid', 12, 2)->default(0)->after('commission_rate');
         });
 
@@ -57,10 +53,6 @@ return new class extends Migration
 
         Schema::table('reservations', function (Blueprint $table) {
             $table->dropColumn(['commission_rate', 'amount_paid']);
-        });
-
-        Schema::table('properties', function (Blueprint $table) {
-            $table->dropColumn('commission_rate');
         });
     }
 };

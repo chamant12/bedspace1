@@ -15,8 +15,12 @@
                 <p class="mb-1">{{ $r->check_in->format('D, d M Y') }} &rarr; {{ $r->check_out->format('D, d M Y') }} ({{ $r->nights }} night{{ $r->nights > 1 ? 's' : '' }})</p>
                 <p class="mb-1">Payment: {{ $r->payment_method->label() }} &middot; {{ ucfirst(str_replace('_', ' ', $r->payment_status)) }}</p>
                 <p class="mb-1">Source: {{ $r->source === 'owner' ? 'Entered by property' : 'Website' }} &middot; Booked {{ $r->created_at->timezone(config('bedspace.timezone'))->format('Y-m-d H:i') }}</p>
+                <p class="mb-1">Cancellation policy: {{ $r->free_cancellation_until ? 'free until '.$r->free_cancellation_until->format('Y-m-d').' ('.$r->cancellation_days.' days)' : 'non-refundable' }}</p>
                 @if($r->cancelled_at)
                     <p class="mb-1 text-danger">Cancelled {{ $r->cancelled_at->timezone(config('bedspace.timezone'))->format('Y-m-d H:i') }}: {{ $r->cancellation_reason }}</p>
+                    @if((float) $r->refund_due > 0)
+                        <p class="mb-1 text-danger"><strong>Refund due: {{ $r->money($r->refund_due) }}</strong> ({{ $r->refund_status }})</p>
+                    @endif
                 @endif
             </div></div>
         </div>

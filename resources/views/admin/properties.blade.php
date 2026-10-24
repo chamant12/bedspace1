@@ -13,7 +13,7 @@
                             <th>City</th>
                             <th>District</th>
                             <th>Rooms</th>
-                            <th>Commission %</th>
+                            <th>No-refund window</th>
                             <th>Status</th>
                             <th></th>
                         </tr>
@@ -29,15 +29,7 @@
                             <td>{{ $property->city?->city_name }}</td>
                             <td>{{ $property->city?->district?->district_name }}</td>
                             <td>{{ (int) ($roomCounts[$property->id] ?? 0) }}</td>
-                            <td>
-                                <form method="POST" action="/admin/properties/{{ $property->id }}/commission" class="d-flex gap-1">
-                                    @csrf
-                                    <input type="number" name="commission_rate" step="0.01" min="0" max="100" class="form-control form-control-sm" style="width:80px;"
-                                           value="{{ $property->commission_rate }}" placeholder="{{ number_format(config('bedspace.default_commission_rate'), 2) }}"
-                                           title="Empty = platform default">
-                                    <button type="submit" class="btn btn-sm btn-outline-primary">Set</button>
-                                </form>
-                            </td>
+                            <td>{{ $property->effectiveCancellationDays() }} days</td>
                             <td>
                                 @if($property->is_active)
                                     <span class="badge badge-success">Active</span>

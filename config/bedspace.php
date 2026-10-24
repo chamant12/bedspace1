@@ -16,8 +16,13 @@ return [
     'local_currency' => 'LKR',
     'foreign_currency' => 'USD',
 
-    // Platform commission (%) on each payment, unless the admin set a rate for the property
-    'default_commission_rate' => (float) env('BEDSPACE_COMMISSION_RATE', 10),
+    // Platform (Bedspace) commission in % of each payment. Changed by DevOps at the
+    // admin's request; each booking keeps the rate in force when it was made.
+    'commission_rate' => (float) env('BEDSPACE_COMMISSION_RATE', 5),
+
+    // Default cancellation policy: cancellations within this many days before
+    // check-in are not refunded. Each property may set its own number of days.
+    'free_cancellation_days' => (int) env('BEDSPACE_FREE_CANCELLATION_DAYS', 3),
 
     // Online payment gateway: "dummy" (test page, no real money) until Sampath Bank IPG is integrated.
     // The dummy gateway refuses to run in production unless explicitly allowed.

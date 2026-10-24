@@ -28,6 +28,9 @@ class Reservation extends Model
         'total_lkr' => 'decimal:2',
         'commission_rate' => 'decimal:2',
         'amount_paid' => 'decimal:2',
+        'cancellation_days' => 'integer',
+        'free_cancellation_until' => 'date',
+        'refund_due' => 'decimal:2',
         'expires_at' => 'datetime',
         'cancelled_at' => 'datetime',
     ];
