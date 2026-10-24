@@ -51,6 +51,7 @@ class UserLoginController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate(); // Prevent session fixation
+            \App\Support\Audit::log('auth.login', Auth::user(), 'Signed in');
             return redirect(Auth::user()->dashboardUrl());
         }
         session()->flash('error', 'Invalid username or password');

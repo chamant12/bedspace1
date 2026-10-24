@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Payment extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     const PENDING = 'pending';
     const COMPLETED = 'completed';

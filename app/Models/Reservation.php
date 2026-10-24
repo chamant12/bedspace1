@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Reservation extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     protected $casts = [
         'status' => ReservationStatus::class,

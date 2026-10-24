@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class RoomType extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     protected $table = 'roomtypes';
 

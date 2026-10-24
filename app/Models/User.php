@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 class User extends Authenticatable
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;

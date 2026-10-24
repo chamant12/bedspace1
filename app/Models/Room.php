@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Room extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     protected $casts = [
         'is_active' => 'boolean',

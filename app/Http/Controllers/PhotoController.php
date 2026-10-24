@@ -132,6 +132,8 @@ class PhotoController extends Controller
             $this->authorizeTarget($photo->upload_type, $photo->type_id);
 
             DB::table('photos')->where('id', $photo_id)->update(['is_active' => false, 'updated_at' => now()]);
+            \App\Support\Audit::log('photo.removed', null, "Photo #$photo_id ({$photo->upload_type} #{$photo->type_id}) removed from the gallery", null,
+                $photo->upload_type === 'property' ? (int) $photo->type_id : null);
 
             // 🔄 Reorder remaining active photos
             $remaining = DB::table('photos')

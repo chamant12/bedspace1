@@ -224,12 +224,30 @@
               </a>
             </li>
             @endif
-            @if($navUser->isAdmin() || ($navUser->isOwner() && $navUser->isApproved()))
+            @if($navUser->isAdmin() || ($navUser->isPartner() && $navUser->isApproved()))
             <li class="nav-item">
-              <a class="nav-link" href="{{ $navUser->isAdmin() ? '/admin/reports/income' : '/reports/income' }}">
-                <i class="mdi mdi-chart-line menu-icon"></i>
-                <span class="menu-title">Income report</span>
+              <a class="nav-link" href="/guests">
+                <i class="mdi mdi-account-multiple menu-icon"></i>
+                <span class="menu-title">Guests</span>
               </a>
+            </li>
+            @endif
+            @if($navUser->isAdmin() || ($navUser->isOwner() && $navUser->isApproved()))
+            @php($reportBase = $navUser->isAdmin() ? '/admin' : '')
+            <li class="nav-item">
+              <a class="nav-link" data-bs-toggle="collapse" href="#menu-reports" aria-expanded="false" aria-controls="menu-reports">
+                <i class="mdi mdi-chart-line menu-icon"></i>
+                <span class="menu-title">Reports</span>
+                <i class="menu-arrow"></i>
+              </a>
+              <div class="collapse" id="menu-reports">
+                <ul class="nav flex-column sub-menu">
+                  <li class="nav-item"> <a class="nav-link" href="{{ $reportBase }}/reports/income">Income</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="{{ $reportBase }}/reports/occupancy">Occupancy</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="{{ $reportBase }}/reports/bookings">Bookings</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="{{ $reportBase }}/audit">Audit log</a></li>
+                </ul>
+              </div>
             </li>
             @endif
             @if($navUser->isPartner() && $navUser->isApproved())

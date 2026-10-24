@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CurrencyRate extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     protected $table = 'currency_rates';
 

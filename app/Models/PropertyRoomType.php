@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PropertyRoomType extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     protected $fillable = ['property_id', 'roomType_id', 'total_rooms', 'is_active'];
 

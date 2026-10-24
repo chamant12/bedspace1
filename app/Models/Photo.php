@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 class Photo extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     protected $casts = [
         'has_thumbnail' => 'boolean',

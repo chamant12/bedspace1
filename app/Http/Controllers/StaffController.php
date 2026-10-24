@@ -113,6 +113,8 @@ class StaffController extends Controller
         DB::table('property_staff')->where('user_id', $member->id)->whereNotIn('property_id', $propertyIds)
             ->update(['is_active' => false, 'updated_at' => now()]);
 
+        \App\Support\Audit::log('staff.properties', $member, "{$member->name} assigned to properties: ".($propertyIds ? implode(', ', $propertyIds) : 'none'));
+
         foreach ($propertyIds as $propertyId) {
             DB::table('property_staff')->updateOrInsert(
                 ['property_id' => $propertyId, 'user_id' => $member->id],

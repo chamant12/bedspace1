@@ -6,6 +6,7 @@ use App\Models\Property;
 use App\Models\PropertyRoomType;
 use App\Models\RoomInventory;
 use App\Models\RoomType;
+use App\Support\Audit;
 use App\Support\BusinessDate;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
@@ -137,6 +138,9 @@ class Inventory
         }
 
         $this->writeClosed($property, $roomType, $values);
+
+        $summary = collect($values)->map(fn ($closed, $date) => "$date: $closed")->take(31)->join(', ');
+        Audit::log('inventory.closed', $roomType, "Closed rooms of {$roomType->roomType} set ($summary".(count($values) > 31 ? ', ...' : '').')', null, $property->id);
     }
 
     /**

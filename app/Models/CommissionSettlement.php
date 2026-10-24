@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class CommissionSettlement extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     protected $casts = [
         'amount_lkr' => 'decimal:2',

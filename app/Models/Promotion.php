@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Promotion extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     const DISCOUNT_PERCENTAGE = 'percentage';
     const DISCOUNT_FIXED_AMOUNT = 'fixed_amount';

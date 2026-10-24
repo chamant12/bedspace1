@@ -9,6 +9,7 @@ use App\Models\Occupancy;
 use App\Models\Property;
 use App\Models\RateType;
 use App\Models\RoomType;
+use App\Support\Audit;
 use App\Support\BusinessDate;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
@@ -131,6 +132,8 @@ class RatesCalendar
         }
 
         $this->write($property, $roomType, $values);
+
+        Audit::log('rates.saved', $roomType, "Rates of {$roomType->roomType} saved for ".count($values)." date(s): ".implode(', ', array_keys($values)), null, $property->id);
     }
 
     /**
@@ -153,7 +156,11 @@ class RatesCalendar
             ? $query->where('rate_for', $date)
             : $query->where('rate_for', '>=', BusinessDate::today());
 
-        return $query->update(['rate' => 0, 'updated_at' => now()]);
+        $count = $query->update(['rate' => 0, 'updated_at' => now()]);
+
+        Audit::log('rates.reset', $roomType, "Rates of {$roomType->roomType} reset ".($date ? "for $date" : 'for all dates from '.BusinessDate::today())." ($count prices)", null, $property->id);
+
+        return $count;
     }
 
     /**
@@ -199,6 +206,8 @@ class RatesCalendar
         }
 
         $this->write($property, $roomType, array_fill_keys($targets, $cells));
+
+        Audit::log('rates.copied', $roomType, "Rates of {$roomType->roomType} on $sourceDate copied to ".count($targets)." date(s) between $from and $to", null, $property->id);
 
         return count($targets);
     }

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Property extends Model
 {
     use Concerns\NeverDeleted;
+    use Concerns\Auditable;
 
     // property_owner_id is deliberately not fillable; it is set from the logged-in user
     protected $fillable = [

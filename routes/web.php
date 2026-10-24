@@ -17,6 +17,8 @@ use App\Http\Controllers\DummyGatewayController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PropertyDetailsController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\GuestController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -63,6 +65,9 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::get('/properties', [Admin\PropertyController::class, 'index']);
     Route::post('/properties/{property_id}/toggle-active', [Admin\PropertyController::class, 'toggleActive']);
     Route::get('/reports/income', [ReportController::class, 'adminIncome']);
+    Route::get('/reports/occupancy', [ReportController::class, 'occupancy']);
+    Route::get('/reports/bookings', [ReportController::class, 'bookings']);
+    Route::get('/audit', [AuditLogController::class, 'index']);
     Route::get('/commission-dues', [Admin\CommissionDueController::class, 'index']);
     Route::get('/commission-dues/{property_id}', [Admin\CommissionDueController::class, 'show']);
     Route::post('/commission-dues/{property_id}/settle', [Admin\CommissionDueController::class, 'settle']);
@@ -101,6 +106,8 @@ Route::middleware(['auth', 'partner.approved'])->group(function () {
         Route::post('/reservations/{reference}/check-in', [ReservationController::class, 'checkIn']);
         Route::post('/reservations/{reference}/payments', [ReservationController::class, 'recordPayment']);
         Route::post('/reservations/{reference}/refunds', [ReservationController::class, 'refund']);
+        Route::get('/guests', [GuestController::class, 'index']);
+        Route::get('/guests/{guest_id}', [GuestController::class, 'show']);
     });
 });
 
@@ -115,6 +122,9 @@ Route::middleware(['auth', 'user.type:owner', 'partner.approved'])->group(functi
     Route::post('/create-property', [PropertyController::class, 'createProperty']);
     Route::post('/property/{property_id}/toggle-active', [PropertyController::class, 'togglePropertyActive']);
     Route::get('/reports/income', [ReportController::class, 'ownerIncome']);
+    Route::get('/reports/occupancy', [ReportController::class, 'occupancy']);
+    Route::get('/reports/bookings', [ReportController::class, 'bookings']);
+    Route::get('/audit', [AuditLogController::class, 'index']);
 
     Route::get('/staff', [StaffController::class, 'index']);
     Route::get('/staff/new', [StaffController::class, 'create']);

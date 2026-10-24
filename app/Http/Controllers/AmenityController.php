@@ -9,6 +9,7 @@ use App\Models\RoomAmenityXref;
 use App\Models\RoomType;
 use App\Models\Property;
 use Illuminate\Validation\Rule;
+use App\Support\Audit;
 use DB;
 
 class AmenityController extends Controller
@@ -107,6 +108,8 @@ class AmenityController extends Controller
         } else {
             PropertyAmenityXref::where(['amenity_id'=>$amenity_id,'property_id'=>$type_id])->update(['is_active'=>false]);
         }
+        Audit::log('amenity.removed', null, "Amenity #$amenity_id removed from $amenity_type #$type_id", null,
+            $amenity_type === 'property' ? (int) $type_id : null);
 
         return response()->json([
                 'status' => 'success'
