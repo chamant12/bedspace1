@@ -25,8 +25,11 @@
                                 {{$property->city->district->district_name}}
                             </td>
                             <td>
-                                <a href="/view-property/{{$property->id}}" data-toggle="tooltip" title="View Property Details" class="btn btn-primary">
+                                <a href="/properties/{{$property->id}}/details" data-toggle="tooltip" title="Property details" class="btn btn-primary">
                                     <i class="fa fa-eye"></i>
+                                </a>
+                                <a href="/view-property/{{$property->id}}" data-toggle="tooltip" title="Edit property" class="btn btn-outline-primary">
+                                    <i class="ti-pencil"></i>
                                 </a>
                                 <a href="/add-base-rate/{{$property->id}}" data-toggle="tooltip" title="Rates calendar" style="text-decoration:none;" class="btn btn-success">
                                 <i class="ti-tag"></i>

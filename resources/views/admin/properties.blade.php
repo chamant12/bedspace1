@@ -38,6 +38,7 @@
                                 @endif
                             </td>
                             <td class="d-flex gap-2">
+                                <a href="/properties/{{ $property->id }}/details" class="btn btn-sm btn-primary">Details</a>
                                 <a href="/rates/{{ $property->id }}/view" class="btn btn-sm btn-outline-primary">View rates</a>
                                 <a href="/inventory/{{ $property->id }}/view" class="btn btn-sm btn-outline-primary">View inventory</a>
                                 <form method="POST" action="/admin/properties/{{ $property->id }}/toggle-active"

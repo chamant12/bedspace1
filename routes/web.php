@@ -15,6 +15,7 @@ use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\DummyGatewayController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\PropertyDetailsController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -77,6 +78,7 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
 
 // Pages shared by several user types; access is decided by policies (admin passes all)
 Route::middleware('auth')->group(function () {
+    Route::get('/properties/{property_id}/details', [PropertyDetailsController::class, 'show']);
     Route::get('/rates/{property_id}/view', [RateController::class, 'viewRates']);
     Route::get('/api/view-base-rates/{property_id}/{roomType_id}/{from_date}/{to_date}', [RateController::class, 'getBaseRatesReadonly']);
     Route::get('/inventory/{property_id}/view', [InventoryController::class, 'view']);

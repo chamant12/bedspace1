@@ -139,7 +139,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="/view-property/{{ $property->id }}" class="btn btn-primary btn-sm" title="View Property Details"><i class="fa fa-eye"></i></a>
+                                    <a href="/properties/{{ $property->id }}/details" class="btn btn-primary btn-sm" title="Property details"><i class="fa fa-eye"></i></a>
                                 </td>
                             </tr>
                             @endforeach

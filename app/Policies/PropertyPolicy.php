@@ -7,6 +7,7 @@ use App\Models\User;
 
 class PropertyPolicy
 {
+    // Property details page. Add the property's staff here when staff roles are added.
     public function view(User $user, Property $property): bool
     {
         return $this->owns($user, $property);
