@@ -117,4 +117,5 @@
     @yield('scripts')
 
 
+@include('partials.chat-widget')
 <div id="ui-datepicker-div" class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all"></div></body></html>

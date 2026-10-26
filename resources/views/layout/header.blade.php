@@ -292,6 +292,7 @@
                   <li class="nav-item"> <a class="nav-link" href="/admin/amenities">Amenities</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/admin/commission-dues">Commission dues</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/admin/payouts">Hotel payouts</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/admin/chatbot">Chatbot</a></li>
                 </ul>
               </div>
             </li>

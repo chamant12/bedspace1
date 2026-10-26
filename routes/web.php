@@ -19,6 +19,7 @@ use App\Http\Controllers\PropertyDetailsController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -42,6 +43,11 @@ Route::middleware('visitor.currency')->group(function () {
     // Dummy payment gateway (test page until Sampath Bank IPG)
     Route::get('/payments/dummy/{payment}', [DummyGatewayController::class, 'show'])->name('payments.dummy')->middleware('signed');
     Route::post('/payments/dummy/{payment}/result', [DummyGatewayController::class, 'result'])->name('payments.dummy.result')->middleware('signed');
+
+    // Virtual receptionist chat widget
+    Route::get('/chat/status', [ChatController::class, 'status']);
+    Route::post('/chat/message', [ChatController::class, 'message'])->middleware('throttle:20,1');
+    Route::post('/chat/reset', [ChatController::class, 'reset']);
 
     // Optional guest accounts
     Route::get('/account/login', [UserLoginController::class, 'customerLogin']);
@@ -68,6 +74,7 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::get('/reports/occupancy', [ReportController::class, 'occupancy']);
     Route::get('/reports/bookings', [ReportController::class, 'bookings']);
     Route::get('/audit', [AuditLogController::class, 'index']);
+    Route::get('/chatbot', [Admin\ChatbotController::class, 'index']);
     Route::get('/commission-dues', [Admin\CommissionDueController::class, 'index']);
     Route::get('/commission-dues/{property_id}', [Admin\CommissionDueController::class, 'show']);
     Route::post('/commission-dues/{property_id}/settle', [Admin\CommissionDueController::class, 'settle']);

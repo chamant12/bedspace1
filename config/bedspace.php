@@ -29,6 +29,33 @@ return [
     'payment_gateway' => env('PAYMENT_GATEWAY', 'dummy'),
     'allow_dummy_gateway_in_production' => (bool) env('ALLOW_DUMMY_GATEWAY_IN_PRODUCTION', false),
 
+    // MCP server (/api/mcp): optional bearer token; empty = open (read-only public data)
+    'mcp_token' => env('MCP_TOKEN'),
+
+    /*
+    | Website chatbot (hotel receptionist) powered by Claude. Stays in
+    | "coming soon" mode until CHATBOT_ENABLED=true, an ANTHROPIC_API_KEY is
+    | set and the SDK is installed (composer require anthropic-ai/sdk guzzlehttp/guzzle).
+    */
+    'chatbot' => [
+        'enabled' => (bool) env('CHATBOT_ENABLED', false),
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('CHATBOT_MODEL', 'claude-opus-5-5'),
+        'effort' => env('CHATBOT_EFFORT', 'low'),          // low suits chat; raise only if answers need more care
+        'max_tokens' => (int) env('CHATBOT_MAX_TOKENS', 2048), // per reply; receptionist answers are short
+        'max_tool_rounds' => 6,                             // tool calls per guest message
+        'history_messages' => 20,                           // earlier messages sent with each question
+        'max_messages_per_visitor_per_day' => (int) env('CHATBOT_DAILY_LIMIT_PER_VISITOR', 40),
+        'max_messages_per_day' => (int) env('CHATBOT_DAILY_LIMIT', 2000), // whole site: a hard budget guard
+
+        // USD per million tokens, for the cost estimate on the admin Chatbot page (check current pricing)
+        'prices' => [
+            'claude-opus-5-5' => ['input' => 4.00, 'output' => 20.00, 'cache_read' => 0.20],
+            'claude-sonnet-5-5' => ['input' => 2.00, 'output' => 10.00, 'cache_read' => 0.20],
+            'claude-haiku-5-5' => ['input' => 0.10, 'output' => 0.50, 'cache_read' => 0.01], // cache read assumed ~10% of input; confirm
+        ],
+    ],
+
     'currency_cookie' => 'bedspace_currency',
     'currency_cookie_minutes' => 60 * 24 * 365 * 2,
 
