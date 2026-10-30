@@ -136,7 +136,9 @@ class PublicBookingController extends Controller
         // Location searches ("Hotels in Kandy"): a few available properties picked at random,
         // each with a random sample of its photos
         $location = $stay['district_id'] ? District::whereKey($stay['district_id'])->value('district_name') : ($area !== '' ? $area : null);
-        $featured = $location ? $this->featuredForLocation($results) : collect();
+        $featured = $location
+            ? $this->featuredForLocation($request, $stay['district_id'] ? 'district:'.$stay['district_id'] : 'area:'.mb_strtolower($area), $results)
+            : collect();
 
         return view('public.search', compact('stay', 'districts', 'results', 'error', 'location', 'featured') + [
             'occupancies' => Occupancy::orderBy('occupancy')->get(),
@@ -388,22 +390,46 @@ class PublicBookingController extends Controller
         return ($user && (int) $user->user_type_id === User::TYPE_CUSTOMER) ? $user : null;
     }
 
-    // Up to 3 random results that have photos, each with up to 3 random photos
-    private function featuredForLocation(array $results)
+    /**
+     * Up to 3 random results that have photos, each with up to 3 random photos.
+     * The picks are kept in the session per location, so refreshing shows the
+     * same set until the session ends; a pick that is no longer available
+     * (other dates, photo removed) is replaced by a new random one.
+     */
+    private function featuredForLocation(Request $request, string $locationKey, array $results)
     {
-        $withPhotos = Photo::where(['upload_type' => 'property', 'is_active' => true])
-            ->whereIn('type_id', collect($results)->pluck('property.id'))
+        $byId = collect($results)->keyBy(fn ($result) => $result['property']->id);
+        $photos = Photo::where(['upload_type' => 'property', 'is_active' => true])
+            ->whereIn('type_id', $byId->keys())
             ->get()
             ->groupBy('type_id');
 
-        return collect($results)
-            ->filter(fn ($result) => $withPhotos->has($result['property']->id))
-            ->shuffle()
-            ->take(3)
-            ->map(fn ($result) => $result + [
-                'samples' => $withPhotos->get($result['property']->id)->shuffle()->take(3)->values(),
-            ])
-            ->values();
+        $sessionKey = 'featured_picks.'.md5($locationKey);
+        $saved = $request->session()->get($sessionKey, []); // [property id => [photo ids]]
+
+        // Keep saved picks that are still available, with their still-active photos
+        $picks = [];
+        foreach ($saved as $propertyId => $photoIds) {
+            $active = $photos->get($propertyId, collect())->whereIn('id', $photoIds)->pluck('id')->all();
+            if ($byId->has($propertyId) && $active) {
+                $picks[$propertyId] = $active;
+            }
+        }
+
+        // Top up with random new picks
+        $candidates = $byId->keys()->filter(fn ($id) => $photos->has($id) && !isset($picks[$id]))->shuffle();
+        foreach ($candidates->take(3 - count($picks)) as $propertyId) {
+            $picks[$propertyId] = $photos->get($propertyId)->shuffle()->take(3)->pluck('id')->all();
+        }
+
+        if ($picks !== $saved) {
+            $request->session()->put($sessionKey, $picks);
+        }
+
+        return collect($picks)->map(fn ($photoIds, $propertyId) => $byId->get($propertyId) + [
+            'samples' => $photos->get($propertyId)->whereIn('id', $photoIds)
+                ->sortBy(fn ($photo) => array_search($photo->id, $photoIds))->values(),
+        ])->values();
     }
 
     private function coverPhoto(Property $property): ?Photo
