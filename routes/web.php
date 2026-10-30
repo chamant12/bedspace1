@@ -24,9 +24,7 @@ use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
 Route::middleware('visitor.currency')->group(function () {
-    Route::get('/', function () {
-        return view('welcome');
-    });
+    Route::get('/', [PublicBookingController::class, 'home']);
     Route::post('/currency', [CurrencyController::class, 'switchCurrency']);
 
     // Booking engine

@@ -68,13 +68,18 @@ class PublicBookingController extends Controller
         return redirect()->away($this->payments->startOnline($reservation));
     }
 
+    // Home page: the template's search form submits to /search
+    public function home(Request $request){
+        return view('welcome', [
+            'stay' => $this->stayFromRequest($request),
+            'districts' => $this->districtsWithProperties(),
+            'occupancies' => Occupancy::orderBy('occupancy')->get(),
+        ]);
+    }
+
     public function search(Request $request){
         $stay = $this->stayFromRequest($request);
-        $districts = District::whereIn('id', function ($query) {
-            $query->select('cities.district_id')->from('properties')
-                ->join('cities', 'cities.id', '=', 'properties.city_id')
-                ->where('properties.is_active', true);
-        })->orderBy('district_name')->get();
+        $districts = $this->districtsWithProperties();
 
         $results = [];
         $error = null;
@@ -265,6 +270,16 @@ class PublicBookingController extends Controller
         }
 
         return redirect($this->bookingUrl($reservation));
+    }
+
+    // Districts that have at least one active property
+    private function districtsWithProperties()
+    {
+        return District::whereIn('id', function ($query) {
+            $query->select('cities.district_id')->from('properties')
+                ->join('cities', 'cities.id', '=', 'properties.city_id')
+                ->where('properties.is_active', true);
+        })->orderBy('district_name')->get();
     }
 
     private function bookingUrl(Reservation $reservation): string

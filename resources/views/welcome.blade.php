@@ -107,299 +107,72 @@
                                  <div class="row">
                                   <div class="col-md-12">  
 
-                                   <!--********************* Hotel reservation ********************-->
+                                   <!--********************* Hotel search (booking engine) ********************-->
                                    <div class="reservation-tabs">
-                                        
                                            <ul class="nav nav-tabs search-opt">
-                                                    <li><a href=//index.html#hotels-tab" data-toggle="tab"><i class="flaticon-hotel"></i>hotels</a></li>
-                                                    <li class=""><a href=//index.html#flights-tab" data-toggle="tab"><i class="flaticon-air-freight"></i>flight</a></li>
-                                                    <li class=""><a href=//index.html#Packages-tab" data-toggle="tab"><i class="flaticon-suitcase"></i>Packages</a></li>
-                                                    <li class=""><a href=//index.html#holiday-tab" data-toggle="tab"><i class="flaticon-air-balloon"></i>Holiday</a></li>
+                                                    <li class="active"><a href="#hotels-tab" data-toggle="tab"><i class="flaticon-hotel"></i>hotels</a></li>
                                                 </ul>
-                                        
                                     </div>
                                     <div class="tab-content">
-                                    <form id="hotels-tab" class="tab-pane form-inline reservation-hotel active" method="post" name="reservationform">
+                                    <form id="hotels-tab" class="tab-pane form-inline reservation-hotel active" method="GET" action="/search" name="reservationform">
                                       <div class="row">
                                         <div class="col-md-3 step-where steo-f">
                                           <div class="form-group">
                                             <div class="content-checkin-data">
                                                  <i class="flaticon-map"></i>
-                                                    <select name="adults" id="Select" class="form-control">
-                                                        <option class="opt-default" selected="selected">From</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
+                                                    <select name="district_id" class="form-control" aria-label="Where">
+                                                        <option value="" selected="selected">Anywhere in Sri Lanka</option>
+                                                        @foreach($districts as $district)
+                                                            <option value="{{ $district->id }}">{{ $district->district_name }}</option>
+                                                        @endforeach
                                                       </select>
                                                 </div>
-                                                 
-                                          </div>
-                                        </div>
-                                        <div class="col-md-3 step-where">
-                                          <div class="form-group">
-                                            <div class="content-checkin-data">
-                                                <i class="flaticon-map"></i>
-                                                    <select name="adults" id="Select1" class="form-control">
-                                                        <option class="opt-default" selected="selected">To</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
-                                                      </select>
-                                                </div>
-                                                 
                                           </div>
                                         </div>
                                         <div class="col-md-2 departure-date step-where">
-                                    
                                               <div class="form-group">
-                                              
 <i class="flaticon-appointment"></i>
-                                                <input type="text" id="datepicker" data-provide="datepicker" class="field-input calendar-input hasDatepicker" placeholder="Depart date">
+                                                <input type="text" id="bs-check-in" name="check_in" class="field-input calendar-input" placeholder="Check-in" value="{{ $stay['check_in'] }}" autocomplete="off" readonly required aria-label="Check-in date">
                                               </div>
-                                            
                                         </div>
                                         <div class="col-md-2 departure-date step-where">
-                                    
                                               <div class="form-group">
-                                              
 <i class="flaticon-appointment"></i>
-                                                <input type="text" id="datepicker1" data-provide="datepicker" class="field-input calendar-input hasDatepicker" placeholder="Return date">
+                                                <input type="text" id="bs-check-out" name="check_out" class="field-input calendar-input" placeholder="Check-out" value="{{ $stay['check_out'] }}" autocomplete="off" readonly required aria-label="Check-out date">
                                               </div>
-                                            
                                         </div>
-                                        <div class="col-md-2 travel-where">
+                                        <div class="col-md-3 travel-where">
                                           <div class="form-group">
                                             <div class="content-checkin-data">
                                                  <i class="flaticon-passenger"></i>
-                                                    <select name="adults" id="Select2" class="form-control">
-                                                        <option class="opt-default" selected="selected">Traveller</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
+                                                    <select name="guests" class="form-control" aria-label="Guests per room">
+                                                        <option value="" selected="selected">Guests per room</option>
+                                                        @foreach($occupancies as $occupancy)
+                                                            <option value="{{ $occupancy->occupancy }}">{{ $occupancy->occupancy }} ({{ $occupancy->occupancy_name }})</option>
+                                                        @endforeach
                                                       </select>
                                                 </div>
-                                                 
                                           </div>
-                                        </div>
-                                        <div class="col-md-12">
-                                          <div class="form-group">
-                                           <button class="banner-btn">Search<i class="fas fa-long-arrow-alt-right"></i></button>
-                                            </div>
-                                          </div>
-                                        
-                                      </div>
-                                    </form>
-                                    <form id="flights-tab" class="tab-pane form-inline reservation-hotel" method="post" name="reservationform">
-                                      <div class="row">
-                                        <div class="col-md-3 step-where steo-f">
-                                          <div class="form-group">
-                                            <div class="content-checkin-data">
-                                                 <i class="flaticon-map"></i>
-                                                    <select name="adults" id="Select3" class="form-control">
-                                                        <option class="opt-default" selected="selected">From</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
-                                                      </select>
-                                                </div>
-                                                 
-                                          </div>
-                                        </div>
-                                        <div class="col-md-3 step-where">
-                                          <div class="form-group">
-                                            <div class="content-checkin-data">
-                                                <i class="flaticon-map"></i>
-                                                    <select name="adults" id="Select4" class="form-control">
-                                                        <option class="opt-default" selected="selected">To</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
-                                                      </select>
-                                                </div>
-                                                 
-                                          </div>
-                                        </div>
-                                        <div class="col-md-2 departure-date step-where">
-                                    
-                                              <div class="form-group">
-                                              
-<i class="flaticon-appointment"></i>
-                                                <input type="text" id="datepicker2" data-provide="datepicker" class="field-input calendar-input hasDatepicker" placeholder="Depart date">
-                                              </div>
-                                            
-                                        </div>
-                                        <div class="col-md-2 departure-date step-where">
-                                    
-                                              <div class="form-group">
-                                              
-<i class="flaticon-appointment"></i>
-                                                <input type="text" id="datepicker3" data-provide="datepicker" class="field-input calendar-input hasDatepicker" placeholder="Return date">
-                                              </div>
-                                            
                                         </div>
                                         <div class="col-md-2 travel-where">
                                           <div class="form-group">
                                             <div class="content-checkin-data">
-                                                 <i class="flaticon-sit"></i>
-                                                    <select name="adults" id="Select5" class="form-control">
-                                                        <option class="opt-default" selected="selected">Traveller</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
+                                                 <i class="flaticon-hotel"></i>
+                                                    <select name="rooms" class="form-control" aria-label="Rooms">
+                                                        @for($i = 1; $i <= \App\Services\BookingQuotes::MAX_ROOMS; $i++)
+                                                            <option value="{{ $i }}">{{ $i }} {{ $i === 1 ? 'room' : 'rooms' }}</option>
+                                                        @endfor
                                                       </select>
                                                 </div>
-                                                 
                                           </div>
                                         </div>
                                         <div class="col-md-12">
                                           <div class="form-group">
-                                           <button class="banner-btn">Search<i class="fas fa-long-arrow-alt-right"></i></button>
+                                           <button type="submit" class="banner-btn">Search<i class="fas fa-long-arrow-alt-right"></i></button>
                                             </div>
                                           </div>
-                                        
                                       </div>
                                     </form>
-                                     <form id="Packages-tab" class="tab-pane form-inline reservation-hotel" method="post" name="reservationform">
-                                      <div class="row">
-                                        <div class="col-md-3 step-where steo-f">
-                                          <div class="form-group">
-                                            <div class="content-checkin-data">
-                                                 <i class="flaticon-map"></i>
-                                                    <select name="adults" id="Select6" class="form-control">
-                                                        <option class="opt-default" selected="selected">From</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
-                                                      </select>
-                                                </div>
-                                                 
-                                          </div>
-                                        </div>
-                                        <div class="col-md-3 step-where">
-                                          <div class="form-group">
-                                            <div class="content-checkin-data">
-                                                <i class="flaticon-map"></i>
-                                                    <select name="adults" id="Select7" class="form-control">
-                                                        <option class="opt-default" selected="selected">To</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
-                                                      </select>
-                                                </div>
-                                                 
-                                          </div>
-                                        </div>
-                                        <div class="col-md-2 departure-date step-where">
-                                    
-                                              <div class="form-group">
-                                              
-<i class="flaticon-appointment"></i>
-                                                <input type="text" id="datepicker4" data-provide="datepicker" class="field-input calendar-input hasDatepicker" placeholder="Depart date">
-                                              </div>
-                                            
-                                        </div>
-                                        <div class="col-md-2 departure-date step-where">
-                                    
-                                              <div class="form-group">
-                                              
-<i class="flaticon-appointment"></i>
-                                                <input type="text" id="datepicker5" data-provide="datepicker" class="field-input calendar-input hasDatepicker" placeholder="Return date">
-                                              </div>
-                                            
-                                        </div>
-                                        <div class="col-md-2 travel-where">
-                                          <div class="form-group">
-                                            <div class="content-checkin-data">
-                                                 <i class="flaticon-sit"></i>
-                                                    <select name="adults" id="Select8" class="form-control">
-                                                        <option class="opt-default" selected="selected">Traveller</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
-                                                      </select>
-                                                </div>
-                                                 
-                                          </div>
-                                        </div>
-                                        <div class="col-md-12">
-                                          <div class="form-group">
-                                           <button class="banner-btn">Search<i class="fas fa-long-arrow-alt-right"></i></button>
-                                            </div>
-                                          </div>
-                                        
-                                      </div>
-                                    </form>
-                                     <form id="holiday-tab" class="tab-pane form-inline reservation-hotel" method="post" name="reservationform">
-                                      <div class="row">
-                                        <div class="col-md-3 step-where steo-f">
-                                          <div class="form-group">
-                                            <div class="content-checkin-data">
-                                                 <i class="flaticon-map"></i>
-                                                    <select name="adults" id="Select9" class="form-control">
-                                                        <option class="opt-default" selected="selected">From</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
-                                                      </select>
-                                                </div>
-                                                 
-                                          </div>
-                                        </div>
-                                        <div class="col-md-3 step-where">
-                                          <div class="form-group">
-                                            <div class="content-checkin-data">
-                                                <i class="flaticon-map"></i>
-                                                    <select name="adults" id="Select10" class="form-control">
-                                                        <option class="opt-default" selected="selected">To</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
-                                                      </select>
-                                                </div>
-                                                 
-                                          </div>
-                                        </div>
-                                        <div class="col-md-2 departure-date step-where">
-                                    
-                                              <div class="form-group">
-                                              
-<i class="flaticon-appointment"></i>
-                                                <input type="text" id="datepicker6" data-provide="datepicker" class="field-input calendar-input hasDatepicker" placeholder="Depart date">
-                                              </div>
-                                            
-                                        </div>
-                                        <div class="col-md-2 departure-date step-where">
-                                    
-                                              <div class="form-group">
-                                              
-<i class="flaticon-appointment"></i>
-                                                <input type="text" id="datepicker7" data-provide="datepicker" class="field-input calendar-input hasDatepicker" placeholder="Return date">
-                                              </div>
-                                            
-                                        </div>
-                                        <div class="col-md-2 travel-where">
-                                          <div class="form-group">
-                                            <div class="content-checkin-data">
-                                                 <i class="flaticon-sit"></i>
-                                                    <select name="adults" id="Select11" class="form-control">
-                                                        <option class="opt-default" selected="selected">Traveller</option>
-                                                        <option value="1">Dubai</option>
-                                                        <option value="2">UK</option>
-                                                        <option value="3">USA</option>
-                                                      </select>
-                                                </div>
-                                                 
-                                          </div>
-                                        </div>
-                                        <div class="col-md-12">
-                                          <div class="form-group">
-                                           <button class="banner-btn">Search<i class="fas fa-long-arrow-alt-right"></i></button>
-                                            </div>
-                                          </div>
-                                        
-                                      </div>
-                                    </form>
-                                    <!--********************* Flight reservation ********************-->
 
                                     
                                     </div><!--Close tab-content form-->
@@ -1297,34 +1070,6 @@ travel agency</h3>
     <!-- =============================
         Start: News Letter
     ============================= -->
-		<section id="news" class="newsletter">
-			<div class="container">
-				<div class="row justify-content-center text-center">	
-                    <div class="col-md-12 news-inner">
-                        <div class="row">
-                    <div class="col-lg-6 col-md-12">
-                        <div class="news-text">
-                            <h3>Subscribe to Our Newsletter</h3>
-                            <p>If you Subscribe to our newsletter, we’ll send you the best deals for you and updates.</p>
-                        </div>
-                    </div>
-                    <div class="col-lg-6 col-md-12">
-                        <div class="subscribe-search">
-                            <form action=//index.html#">
-                                <div class="input-group">
-                                    <input type="email" id="destination3" class="field-input" value="Your e-mail here" onfocus="if(this.value  == &#39;Your e-mail here&#39;) { this.value = &#39;&#39;; } " onblur="if(this.value == &#39;&#39;) { this.value = &#39;Your e-mail here&#39;; } ">
-                                    <span class="input-group-btn">
-                                <a class="button-form">Subscribe</a>
-                              </span>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                        </div>
-                </div>
-				</div>
-			</div>
-		</section>
 	<!-- =============================
         End: News Letter
     ============================= -->
@@ -1542,46 +1287,6 @@ travel agency</h3>
 <!-- =============================
         Start: get this app
     ============================= -->
-    <section class="get-app section">
-        <div class="container">
-			<div class="row justify-content-center text-center">
-				<div class="col-lg-12">
-					<div class="heading color">
-						<h2>get this app</h2>
-						<p>Download now</p>						
-					</div>
-				</div>
-            </div>
-            <div class="row justify-content-center text-center">
-                <div class="col-md-12">
-                    <ul class="get-icon">
-                        <li class="apple"><a href=//index.html#"><i class="fab fa-apple"></i></a><br><span>iso</span></li>
-                        <li class="android"><a href=//index.html#"><i class="fab fa-android"></i></a><br><span>Android</span></li>
-                    </ul>
-                </div>
-                <div class="col-lg-6 col-md-9">
-                        <div class="get-search">
-                            <form action=//index.html#">
-                                <div class="input-group">
-                                   <div class="ddOutOfVision" id="countries_msddHolder" style="height: 0px; overflow: hidden; position: absolute;"><select name="countries" id="countries" class="arraw-d" style="width:100px;" tabindex="-1">
-      <option value="ad" data-image="images/country2.png");}}" data-imagecss="flag ad" data-title="Andorra"> +1</option>
-      <option value="ae" data-image="images/country3.png");}}" data-imagecss="flag ae" data-title="United Arab Emirates"> +2</option>
-      <option value="af" data-image="images/country1.png");}}" data-imagecss="flag af" data-title="Afghanistan"> +0</option>
-      <option value="ag" data-image="images/country4.png");}}" data-imagecss="flag ag" data-title="Antigua and Barbuda"> +5</option>
-      
-                                    </select></div><div class="dd ddcommon borderRadius" id="countries_msdd" tabindex="0" style="width: 100px;"><div class="ddTitle borderRadiusTp"><span class="divider"></span><span class="ddArrow arrowoff"></span><span class="ddTitleText " id="countries_title"><img src="{{url("theme/country2.png");}}" class="flag ad fnone"><span class="ddlabel">+1</span><span class="description" style="display: none;"></span></span></div><input id="countries_titleText" type="text" autocomplete="off" class="text shadow borderRadius" style="display: none;"><div class="ddChild ddchild_ border shadow" id="countries_child" style="z-index: 9999; display: none; position: absolute; visibility: visible; height: 139px;"><ul><li class="enabled _msddli_ selected" title="Andorra"><img src="{{url("theme/country2.png");}}" class="flag ad fnone"><span class="ddlabel">+1</span><div class="clear"></div></li><li class="enabled _msddli_" title="United Arab Emirates"><img src="{{url("theme/country3.png");}}" class="flag ae fnone"><span class="ddlabel">+2</span><div class="clear"></div></li><li class="enabled _msddli_" title="Afghanistan"><img src="{{url("theme/country1.png");}}" class="flag af fnone"><span class="ddlabel">+0</span><div class="clear"></div></li><li class="enabled _msddli_" title="Antigua and Barbuda"><img src="{{url("theme/country4.png");}}" class="flag ag fnone"><span class="ddlabel">+5</span><div class="clear"></div></li></ul></div></div>
-                                    <input type="tel" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required="" class="field-input" value="Phone Number" onfocus="if(this.value  == &#39;Phone Number&#39;) { this.value = &#39;&#39;; } " onblur="if(this.value == &#39;&#39;) { this.value = &#39;Phone Number&#39;; } ">
-                                    <span class="input-group-btn">
-                                <a class="button-form">Subscribe</a>
-                              </span>
-                                </div>
-                            </form>
-                            <p>we'll send you a download link on your phone</p>
-                        </div>
-                    </div>
-            </div>
-        </div>
-    </section>
     <!-- =============================
         End: get this app
     ============================= -->
@@ -1704,5 +1409,29 @@ travel agency</h3>
     
 
 
+<script>
+// Home page search: no past dates, check-out always after check-in
+$(function () {
+    var checkIn = $('#bs-check-in'), checkOut = $('#bs-check-out');
+    var nextDay = function (date) { var d = new Date(date.getTime()); d.setDate(d.getDate() + 1); return d; };
+
+    checkIn.datepicker({ dateFormat: 'yy-mm-dd', minDate: 0, onSelect: function () {
+        var inDate = checkIn.datepicker('getDate');
+        checkOut.datepicker('option', 'minDate', nextDay(inDate));
+        var outDate = checkOut.datepicker('getDate');
+        if (!outDate || outDate <= inDate) {
+            checkOut.datepicker('setDate', nextDay(inDate));
+        }
+    }});
+    checkOut.datepicker({ dateFormat: 'yy-mm-dd', minDate: 1 });
+
+    $('#hotels-tab').on('submit', function (e) {
+        if (!checkIn.val() || !checkOut.val()) {
+            e.preventDefault();
+            alert('Please choose your check-in and check-out dates.');
+        }
+    });
+});
+</script>
 @include('partials.chat-widget')
 <div id="ui-datepicker-div" class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all"></div></body></html>
