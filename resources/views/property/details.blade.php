@@ -16,6 +16,7 @@
                 <a href="/add-base-rate/{{ $property->id }}" class="btn btn-sm btn-outline-primary">Rates calendar</a>
                 <a href="/inventory/{{ $property->id }}" class="btn btn-sm btn-outline-primary">Inventory</a>
                 <a href="/rooms/{{ $property->id }}" class="btn btn-sm btn-outline-primary">Room numbers</a>
+                <a href="/photos/property/{{ $property->id }}" class="btn btn-sm btn-outline-primary">Photos</a>
                 @if(auth()->user()->isOwner())
                     <form method="POST" action="/property/{{ $property->id }}/toggle-active"
                           onsubmit="return confirm('{{ $property->is_active ? 'Disable this property? Guests will no longer be able to find or book it. Existing bookings are kept.' : 'Enable this property again?' }}');">

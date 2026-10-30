@@ -203,7 +203,8 @@ Route::middleware(['auth', 'user.type:owner,staff', 'partner.approved', 'can.edi
     Route::get('/amenities', [AmenityController::class, 'amenities']);
     Route::post('/addAmenity', [AmenityController::class, 'addAmenity']);
     Route::get('/photos', [PhotoController::class, 'selectPhotoType']);
-    Route::post('/manage-photos', [PhotoController::class, 'managePhotos']);
+    Route::get('/photos/property/{property_id}', [PhotoController::class, 'propertyGallery']);
+    Route::get('/photos/property/{property_id}/room-type/{roomType_id}', [PhotoController::class, 'roomTypeGallery']);
 
     // AJAX endpoints used by the Blade pages
     Route::prefix('api')->group(function () {
