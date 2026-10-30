@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>EpickTours</title>
+    <link rel="icon" type="image/png" href="{{ url('images/epicktours-favicon.png') }}">
     <!-- plugins:css -->
     <link rel="stylesheet" href="{{url("assets/vendors/feather/feather.css")}}">
     <link rel="stylesheet" href="{{url("assets/vendors/mdi/css/materialdesignicons.min.css")}}">
@@ -39,10 +40,10 @@
           </div>
           <div>
             <a class="navbar-brand brand-logo" href="/">
-              <img src="{{url("assets/images/logo.png")}}" alt="logo" width="100%"/>
+              <img src="{{ url('images/epicktours-logo.png') }}" alt="EpickTours" style="height:52px; width:auto; max-width:150px;"/>
             </a>
-            <a class="navbar-brand brand-logo-mini" href="index.html">
-              <img src="{{url("assets/images/logo-mini.svg")}}" alt="logo" />
+            <a class="navbar-brand brand-logo-mini" href="/">
+              <img src="{{ url('images/epicktours-mark.png') }}" alt="EpickTours" style="width:36px; height:36px;"/>
             </a>
           </div>
         </div>

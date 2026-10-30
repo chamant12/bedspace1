@@ -10,7 +10,7 @@
     <meta name="description" content="{{ trim($__env->yieldContent('meta_description')) ?: ($site['meta_description'] ?? '') }}">
     <meta property="og:site_name" content="{{ $siteName }}">
     <meta property="og:title" content="{{ trim($__env->yieldContent('title')) ?: $siteName }}">
-    <link rel="icon" href="{{ url('assets/images/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ url('images/epicktours-favicon.png') }}">
     <link rel="stylesheet" href="{{ url('theme/flaticon.css') }}">
     <link rel="stylesheet" href="{{ url('theme/all.min.css') }}">
     <link rel="stylesheet" href="{{ url('theme/animate.min.css') }}">
