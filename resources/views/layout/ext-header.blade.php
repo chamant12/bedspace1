@@ -1,118 +1,81 @@
+@php($site = \App\Cms\Cms::settings())
+@php($siteName = $site['site_name'] ?? 'EpickTours')
 <!DOCTYPE html>
-<!-- saved from url=(0048)https://ingenioushubs.com/Travel/demo/index.html -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Travel Home</title>
-    
-    <!--================================================
-                   CSS LINK PART START
-    ==================================================-->
-    <link rel="icon" href="{{url("images/favicon.png");}}">
-    <link rel="stylesheet" href="{{url("theme/flaticon.css");}}">
-    <link rel="stylesheet" href="{{url("theme/all.min.css");}}">
-    <link rel="stylesheet" href="{{url("theme/animate.min.css");}}">
-    <link rel="stylesheet" href="{{url("theme/dd.css");}}">
-    <link rel="stylesheet" href="{{url("theme/jquery-ui.min.css");}}">
-    <link href="{{url("theme/jquery.fancybox.min.css");}}" rel="stylesheet">
-    <link rel="stylesheet" href="{{url("theme/slick.css");}}">
-    <link rel="stylesheet" href="{{url("theme/bootstrap.min.css");}}">
-    <link rel="stylesheet" href="{{url("theme/style-1.css");}}">
-    <link rel="stylesheet" href="{{url("theme/responsive-1.css");}}">
-    <style>
-        .content-wrapper {
-            margin-top: 100px;
-        }
-    </style>
+    <title>{{ trim($__env->yieldContent('title')) ? trim($__env->yieldContent('title')).' | '.$siteName : $siteName.' – '.($site['tagline'] ?? '') }}</title>
+    <meta name="description" content="{{ trim($__env->yieldContent('meta_description')) ?: ($site['meta_description'] ?? '') }}">
+    <meta property="og:site_name" content="{{ $siteName }}">
+    <meta property="og:title" content="{{ trim($__env->yieldContent('title')) ?: $siteName }}">
+    <link rel="icon" href="{{ url('assets/images/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url('theme/flaticon.css') }}">
+    <link rel="stylesheet" href="{{ url('theme/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url('theme/animate.min.css') }}">
+    <link rel="stylesheet" href="{{ url('theme/jquery-ui.min.css') }}">
+    <link rel="stylesheet" href="{{ url('theme/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url('theme/style-1.css') }}">
+    <link rel="stylesheet" href="{{ url('theme/responsive-1.css') }}">
+    <link rel="stylesheet" href="{{ url('css/site.css') }}">
     @yield('styles')
-    <!--================================================
-                   CSS LINK PART END
-    ==================================================-->
 </head>
+<body class="@yield('body_class')">
+    <a href="#top" id="back-top-btn" aria-label="Back to top"><i class="fas fa-angle-double-up"></i></a>
+    <span id="top"></span>
 
-<body>
-     <!--=============
-    Preloader Part HTML Start
-    ===================-->
-    <div id="preloader" style="display: none;">
-        <div id="loading-center">
-            <img src="{{url("theme/white.gif");}}" alt="">
-        </div>
-    </div>
-    <!--=============
-    Preloader Part HTML End
-    ===================-->
-     <!-- ===================
-       back to top start 
-     =================== -->
-    <a href="/" id="back-top-btn">
-       <i class="fas fa-angle-double-up"></i>
-     </a>
-     <!-- ===================
-       back to top End 
-     =================== -->
-        
-    <!--================================================
-                      MENU PART START
-    ==================================================-->
     <header>
-        <nav id="nav-part" class="navbar header-nav custom_nav navbar-expand-md">
-            <div class="container p-0">
-                <a class="navbar-brand" href="/"><img src="{{url('assets/images/logo.jpg');}}" class="img-fluid" alt="logo" style="width:64%"></a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+        <nav id="nav-part" class="navbar header-nav custom_nav navbar-expand-lg">
+            <div class="container">
+                <a class="navbar-brand site-brand" href="{{ url('/') }}">
+                    @if(!empty($site['logo_path']))
+                        <img src="{{ \App\Cms\Cms::imageUrl($site['logo_path'], $site['logo_disk'] ?? null) }}" alt="{{ $siteName }}">
+                    @else
+                        <span class="site-brand-name">{{ $siteName }}</span>
+                    @endif
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span></span><span></span><span></span>
                 </button>
-                <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
-                    <ul class="navbar-nav">                                                                     
-                        <li class="nav-item"><a class="nav-link active" href=//index.html#banner_part">Home<span class="sr-only">(current)</span></a></li>
-                        <li class="nav-item"><a class="nav-link" href=//popular.html">Popular Destination  </a></li>
-                        <li class="nav-item"><a class="nav-link" href=//blog.html">Blog</a></li>
-                        <li class="nav-item"><a class="nav-link" href=//tourpackage.html">Tour Packages</a></li>
-                        @if(auth()->check())
-                        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
-                        @else
-                        <li class="nav-item"><a class="nav-link" href="/signup">Signup</a></li>
-                        @endif
-                        <li class="nav-item"><a class="nav-link" href=//index.html#contact">Contact</a></li>
+                <div class="collapse navbar-collapse justify-content-end" id="siteNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ url('/') }}">Home</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->is('search', 'stay/*', 'book') ? 'active' : '' }}" href="{{ url('/search') }}">Find a stay</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url('/#destinations') }}">Destinations</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->is('blog', 'blog/*') ? 'active' : '' }}" href="{{ url('/blog') }}">Blog</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->is('about') ? 'active' : '' }}" href="{{ url('/about') }}">About</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->is('contact') ? 'active' : '' }}" href="{{ url('/contact') }}">Contact</a></li>
                     </ul>
-                    <ul class="login_menu navbar-right nav-sign">                    
-						<li class="login"><a href="/signup"" class="btn-4">Sign up / login</a></li>
-					</ul>
-
+                    <ul class="login_menu navbar-right nav-sign">
+                        @auth
+                            <li class="login"><a href="{{ auth()->user()->dashboardUrl() }}" class="btn-4">{{ auth()->user()->isCustomer() ? 'My bookings' : 'Dashboard' }}</a></li>
+                        @else
+                            <li class="login"><a href="{{ url('/account/login') }}" class="btn-4">Sign in</a></li>
+                        @endauth
+                    </ul>
                 </div>
             </div>
         </nav>
-        <div class="container text-right py-1">
-            <a href="/search" class="mr-3">Find a stay</a>
-            <a href="/booking/find" class="mr-3">Find my booking</a>
-            @auth
-                @if(auth()->user()->isCustomer())<a href="/account/bookings" class="mr-3">My bookings</a>@endif
-            @else
-                <a href="/account/login" class="mr-3">Sign in</a>
-            @endauth
-            @include('partials.currency-switcher')
+        <div class="site-subbar">
+            <div class="container">
+                <a href="{{ url('/booking/find') }}">Find my booking</a>
+                @guest<a href="{{ url('/login') }}">Property owners: sign in</a><a href="{{ url('/signup') }}">List your property</a>@endguest
+                @include('partials.currency-switcher')
+            </div>
         </div>
     </header>
-    <!--================================================
-                       MENU PART END
-    ==================================================-->
-@if (session('success'))
-    <div class="alert alert-success" style="margin-top: 137px;text-align: center;margin-bottom: -80px;">
-        {{ session('success') }}
-    </div>
-@endif
-@if (session('error'))
-    <div class="alert alert-danger" style="margin-top: 137px;text-align: center;margin-bottom: -80px;">
-        {{ session('error') }}
-    </div>
-@endif
-@if ($errors->any())
-    <div class="alert alert-danger" style="margin-top: 137px;text-align: center;margin-bottom: -80px;">
-        @foreach ($errors->all() as $error)
-            <div>{{ $error }}</div>
-        @endforeach
-    </div>
-@endif
+
+    @if (session('success'))
+        <div class="alert alert-success site-flash">{{ session('success') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-danger site-flash">{{ session('error') }}</div>
+    @endif
+    @if ($errors->any())
+        <div class="alert alert-danger site-flash">
+            @foreach ($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif

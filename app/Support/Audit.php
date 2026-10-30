@@ -23,7 +23,12 @@ class Audit
             $log->user_id = auth()->id();
             $log->action = $action;
             $log->subject_type = $subject ? class_basename($subject) : null;
-            $log->subject_id = $subject?->getKey();
+            $key = $subject?->getKey();
+            $log->subject_id = is_numeric($key) ? (int) $key : null;
+            if ($key !== null && !is_numeric($key)) {
+                // Records with a text key (e.g. site settings): keep the key in the description
+                $description = trim($key.($description ? ': '.$description : ''));
+            }
             $log->property_id = $propertyId ?? ($subject ? self::propertyIdOf($subject) : null);
             $log->description = $description ? mb_substr($description, 0, 500) : null;
             $log->changes = $changes ?: null;

@@ -1,121 +1,76 @@
-<!-- =======================
-        footer Start 
-    ========================== -->
-	<footer id="contact" class="contact">
+@php($site = \App\Cms\Cms::settings())
+    <footer id="contact" class="contact site-footer">
         <div class="container">
             <div class="row contact-part">
-                <div class="col-lg-4 col-md-6 col-sm-6 col-12">
-                    <div class="footer-add">
-                        <img src="{{url("theme/footer-logo.png");}}" class="img-fluid" alt="logo">    
-                        <div class="row footer-ad-txt footer-top">
-                            <div class="col-lg-4 col-md-4 col-4">
-                                <h3>Address :</h3>
-                            </div>
-                            <div class="col-lg-8 col-md-8 col-8">
-                                <ul>
-                                    <li>420 Rankin Street Avenue</li>
-                                    <li>London City Center,</li>
-                                     <li>United Kingdom</li>
-                                </ul>
-                            </div>
-                        </div>
-<div class="row footer-ad-txt">
-                            <div class="col-4">
-                                <h3>Phone	:</h3>
-                            </div>
-                            <div class="col-8">
-                                <ul>
-                                    <li>+442012345678</li>
-                                    
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="row footer-ad-txt footer-bot">
-                            <div class="col-4">
-                                <h3>Website	:</h3>
-                            </div>
-                            <div class="col-8">
-                                <ul>
-                                    <li> www.travelagency.com</li>
-                                    
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-lg-4 col-md-6 col-12 mb-4">
+                    <div class="site-brand-name site-brand-footer">{{ $site['site_name'] ?? 'EpickTours' }}</div>
+                    <p class="site-footer-about">{{ $site['footer_about'] ?? '' }}</p>
+                    @if(!empty($site['address']))
+                        <p class="mb-1"><i class="fas fa-map-marker-alt"></i> {!! nl2br(e($site['address'])) !!}</p>
+                    @endif
+                    @if(!empty($site['contact_phone']))
+                        <p class="mb-1"><i class="fas fa-phone"></i> <a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['contact_phone']) }}">{{ $site['contact_phone'] }}</a></p>
+                    @endif
+                    @if(!empty($site['contact_email']))
+                        <p class="mb-1"><i class="fas fa-envelope"></i> <a href="mailto:{{ $site['contact_email'] }}">{{ $site['contact_email'] }}</a></p>
+                    @endif
                 </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                <div class="col-lg-3 col-md-6 col-12 mb-4">
                     <div class="con-inner">
-                        <h2>Help &amp; Support</h2>
+                        <h2>Plan your trip</h2>
                         <ul>
-                            <li><a href=//index.html#">Contact Us</a></li>
-                            <li><a href=//index.html#">FAQs</a></li>
-                            <li><a href=//index.html#">Privacy policy</a></li>
-                            <li><a href=//index.html#">Cookie policy</a></li>
-                            <li><a href=//index.html#">Terms of use</a></li>
+                            <li><a href="{{ url('/search') }}">Find a stay</a></li>
+                            <li><a href="{{ url('/#destinations') }}">Popular destinations</a></li>
+                            <li><a href="{{ url('/blog') }}">Travel journal</a></li>
+                            <li><a href="{{ url('/booking/find') }}">Find my booking</a></li>
                         </ul>
                     </div>
                 </div>
-                
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                <div class="col-lg-3 col-md-6 col-12 mb-4">
                     <div class="con-inner">
-                        <h2>Important Search</h2>
+                        <h2>Help &amp; information</h2>
                         <ul>
-                            <li><a href=//index.html#">Countries </a></li>
-                            <li><a href=//index.html#">Cities</a></li>
-                            <li><a href=//index.html#">Districts</a></li>
-                            <li><a href=//index.html#">Airports</a></li>
-                            <li><a href=//index.html#">Hotels</a></li>
+                            <li><a href="{{ url('/about') }}">About us</a></li>
+                            <li><a href="{{ url('/contact') }}">Contact us</a></li>
+                            @foreach(\App\Cms\Cms::footerPages() as $footerPage)
+                                <li><a href="{{ \App\Cms\Cms::pageUrl($footerPage->slug) }}">{{ $footerPage->title }}</a></li>
+                            @endforeach
+                            <li><a href="{{ url('/signup') }}">List your property</a></li>
                         </ul>
                     </div>
                 </div>
-                <div class="col-lg-2 col-md-6 col-sm-6 col-12">
+                @php($socials = array_filter(['facebook' => $site['facebook_url'] ?? null, 'instagram' => $site['instagram_url'] ?? null, 'tripadvisor' => $site['tripadvisor_url'] ?? null, 'youtube' => $site['youtube_url'] ?? null]))
+                @if($socials)
+                <div class="col-lg-2 col-md-6 col-12 mb-4">
                     <div class="con-inner">
-                        <h2>Follow us on</h2>
+                        <h2>Follow us</h2>
                         <ul>
-                            <li><a href=//index.html#"><i class="fab fa-facebook-f"></i>Facebook</a></li>
-                            <li><a href=//index.html#"><i class="fab fa-twitter"></i>Twitter</a></li>
-                            <li><a href=//index.html#"><i class="fab fa-tripadvisor"></i>tripadvisor</a></li>                            
-                            <li><a href=//index.html#"><i class="fab fa-linkedin"></i>Linkedin</a></li>
-                            <li><a href=//index.html#"><i class="fab fa-behance"></i>Behance</a></li>
+                            @foreach($socials as $network => $link)
+                                @if(preg_match('#^https?://#i', $link))
+                                    <li><a href="{{ $link }}" target="_blank" rel="noopener"><i class="fab fa-{{ $network === 'facebook' ? 'facebook-f' : $network }}"></i> {{ ucfirst($network) }}</a></li>
+                                @endif
+                            @endforeach
                         </ul>
                     </div>
                 </div>
+                @endif
             </div>
             <div class="row">
                 <div class="col-md-12">
                     <div class="footer">
-                        <p>Copyright © 2020. All rights reserved by Designer</p>
+                        <p>&copy; {{ date('Y') }} {{ $site['copyright'] ?? 'EpickTours. All rights reserved.' }}</p>
                     </div>
                 </div>
             </div>
         </div>
     </footer>
-	<!-- =====================
-     footer end 
-     ===================== -->
-    
-    
-    
-    <!--================================================
-                JAVA SCRIPT LINK PART START
-    ==================================================-->
-    <script src="{{url("theme/jquery-3.2.1.min.js")}}"></script>
-    <script src="{{url("theme/popper.min.js")}}"></script>
-    <script src="{{url("theme/jquery-migrate-3.0.0.min.js")}}"></script>
-    <script src="{{url("theme/bootstrap.min.js")}}"></script>
-    <script src="{{url("theme/waypoints.min.js")}}"></script>
-    <script src="{{url("theme/jquery.counterup.min.js")}}"></script>
-    <script src="{{url("theme/jquery-ui.min.js")}}"></script>
-    <script src="{{url("theme/jquery.dd.min.js")}}"></script>
-    <script src="{{url("theme/mixitup.min.js")}}"></script>
-    <script src="{{url("theme/slick.min.js")}}"></script>
-    <script src="{{url("theme/SmoothScroll.js")}}"></script>
-    <script src="{{url("theme/script.js")}}"></script>
-    <!--================================================
-                JAVA SCRIPT LINK PART END
-    ==================================================-->
+
+    <script src="{{ url('theme/jquery-3.2.1.min.js') }}"></script>
+    <script src="{{ url('theme/popper.min.js') }}"></script>
+    <script src="{{ url('theme/bootstrap.min.js') }}"></script>
+    <script src="{{ url('theme/jquery-ui.min.js') }}"></script>
+    <script src="{{ url('js/site.js') }}"></script>
     @yield('scripts')
-
-
-@include('partials.chat-widget')
-<div id="ui-datepicker-div" class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all"></div></body></html>
+    @include('partials.chat-widget')
+</body>
+</html>

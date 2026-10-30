@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Bedspace MCP server (Model Context Protocol), Streamable HTTP transport in
+ * EpickTours MCP server (Model Context Protocol), Streamable HTTP transport in
  * stateless JSON mode: clients POST JSON-RPC 2.0 messages to /api/mcp.
  *
  * Exposes the read-only guest tools (App\Chat\GuestTools): destinations,
@@ -73,8 +73,8 @@ class McpController extends Controller
                 'protocolVersion' => in_array($params['protocolVersion'] ?? null, self::SUPPORTED_VERSIONS, true)
                     ? $params['protocolVersion'] : self::SUPPORTED_VERSIONS[0],
                 'capabilities' => ['tools' => ['listChanged' => false]],
-                'serverInfo' => ['name' => 'bedspace', 'title' => 'Bedspace hotel information', 'version' => '1.0.0'],
-                'instructions' => 'Read-only information about Bedspace properties in Sri Lanka: search by area and dates, '
+                'serverInfo' => ['name' => 'bedspace', 'title' => 'EpickTours hotel information', 'version' => '1.0.0'],
+                'instructions' => 'Read-only information about EpickTours properties in Sri Lanka: search by area and dates, '
                     .'property details, rooms, meal plans and prices (LKR or USD), cancellation policies, and a guest\'s own '
                     .'booking by reference + email. Nothing can be booked or changed through these tools; give guests the '
                     .'returned URLs to book. Dates are YYYY-MM-DD in Sri Lanka time.',

@@ -18,6 +18,6 @@ class OwnerApprovedMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Your Bedspace account is approved')->view('email.ownerApproved');
+        return $this->subject('Your EpickTours account is approved')->view('email.ownerApproved');
     }
 }

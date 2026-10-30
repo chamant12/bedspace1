@@ -20,11 +20,21 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\SiteController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
 Route::middleware('visitor.currency')->group(function () {
     Route::get('/', [PublicBookingController::class, 'home']);
+
+    // Website pages (CMS)
+    Route::get('/about', [SiteController::class, 'about']);
+    Route::get('/contact', [SiteController::class, 'contact']);
+    Route::post('/contact', [SiteController::class, 'sendContact'])->middleware('throttle:5,1');
+    Route::get('/blog', [SiteController::class, 'blog']);
+    Route::get('/blog/{slug}', [SiteController::class, 'post'])->where('slug', '[a-z0-9-]+');
+    Route::get('/page/{slug}', [SiteController::class, 'page'])->where('slug', '[a-z0-9-]+');
     Route::post('/currency', [CurrencyController::class, 'switchCurrency']);
 
     // Booking engine
@@ -60,6 +70,12 @@ Route::post('login', [UserLoginController::class, 'authenticateUser'])->middlewa
 Route::get('/signup', [UserLoginController::class, 'propertyOwnerSignup']);
 Route::post('/create-property-owner', [UserLoginController::class, 'createPropertyOwner']);
 
+// Password reset (all account types)
+Route::get('/forgot-password', [PasswordResetController::class, 'requestForm']);
+Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:5,1');
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
+
 Route::get('/admin/login', [UserLoginController::class, 'adminLogin'])->name('admin.login');
 Route::post('/admin/login', [UserLoginController::class, 'authenticateAdmin'])->middleware('throttle:10,1');
 
@@ -73,6 +89,25 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::get('/reports/bookings', [ReportController::class, 'bookings']);
     Route::get('/audit', [AuditLogController::class, 'index']);
     Route::get('/chatbot', [Admin\ChatbotController::class, 'index']);
+
+    // Website content (CMS)
+    Route::get('/cms', [Admin\CmsController::class, 'index']);
+    Route::get('/cms/settings', [Admin\CmsController::class, 'settings']);
+    Route::post('/cms/settings', [Admin\CmsController::class, 'saveSettings']);
+    Route::post('/cms/pages', [Admin\CmsController::class, 'createPage']);
+    Route::get('/cms/pages/{page_id}', [Admin\CmsController::class, 'editPage']);
+    Route::post('/cms/pages/{page_id}', [Admin\CmsController::class, 'savePage']);
+    Route::post('/cms/pages/{page_id}/toggle', [Admin\CmsController::class, 'togglePage']);
+    Route::post('/cms/sections/{section_id}', [Admin\CmsController::class, 'saveSection']);
+    Route::get('/cms/blog', [Admin\BlogPostController::class, 'index']);
+    Route::get('/cms/blog/new', [Admin\BlogPostController::class, 'create']);
+    Route::post('/cms/blog', [Admin\BlogPostController::class, 'store']);
+    Route::get('/cms/blog/{post_id}', [Admin\BlogPostController::class, 'edit']);
+    Route::put('/cms/blog/{post_id}', [Admin\BlogPostController::class, 'update']);
+    Route::post('/cms/blog/{post_id}/toggle', [Admin\BlogPostController::class, 'togglePublish']);
+    Route::get('/cms/messages', [Admin\ContactMessageController::class, 'index']);
+    Route::get('/cms/messages/{message_id}', [Admin\ContactMessageController::class, 'show']);
+    Route::post('/cms/messages/{message_id}/status', [Admin\ContactMessageController::class, 'setStatus']);
     Route::get('/commission-dues', [Admin\CommissionDueController::class, 'index']);
     Route::get('/commission-dues/{property_id}', [Admin\CommissionDueController::class, 'show']);
     Route::post('/commission-dues/{property_id}/settle', [Admin\CommissionDueController::class, 'settle']);

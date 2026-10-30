@@ -96,11 +96,11 @@
                 (cancelled within the free-cancellation period)
                 @if((float) $r->amount_refunded > 0) &middot; already refunded {{ $r->money($r->amount_refunded) }} @endif
             </div>
-            @foreach(['platform' => 'Online payment (held by Bedspace)', 'property' => 'Paid at the hotel'] as $collector => $label)
+            @foreach(['platform' => 'Online payment (held by EpickTours)', 'property' => 'Paid at the hotel'] as $collector => $label)
                 @php($refundable = min($heldBy[$collector], $r->refundRemaining()))
                 @continue($refundable <= 0)
                 @if($collector === 'platform' && !auth()->user()->isAdmin())
-                    <p class="text-muted">{{ $label }}: {{ $r->money($refundable) }} will be refunded to the guest's card by Bedspace.</p>
+                    <p class="text-muted">{{ $label }}: {{ $r->money($refundable) }} will be refunded to the guest's card by EpickTours.</p>
                     @continue
                 @endif
                 @if($collector === 'property' && !$canManage)

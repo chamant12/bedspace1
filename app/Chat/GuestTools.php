@@ -27,7 +27,7 @@ class GuestTools
         return [
             [
                 'name' => 'list_destinations',
-                'description' => 'List the areas (districts of Sri Lanka) where Bedspace has bookable properties.',
+                'description' => 'List the areas (districts of Sri Lanka) where EpickTours has bookable properties.',
                 'inputSchema' => ['type' => 'object', 'properties' => new \stdClass(), 'additionalProperties' => false],
             ],
             [

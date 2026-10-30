@@ -14,6 +14,8 @@ use App\Models\RoomType;
 use App\Models\User;
 use App\Services\BookingQuotes;
 use App\Services\Payments;
+use App\Cms\Cms;
+use App\Models\BlogPost;
 use App\Services\CancellationPolicy;
 use App\Enums\ReservationStatus;
 use App\Services\Reservations;
@@ -68,12 +70,28 @@ class PublicBookingController extends Controller
         return redirect()->away($this->payments->startOnline($reservation));
     }
 
-    // Home page: the template's search form submits to /search
+    // Home page: CMS content, search form, featured stays and the latest blog posts
     public function home(Request $request){
+        $stay = $this->stayFromRequest($request);
+
+        // Up to 6 recently added active properties, priced for one night from tomorrow
+        $tomorrow = CarbonImmutable::parse(BusinessDate::today())->addDay();
+        $featuredStays = Property::with('city.district')->where('is_active', true)->latest()->take(6)->get()
+            ->map(fn ($property) => [
+                'property' => $property,
+                'price' => $this->quotes->lowestPrice($property, $tomorrow->toDateString(), $tomorrow->addDay()->toDateString(),
+                    $this->currency($request), null, 1),
+                'photo' => $this->coverPhoto($property)?->thumb_url ?? asset('theme/tour-package-1.jpg'),
+                'url' => url('/stay/'.$property->id),
+            ]);
+
         return view('welcome', [
-            'stay' => $this->stayFromRequest($request),
+            'page' => Cms::page('home'),
+            'stay' => $stay,
             'districts' => $this->districtsWithProperties(),
             'occupancies' => Occupancy::orderBy('occupancy')->get(),
+            'featuredStays' => $featuredStays,
+            'posts' => BlogPost::published()->orderByDesc('published_at')->take(3)->get(),
         ]);
     }
 
@@ -81,15 +99,24 @@ class PublicBookingController extends Controller
         $stay = $this->stayFromRequest($request);
         $districts = $this->districtsWithProperties();
 
+        // ?area=Kandy (destination links): use the matching district, otherwise match city names
+        $area = trim((string) $request->query('area', ''));
+        if ($area !== '' && !$stay['district_id']) {
+            $stay['district_id'] = District::where('district_name', 'like', '%'.$area.'%')->value('id');
+        }
+
         $results = [];
         $error = null;
-        if ($request->filled('check_in')) {
+        if ($request->filled('check_in') || $request->filled('district_id') || $area !== '') {
             $error = $this->quotes->validateStay($stay['check_in'], $stay['check_out']);
             if (!$error) {
                 $properties = Property::with('city.district')
                     ->where('is_active', true)
-                    ->when($request->filled('district_id'), fn ($q) => $q->whereIn('city_id', function ($sub) use ($request) {
-                        $sub->select('id')->from('cities')->where('district_id', $request->district_id);
+                    ->when($stay['district_id'], fn ($q) => $q->whereIn('city_id', function ($sub) use ($stay) {
+                        $sub->select('id')->from('cities')->where('district_id', $stay['district_id']);
+                    }))
+                    ->when(!$stay['district_id'] && $area !== '', fn ($q) => $q->whereIn('city_id', function ($sub) use ($area) {
+                        $sub->select('id')->from('cities')->where('city_name', 'like', '%'.$area.'%');
                     }))
                     ->orderBy('property_name')
                     ->get();

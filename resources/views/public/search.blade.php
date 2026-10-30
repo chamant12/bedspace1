@@ -1,14 +1,15 @@
 @extends('layout.ext-app')
+@section('title', 'Find a stay')
 @section('content')
 <div class="container bs-page">
-    <h2>Find a place to stay</h2>
+    <h1 class="site-heading">Find a place to stay</h1>
     <div class="bs-card">
         @include('public._stayForm', ['action' => '/search'])
     </div>
 
     @if($error)
         <div class="alert alert-danger">{{ $error }}</div>
-    @elseif(request()->filled('check_in'))
+    @elseif(request()->filled('check_in') || request()->filled('district_id') || request()->filled('area'))
         <p class="bs-muted">{{ count($results) }} {{ count($results) === 1 ? 'property' : 'properties' }} available
             &middot; prices for {{ $stay['rooms'] }} room(s), whole stay, in {{ $visitorCurrency->code }}</p>
 

@@ -23,6 +23,7 @@
                   <button class="btn btn-block btn-primary btn-lg fw-medium auth-form-btn" >SIGN
                     IN</button>
                 </div>
+                <div class="my-2"><a href="/forgot-password" class="auth-link text-black">Forgot password?</a></div>
                     {{csrf_field()}}
               </form>
             </div>

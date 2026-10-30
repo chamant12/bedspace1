@@ -49,7 +49,7 @@ class UserLoginController extends Controller
         $credentials['status'] = 1;
         $credentials['user_type_id'] = $userType;
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate(); // Prevent session fixation
             \App\Support\Audit::log('auth.login', Auth::user(), 'Signed in');
             return redirect(Auth::user()->dashboardUrl());
@@ -104,7 +104,7 @@ class UserLoginController extends Controller
             report($e);
         }
 
-        session()->flash('success', 'Signup successful! You can sign in now; you can add your properties once the Bedspace team has approved your account.');
+        session()->flash('success', 'Signup successful! You can sign in now; you can add your properties once the EpickTours team has approved your account.');
         return redirect('/login');
     }
 }

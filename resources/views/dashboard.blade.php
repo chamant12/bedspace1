@@ -31,12 +31,12 @@
 @endif
 @if($payoutDue > 0)
 <div class="alert alert-success">
-    Bedspace owes you <strong>LKR {{ number_format($payoutDue, 2) }}</strong> for online payments (after commission), to be paid out.
+    EpickTours owes you <strong>LKR {{ number_format($payoutDue, 2) }}</strong> for online payments (after commission), to be paid out.
 </div>
 @endif
 @if($commissionDue > 0)
 <div class="alert alert-info">
-    Commission due to Bedspace on payments collected at your properties: <strong>LKR {{ number_format($commissionDue, 2) }}</strong>.
+    Commission due to EpickTours on payments collected at your properties: <strong>LKR {{ number_format($commissionDue, 2) }}</strong>.
 </div>
 @endif
 
@@ -46,7 +46,7 @@
             <div class="card-body">
                 <h4 class="card-title card-title-dash">Pay-at-hotel bookings to settle</h4>
                 <p class="card-description">Mark each booking as paid when the guest pays at the property, or as cancelled / no-show.
-                    Commission on paid bookings is added to your dues to Bedspace.</p>
+                    Commission on paid bookings is added to your dues to EpickTours.</p>
                 @if($offlineToSettle->isEmpty())
                     <p class="mb-0">Nothing to settle.</p>
                 @else

@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Bedspace</title>
+    <title>EpickTours</title>
     <!-- plugins:css -->
     <link rel="stylesheet" href="{{url("assets/vendors/feather/feather.css")}}">
     <link rel="stylesheet" href="{{url("assets/vendors/mdi/css/materialdesignicons.min.css")}}">
@@ -293,6 +293,7 @@
                   <li class="nav-item"> <a class="nav-link" href="/admin/commission-dues">Commission dues</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/admin/payouts">Hotel payouts</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/admin/chatbot">Chatbot</a></li>
+                  <li class="nav-item"> <a class="nav-link" href="/admin/cms">Website content</a></li>
                 </ul>
               </div>
             </li>

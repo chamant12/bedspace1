@@ -1,0 +1,143 @@
+/*
+ * EpickTours public site: overrides for the travel theme and styles for
+ * the CMS-driven pages. Loaded after theme/style-1.css.
+ */
+
+:root {
+    --site-primary: #1675ac;
+    --site-accent: #ffa913;
+    --site-dark: #13293d;
+    --site-muted: #6c757d;
+    --site-light: #f6f8fa;
+}
+
+/* ---------- Scrolling ----------
+ * The theme combined SmoothScroll.js (wheel hijacking) with CSS smooth
+ * scrolling and a fixed-background parallax; together they made the page
+ * keep gliding after the user stopped scrolling. Native scrolling is
+ * restored; in-page links scroll smoothly via js/site.js. */
+html, body { scroll-behavior: auto !important; }
+.contact { background-attachment: scroll !important; }
+
+/* ---------- Header ---------- */
+.navbar {
+    position: sticky !important;
+    top: 0;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+    padding: 10px 0 !important;
+}
+.navbar.sticky { position: sticky !important; padding: 10px 0 !important; animation: none; }
+.site-brand { padding: 4px 0; }
+.site-brand img { max-height: 48px; width: auto; }
+.site-brand-name {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: var(--site-primary);
+}
+.site-brand-name::first-letter { color: var(--site-accent); }
+.header-nav .navbar-nav .nav-link.active { color: var(--site-primary); font-weight: 600; }
+.site-subbar { background: var(--site-light); border-bottom: 1px solid #e9ecef; font-size: 13px; }
+.site-subbar .container { display: flex; justify-content: flex-end; align-items: center; gap: 18px; padding-top: 4px; padding-bottom: 4px; flex-wrap: wrap; }
+.site-subbar a { color: #444; }
+.site-flash { margin: 12px auto 0; max-width: 1110px; text-align: center; }
+#back-top-btn { display: none; }
+
+/* ---------- Sections ---------- */
+.site-section { padding: 70px 0; }
+.site-section.alt { background: var(--site-light); }
+.site-section-head { text-align: center; max-width: 720px; margin: 0 auto 40px; }
+.site-eyebrow { color: var(--site-accent); text-transform: uppercase; letter-spacing: 2px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.site-section-head h2, .site-heading { font-size: 32px; font-weight: 600; color: var(--site-dark); margin-bottom: 12px; }
+.site-section-head p { color: var(--site-muted); }
+.site-btn {
+    display: inline-block; background: var(--site-primary); color: #fff !important; padding: 11px 26px;
+    border-radius: 30px; font-weight: 500; border: 0; transition: background .2s;
+}
+.site-btn:hover { background: #0f5a85; text-decoration: none; }
+.site-btn.outline { background: transparent; color: var(--site-primary) !important; border: 2px solid var(--site-primary); }
+.site-btn.accent { background: var(--site-accent); }
+
+/* ---------- Home banner ---------- */
+.site-hero {
+    position: relative; min-height: 78vh; display: flex; align-items: center;
+    background-size: cover; background-position: center; color: #fff;
+}
+.site-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(19, 41, 61, .65), rgba(19, 41, 61, .15)); }
+.site-hero .container { position: relative; }
+.site-hero h1 { font-size: 64px; font-weight: 700; line-height: 1.1; margin-bottom: 12px; color: #fff; }
+.site-hero p { font-size: 22px; max-width: 560px; color: #f1f1f1; }
+@media (max-width: 767px) {
+    .site-hero { min-height: 56vh; }
+    .site-hero h1 { font-size: 40px; }
+    .site-hero p { font-size: 18px; }
+}
+
+/* Search box under the banner */
+.site-search { margin-top: -70px; position: relative; z-index: 5; }
+.site-search .reservation-hotel { background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, .12); padding: 22px 22px 6px; }
+.site-search label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--site-muted); margin-bottom: 4px; }
+.site-search .form-control { height: 46px; }
+
+/* ---------- Text from the CMS (Markdown) ---------- */
+.site-prose { color: #444; line-height: 1.75; font-size: 16px; }
+.site-prose h2 { font-size: 26px; color: var(--site-dark); margin: 34px 0 12px; font-weight: 600; }
+.site-prose h3 { font-size: 20px; color: var(--site-dark); margin: 26px 0 10px; font-weight: 600; }
+.site-prose p, .site-prose ul, .site-prose ol { margin-bottom: 16px; }
+.site-prose ul { padding-left: 22px; }
+.site-prose a { color: var(--site-primary); text-decoration: underline; }
+.site-prose table { width: 100%; margin-bottom: 18px; border-collapse: collapse; }
+.site-prose th, .site-prose td { border: 1px solid #e3e6ea; padding: 8px 10px; vertical-align: top; }
+.site-prose th { background: var(--site-light); }
+
+/* ---------- Cards ---------- */
+.site-grid { display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.site-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 18px rgba(0, 0, 0, .07); height: 100%; display: flex; flex-direction: column; transition: transform .2s, box-shadow .2s; }
+.site-card:hover { transform: translateY(-3px); box-shadow: 0 8px 26px rgba(0, 0, 0, .1); }
+.site-card a { color: inherit; text-decoration: none; }
+.site-card-img { aspect-ratio: 4 / 3; background: #dde3e8 center / cover no-repeat; }
+.site-card-body { padding: 18px; flex: 1; display: flex; flex-direction: column; }
+.site-card-body h3 { font-size: 19px; font-weight: 600; color: var(--site-dark); margin-bottom: 8px; }
+.site-card-body p { color: var(--site-muted); font-size: 14px; margin-bottom: 12px; }
+.site-card-meta { font-size: 13px; color: var(--site-muted); margin-top: auto; }
+.site-price { color: var(--site-primary); font-weight: 700; font-size: 18px; }
+
+.site-destination { position: relative; border-radius: 10px; overflow: hidden; display: block; aspect-ratio: 3 / 4; background: #dde3e8 center / cover no-repeat; color: #fff !important; text-decoration: none !important; }
+.site-destination::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0, 0, 0, .72) 0%, rgba(0, 0, 0, 0) 60%); transition: background .2s; }
+.site-destination:hover::after { background: linear-gradient(0deg, rgba(0, 0, 0, .82) 0%, rgba(0, 0, 0, .1) 70%); }
+.site-destination div { position: absolute; left: 18px; right: 18px; bottom: 16px; z-index: 1; }
+.site-destination h3 { font-size: 22px; color: #fff; margin-bottom: 4px; font-weight: 600; }
+.site-destination p { font-size: 14px; margin: 0; color: #eee; }
+
+.site-feature { text-align: center; padding: 26px 20px; background: #fff; border-radius: 10px; height: 100%; box-shadow: 0 4px 18px rgba(0, 0, 0, .05); }
+.site-feature-icon { width: 58px; height: 58px; border-radius: 50%; background: rgba(22, 117, 172, .1); color: var(--site-primary); display: inline-flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px; }
+.site-feature h3 { font-size: 18px; font-weight: 600; color: var(--site-dark); }
+.site-feature p { color: var(--site-muted); font-size: 14px; margin: 0; }
+
+.site-split-img { border-radius: 12px; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+
+.site-cta { background: var(--site-dark); color: #fff; border-radius: 14px; padding: 46px; }
+.site-cta h2 { color: #fff; font-size: 30px; }
+.site-cta p { color: #d7dde3; }
+
+/* ---------- Inner pages ---------- */
+.site-page-head { background: linear-gradient(135deg, var(--site-dark), var(--site-primary)); color: #fff; padding: 56px 0 46px; }
+.site-page-head h1 { color: #fff; font-size: 40px; font-weight: 600; margin: 0; }
+.site-page-head p { color: #dbe7ef; margin: 10px 0 0; font-size: 18px; }
+.site-page-body { padding: 50px 0 70px; }
+.site-article-cover { width: 100%; max-height: 460px; object-fit: cover; border-radius: 12px; margin-bottom: 28px; }
+.site-contact-card { background: var(--site-light); border-radius: 12px; padding: 24px; }
+.site-contact-card p { margin-bottom: 10px; }
+
+/* ---------- Footer ---------- */
+.site-footer { background: var(--site-dark) !important; color: #c9d3dc; }
+.site-footer .con-inner h2 { color: #fff; }
+.site-footer a { color: #c9d3dc; }
+.site-footer a:hover { color: #fff; }
+.site-brand-footer { color: #fff; margin-bottom: 12px; }
+.site-footer-about { font-size: 14px; line-height: 1.7; }
+.site-footer .footer p { color: #9fb0bf; }
+
+/* Public pages styled in public/_styles start right under the header now */
+.bs-page { padding-top: 40px !important; }

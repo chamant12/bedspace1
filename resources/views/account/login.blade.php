@@ -13,6 +13,8 @@
             <input type="password" name="password" class="form-control" required>
         </div>
         <button type="submit" class="btn btn-primary">Sign in</button>
+        <a href="/forgot-password" class="ml-3 small">Forgot password?</a>
+        <p class="bs-muted small mt-3 mb-0">Property owner or hotel staff? <a href="/login">Sign in here</a>.</p>
         <p class="bs-muted small mt-3 mb-0">No account? You can create one when you book. Booked without an account? <a href="/booking/find">Find your booking</a>.</p>
     </form>
 </div>
