@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Property;
 use App\Models\PropertyRoomType;
+use App\Services\PropertyStatus;
 
 class PropertyController extends Controller
 {
@@ -22,11 +23,10 @@ class PropertyController extends Controller
         return view('admin.properties', compact('properties', 'roomCounts'));
     }
 
-    public function toggleActive($property_id)
+    public function toggleActive($property_id, PropertyStatus $status)
     {
-        $property = Property::findOrFail($property_id);
-        $property->is_active = !$property->is_active;
-        $property->save();
+        $property = Property::with('propertyOwner')->findOrFail($property_id);
+        $status->setActiveByAdmin($property, !$property->is_active);
 
         session()->flash('success', $property->property_name.' was '.($property->is_active ? 'activated' : 'deactivated'));
         return redirect()->back();

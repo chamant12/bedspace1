@@ -14,6 +14,7 @@ use App\Models\RateType;
 use App\Models\CurrencyRate;
 use App\Models\CurrencyType;
 use App\Services\ExchangeRates;
+use App\Services\PropertyStatus;
 use App\Support\BusinessDate;
 use App\Mail\PropertyRegisteredMail;
 use Illuminate\Support\Facades\DB;
@@ -111,12 +112,11 @@ class PropertyController extends Controller
     }
 
     // Properties are deactivated (hidden from guests), never deleted
-    public function togglePropertyActive($property_id){
+    public function togglePropertyActive($property_id, PropertyStatus $status){
         $property = Property::findOrFail($property_id);
         Gate::authorize('update', $property);
 
-        $property->is_active = !$property->is_active;
-        $property->save();
+        $status->setActiveByOwner($property, !$property->is_active);
 
         session()->flash('success', $property->property_name.' was '.($property->is_active ? 'activated' : 'deactivated'));
         return redirect()->back();

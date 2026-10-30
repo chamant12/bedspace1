@@ -1,0 +1,1 @@
+@if(!$property->is_active && $property->deactivated_reason)<small class="text-muted d-block">{{ ['owner' => 'Disabled by owner', 'admin' => 'Disabled by EpickTours', 'owner_account_disabled' => 'Owner account disabled'][$property->deactivated_reason] ?? '' }}</small>@endif

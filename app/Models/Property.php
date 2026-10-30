@@ -24,6 +24,7 @@ class Property extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'cancellation_days' => 'integer',
+        'deactivated_at' => 'datetime',
     ];
 
     // Non-refundable window before check-in: the owner's setting, or the platform default

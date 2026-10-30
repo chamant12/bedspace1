@@ -22,6 +22,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin;
 
 // Public (guest-facing) pages
@@ -118,11 +119,19 @@ Route::prefix('admin')->middleware(['auth', 'user.type:admin'])->group(function 
     Route::get('/owners/new', [Admin\OwnerController::class, 'create']);
     Route::post('/owners', [Admin\OwnerController::class, 'store']);
     Route::post('/owners/{user_id}/approve', [Admin\OwnerController::class, 'approve']);
+    Route::get('/owners/{user_id}', [Admin\OwnerController::class, 'edit'])->whereNumber('user_id');
+    Route::put('/owners/{user_id}', [Admin\OwnerController::class, 'update'])->whereNumber('user_id');
     Route::post('/owners/{user_id}/toggle-status', [Admin\OwnerController::class, 'toggleStatus']);
     Route::get('/amenities', [Admin\AmenityController::class, 'index']);
     Route::post('/amenities', [Admin\AmenityController::class, 'store']);
     Route::put('/amenities/{amenity_id}', [Admin\AmenityController::class, 'update']);
     Route::post('/amenities/{amenity_id}/toggle-active', [Admin\AmenityController::class, 'toggleActive']);
+});
+
+// My profile (dashboard users; also available while an owner awaits approval)
+Route::middleware(['auth', 'user.type:admin,owner,staff'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit']);
+    Route::put('/profile', [ProfileController::class, 'update']);
 });
 
 // Owner / staff dashboard (also shown while the owner awaits approval)

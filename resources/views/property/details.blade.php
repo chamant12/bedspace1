@@ -7,7 +7,7 @@
             @if($property->is_active)
                 <span class="badge badge-success">Active</span>
             @else
-                <span class="badge badge-secondary">Inactive</span>
+                <span class="badge badge-secondary">Inactive</span>@include('partials.property-disabled-by')
             @endif
         </h3>
         <div class="d-flex gap-2">
@@ -16,6 +16,13 @@
                 <a href="/add-base-rate/{{ $property->id }}" class="btn btn-sm btn-outline-primary">Rates calendar</a>
                 <a href="/inventory/{{ $property->id }}" class="btn btn-sm btn-outline-primary">Inventory</a>
                 <a href="/rooms/{{ $property->id }}" class="btn btn-sm btn-outline-primary">Room numbers</a>
+                @if(auth()->user()->isOwner())
+                    <form method="POST" action="/property/{{ $property->id }}/toggle-active"
+                          onsubmit="return confirm('{{ $property->is_active ? 'Disable this property? Guests will no longer be able to find or book it. Existing bookings are kept.' : 'Enable this property again?' }}');">
+                        @csrf
+                        <button type="submit" class="btn btn-sm {{ $property->is_active ? 'btn-outline-danger' : 'btn-outline-success' }}">{{ $property->is_active ? 'Disable property' : 'Enable property' }}</button>
+                    </form>
+                @endif
             @else
                 <a href="/rates/{{ $property->id }}/view" class="btn btn-sm btn-outline-primary">View rates</a>
                 <a href="/inventory/{{ $property->id }}/view" class="btn btn-sm btn-outline-primary">View inventory</a>

@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
+use App\Services\PropertyStatus;
 
 class OwnerController extends Controller
 {
@@ -68,14 +70,52 @@ class OwnerController extends Controller
         return redirect()->back()->with('success', "{$owner->name} was approved and notified by email.");
     }
 
-    // Inactive owners (and their staff) cannot sign in or work
-    public function toggleStatus($user_id)
+    public function edit($user_id)
+    {
+        $owner = User::where('user_type_id', User::TYPE_PROPERTY_OWNER)->withCount('properties')->findOrFail($user_id);
+        $properties = $owner->properties()->orderBy('property_name')->get();
+
+        return view('admin.ownerEdit', compact('owner', 'properties'));
+    }
+
+    // Name, email (sign-in name), mobile and, optionally, a new password
+    public function update(Request $request, $user_id)
     {
         $owner = User::where('user_type_id', User::TYPE_PROPERTY_OWNER)->findOrFail($user_id);
-        $owner->status = $owner->status ? 0 : 1;
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($owner->id)],
+            'phone' => ['required', 'string', 'max:50'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $owner->name = $data['name'];
+        $owner->email = $data['email'];
+        $owner->phone = $data['phone'];
+        if (!empty($data['password'])) {
+            $owner->password = Hash::make($data['password']);
+        }
         $owner->save();
 
-        session()->flash('success', $owner->name.' was '.($owner->status ? 'activated' : 'deactivated'));
-        return redirect()->back();
+        return redirect('/admin/owners/'.$owner->id)->with('success', "{$owner->name}'s details were saved.");
+    }
+
+    /**
+     * Disabling an owner stops them and their staff signing in and disables
+     * all their properties at once; enabling brings those properties back.
+     */
+    public function toggleStatus($user_id, PropertyStatus $status)
+    {
+        $owner = User::where('user_type_id', User::TYPE_PROPERTY_OWNER)->findOrFail($user_id);
+
+        if ($owner->status) {
+            $count = $status->disableOwner($owner);
+            $message = "{$owner->name} was disabled, together with $count propert".($count === 1 ? 'y' : 'ies').'.';
+        } else {
+            $count = $status->enableOwner($owner);
+            $message = "{$owner->name} was enabled, and $count propert".($count === 1 ? 'y was' : 'ies were').' enabled again.';
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 }

@@ -39,6 +39,7 @@
                                 @endif
                             </td>
                             <td class="d-flex gap-2">
+                                <a href="/admin/owners/{{ $owner->id }}" class="btn btn-sm btn-outline-primary">Edit</a>
                                 @if(!$owner->approved_at)
                                     <form method="POST" action="/admin/owners/{{ $owner->id }}/approve"
                                           onsubmit="return confirm('Approve {{ $owner->name }}? They will be able to add properties, staff and rates.');">
@@ -47,7 +48,7 @@
                                     </form>
                                 @endif
                                 <form method="POST" action="/admin/owners/{{ $owner->id }}/toggle-status"
-                                      onsubmit="return confirm('{{ $owner->status ? 'Deactivate' : 'Activate' }} this owner? Inactive owners cannot sign in.');">
+                                      onsubmit="return confirm('{{ $owner->status ? 'Disable this owner? They and their staff will not be able to sign in, and all their properties will be disabled.' : 'Enable this owner? Properties disabled with the account will be enabled again.' }}');">
                                     @csrf
                                     <button type="submit" class="btn btn-sm {{ $owner->status ? 'btn-danger' : 'btn-success' }}">
                                         {{ $owner->status ? 'Deactivate' : 'Activate' }}

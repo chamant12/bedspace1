@@ -34,7 +34,7 @@
                                 @if($property->is_active)
                                     <span class="badge badge-success">Active</span>
                                 @else
-                                    <span class="badge badge-secondary">Inactive</span>
+                                    <span class="badge badge-secondary">Inactive</span>@include('partials.property-disabled-by')
                                 @endif
                             </td>
                             <td class="d-flex gap-2">

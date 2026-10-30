@@ -18,7 +18,7 @@
                           <tr>
                             <td class="py-1">
                               {{$property->property_name}}
-                              @unless($property->is_active)<span class="badge badge-secondary">Inactive</span>@endunless
+                              @unless($property->is_active)<span class="badge badge-secondary">Inactive</span>@endunless @include('partials.property-disabled-by')
                             </td>
                             <td> {{$property->city->city_name}} </td>
                             <td>
