@@ -7,6 +7,31 @@
         @include('public._stayForm', ['action' => '/search'])
     </div>
 
+    @php($stayQuery = http_build_query(array_filter(['check_in' => $stay['check_in'], 'check_out' => $stay['check_out'], 'guests' => $stay['guests'], 'rooms' => $stay['rooms']])))
+
+    @if(!$error && $location && $featured->isNotEmpty())
+        <h2 class="site-heading mt-4 mb-3">Featured stays in {{ $location }}</h2>
+        <div class="row">
+            @foreach($featured as $item)
+                @php($property = $item['property'])
+                <div class="col-md-4 mb-4">
+                    <a href="/stay/{{ $property->id }}?{{ $stayQuery }}" class="bs-featured">
+                        <div class="bs-featured-photos bs-featured-photos-{{ $item['samples']->count() }}">
+                            @foreach($item['samples'] as $photo)
+                                <img src="{{ $photo->thumb_url }}" alt="{{ $property->property_name }}" loading="lazy">
+                            @endforeach
+                        </div>
+                        <div class="bs-featured-body">
+                            <h4 class="mb-1">{{ $property->property_name }}</h4>
+                            <div class="bs-muted">{{ $property->city?->city_name }}</div>
+                            <div class="mt-1">from <span class="bs-price">{{ $visitorCurrency->code }} {{ number_format($item['price'], 2) }}</span></div>
+                        </div>
+                    </a>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     @if($error)
         <div class="alert alert-danger">{{ $error }}</div>
     @elseif(request()->filled('check_in') || request()->filled('district_id') || request()->filled('area'))
@@ -29,7 +54,7 @@
                     <div class="bs-muted">from</div>
                     <div class="bs-price">{{ $visitorCurrency->code }} {{ number_format($result['price'], 2) }}</div>
                     <a class="btn btn-primary mt-2"
-                       href="/stay/{{ $property->id }}?{{ http_build_query(array_filter(['check_in' => $stay['check_in'], 'check_out' => $stay['check_out'], 'guests' => $stay['guests'], 'rooms' => $stay['rooms']])) }}">
+                       href="/stay/{{ $property->id }}?{{ $stayQuery }}">
                         See rooms
                     </a>
                 </div>

@@ -19,6 +19,14 @@
 .bs-lightbox .bs-lb-prev { left: 4px; top: 50%; transform: translateY(-50%); }
 .bs-lightbox .bs-lb-next { right: 4px; top: 50%; transform: translateY(-50%); }
 .bs-lightbox .bs-lb-caption { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: #ddd; font-size: .9rem; }
+.bs-featured { display: block; height: 100%; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden; background: #fff; color: inherit; transition: box-shadow .2s; }
+.bs-featured:hover { text-decoration: none; color: inherit; box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+.bs-featured-photos { display: grid; gap: 3px; height: 200px; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
+.bs-featured-photos img { width: 100%; height: 100%; object-fit: cover; background: #eee; min-height: 0; }
+.bs-featured-photos img:first-child { grid-row: 1 / 3; }
+.bs-featured-photos-1 { grid-template-columns: 1fr; }
+.bs-featured-photos-2 img:nth-child(2) { grid-row: 1 / 3; }
+.bs-featured-body { padding: 12px 14px; }
 .bs-stay-form label { font-size: 0.85rem; margin-bottom: 2px; }
 /* Bootstrap 5 utilities used on these pages (the public theme ships Bootstrap 4) */
 .gap-2 { gap: .5rem; }

@@ -133,7 +133,12 @@ class PublicBookingController extends Controller
             }
         }
 
-        return view('public.search', compact('stay', 'districts', 'results', 'error') + [
+        // Location searches ("Hotels in Kandy"): a few available properties picked at random,
+        // each with a random sample of its photos
+        $location = $stay['district_id'] ? District::whereKey($stay['district_id'])->value('district_name') : ($area !== '' ? $area : null);
+        $featured = $location ? $this->featuredForLocation($results) : collect();
+
+        return view('public.search', compact('stay', 'districts', 'results', 'error', 'location', 'featured') + [
             'occupancies' => Occupancy::orderBy('occupancy')->get(),
         ]);
     }
@@ -381,6 +386,24 @@ class PublicBookingController extends Controller
     {
         $user = Auth::user();
         return ($user && (int) $user->user_type_id === User::TYPE_CUSTOMER) ? $user : null;
+    }
+
+    // Up to 3 random results that have photos, each with up to 3 random photos
+    private function featuredForLocation(array $results)
+    {
+        $withPhotos = Photo::where(['upload_type' => 'property', 'is_active' => true])
+            ->whereIn('type_id', collect($results)->pluck('property.id'))
+            ->get()
+            ->groupBy('type_id');
+
+        return collect($results)
+            ->filter(fn ($result) => $withPhotos->has($result['property']->id))
+            ->shuffle()
+            ->take(3)
+            ->map(fn ($result) => $result + [
+                'samples' => $withPhotos->get($result['property']->id)->shuffle()->take(3)->values(),
+            ])
+            ->values();
     }
 
     private function coverPhoto(Property $property): ?Photo
