@@ -10,7 +10,7 @@
         <form method="POST" action="/admin/cms/settings" enctype="multipart/form-data">
             @csrf
             <div class="form-group">
-                <label>Logo (optional; the website name is shown when there is no logo)</label>
+                <label>Logo (optional; the built-in EpickTours logo is shown when none is uploaded)</label>
                 @if(!empty($settings['logo_path']))
                     <div class="mb-2">
                         <img src="{{ \App\Cms\Cms::imageUrl($settings['logo_path'], $settings['logo_disk'] ?? null) }}" style="max-height:60px;" alt="Logo">

@@ -29,11 +29,9 @@
         <nav id="nav-part" class="navbar header-nav custom_nav navbar-expand-lg">
             <div class="container">
                 <a class="navbar-brand site-brand" href="{{ url('/') }}">
-                    @if(!empty($site['logo_path']))
-                        <img src="{{ \App\Cms\Cms::imageUrl($site['logo_path'], $site['logo_disk'] ?? null) }}" alt="{{ $siteName }}">
-                    @else
-                        <span class="site-brand-name">{{ $siteName }}</span>
-                    @endif
+                    {{-- A logo uploaded in Website > Settings replaces the built-in EpickTours logo --}}
+                    <img src="{{ !empty($site['logo_path']) ? \App\Cms\Cms::imageUrl($site['logo_path'], $site['logo_disk'] ?? null) : url('images/epicktours-logo.png') }}"
+                         alt="{{ $siteName }}" width="135" height="56">
                 </a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span></span><span></span><span></span>
