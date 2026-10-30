@@ -147,11 +147,16 @@ class PublicBookingController extends Controller
             $this->currency($request), $stay['guests'], $stay['rooms']);
 
         $photos = Photo::where(['upload_type' => 'property', 'type_id' => $property->id, 'is_active' => true])->orderBy('sort_order')->get();
+        // Room photos, shown with each room type while the guest picks guests and meal plan
+        $roomPhotos = Photo::where(['upload_type' => 'roomType', 'is_active' => true])
+            ->whereIn('type_id', collect($offers)->map(fn ($offer) => $offer['roomType']->id))
+            ->orderBy('sort_order')->orderBy('id')->get()
+            ->groupBy('type_id');
         $amenities = Amenity::whereIn('id', function ($q) use ($property) {
             $q->select('amenity_id')->from('property_amenity_xrefs')->where(['property_id' => $property->id, 'is_active' => true]);
         })->where('is_active', true)->orderBy('amenity')->get();
 
-        return view('public.property', compact('property', 'stay', 'error', 'offers', 'photos', 'amenities') + [
+        return view('public.property', compact('property', 'stay', 'error', 'offers', 'photos', 'roomPhotos', 'amenities') + [
             'occupancies' => Occupancy::orderBy('occupancy')->get(),
             'cancellationSummary' => $error
                 ? $this->cancellationPolicy->summary($property)
@@ -170,6 +175,8 @@ class PublicBookingController extends Controller
 
         return view('public.checkout', $choice + [
             'quote' => $quote,
+            'roomPhoto' => Photo::where(['upload_type' => 'roomType', 'type_id' => $choice['roomType']->id, 'is_active' => true])
+                ->orderBy('sort_order')->orderBy('id')->first(),
             'account' => $this->customer(),
             'paymentMethods' => PaymentMethod::available(),
             'cancellationPolicy' => $this->cancellationPolicy->statementForStay($choice['property'], $choice['check_in']),

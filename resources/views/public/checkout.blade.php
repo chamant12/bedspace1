@@ -83,6 +83,9 @@
 
         <div class="col-md-5">
             <div class="bs-card">
+                @if($roomPhoto)
+                    <img src="{{ $roomPhoto->thumb_url }}" class="bs-room-cover mb-3" alt="{{ $roomType->roomType }}">
+                @endif
                 <h5>{{ $property->property_name }}</h5>
                 <p class="mb-1"><strong>{{ $roomType->roomType }}</strong> &times; {{ $rooms }}</p>
                 <p class="mb-1">{{ $occupancy->occupancy_name }}, {{ $mealType->mealType }}</p>
