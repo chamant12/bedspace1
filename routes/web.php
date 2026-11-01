@@ -211,6 +211,7 @@ Route::middleware(['auth', 'user.type:owner,staff', 'partner.approved', 'can.edi
         Route::post('/save-base-rates', [RateController::class, 'saveBaseRates']);
         Route::post('/reset-base-rates', [RateController::class, 'resetBaseRates']);
         Route::post('/copy-base-rates', [RateController::class, 'copyBaseRates']);
+        Route::post('/set-range-rates', [RateController::class, 'setRangeRates']);
         Route::get('/inventory/{property_id}/{roomType_id}/{from_date}/{to_date}', [InventoryController::class, 'grid']);
         Route::post('/inventory/total', [InventoryController::class, 'saveTotal']);
         Route::post('/inventory/closed', [InventoryController::class, 'saveClosed']);

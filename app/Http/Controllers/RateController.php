@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Property;
 use App\Models\RoomType;
+use App\Models\Occupancy;
 use App\Services\RatesCalendar;
 use App\Support\BusinessDate;
 use Illuminate\Http\Request;
@@ -25,7 +26,10 @@ class RateController extends Controller
         Gate::authorize('manageRates', $property);
         $roomTypes = $this->ownerRoomTypes($property);
         $today = BusinessDate::today();
-        return view('rate.addBaseRate', compact('property','roomTypes','today'));
+        // For the date-range form: every occupancy (shown up to the room type's maximum) x meal plan
+        $occupancies = Occupancy::orderBy('occupancy')->get();
+        $mealTypes = $this->calendar->mealTypes();
+        return view('rate.addBaseRate', compact('property','roomTypes','today','occupancies','mealTypes'));
     }
 
     public function viewRates($property_id){
@@ -91,6 +95,27 @@ class RateController extends Controller
             array_map('intval', $request->weekdays ?? []));
 
         return response()->json(['status' => 'success', 'message' => "Rates of {$request->source_date} were copied to $count date(s)."]);
+    }
+
+    // The same USD and LKR prices for every date in a range, in one submit
+    public function setRangeRates(Request $request){
+        $request->validate([
+            'property_id' => ['required', 'integer'],
+            'roomType_id' => ['required', 'integer'],
+            'from_date' => ['required', 'date_format:Y-m-d'],
+            'to_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:from_date'],
+            'weekdays' => ['nullable', 'array'],
+            'weekdays.*' => ['integer', 'between:0,6'],
+            'prices' => ['required', 'array'],
+        ], [
+            'to_date.after_or_equal' => 'The end date must be on or after the start date.',
+        ]);
+        [$property, $roomType] = $this->resolvePropertyRoomType($request->property_id, $request->roomType_id, 'manageRates');
+
+        $count = $this->calendar->setRange($property, $roomType, $request->from_date, $request->to_date,
+            array_map('intval', $request->weekdays ?? []), $request->prices);
+
+        return response()->json(['status' => 'success', 'message' => "Rates of {$roomType->roomType} were set for $count date(s) from {$request->from_date} to {$request->to_date}."]);
     }
 
     private function gridResponse(string $ability, bool $editable, $property_id, $roomType_id, $from_date, $to_date){

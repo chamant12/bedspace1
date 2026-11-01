@@ -86,9 +86,6 @@ class RatesCalendar
      */
     public function save(Property $property, RoomType $roomType, array $rates): void
     {
-        $occupancyNames = $this->occupancies($roomType)->pluck('occupancy_name', 'id');
-        $mealTypeNames = $this->mealTypes()->pluck('mealType', 'id');
-
         $errors = [];
         $values = [];
         foreach ($rates as $date => $occupancies) {
@@ -100,31 +97,7 @@ class RatesCalendar
                 $errors[] = "$date is in the past; past rates cannot be changed.";
                 continue;
             }
-            foreach ($occupancies as $occupancyId => $meals) {
-                foreach ((array) $meals as $mealTypeId => $prices) {
-                    if (!isset($occupancyNames[$occupancyId], $mealTypeNames[$mealTypeId])) {
-                        $errors[] = 'Invalid occupancy or meal plan in rates.';
-                        continue;
-                    }
-                    $label = "$date, {$occupancyNames[$occupancyId]} / {$mealTypeNames[$mealTypeId]}";
-                    $cell = [];
-                    foreach (self::CURRENCIES as $code) {
-                        $raw = trim((string) ($prices[$code] ?? ''));
-                        if ($raw === '' || (is_numeric($raw) && (float) $raw == 0)) {
-                            $cell[$code] = null;
-                        } elseif (!is_numeric($raw) || (float) $raw < 0 || (float) $raw > 99999999) {
-                            $errors[] = "$label: $code price must be a positive amount.";
-                            $cell[$code] = null;
-                        } else {
-                            $cell[$code] = round((float) $raw, 2);
-                        }
-                    }
-                    if (($cell['USD'] === null) !== ($cell['LKR'] === null)) {
-                        $errors[] = "$label: enter both the USD and the LKR price, or leave both empty.";
-                    }
-                    $values[$date][(int) $occupancyId][(int) $mealTypeId] = $cell;
-                }
-            }
+            $values[$date] = $this->validatePrices($roomType, $occupancies, "$date, ", $errors);
         }
 
         if ($errors) {
@@ -213,6 +186,56 @@ class RatesCalendar
     }
 
     /**
+     * Gives every future date between $from and $to (optionally only some
+     * weekdays, 0 = Sunday ... 6 = Saturday) the same prices in one go.
+     * $prices[occupancy_id][mealType_id][USD|LKR]; combinations left empty
+     * keep whatever they had. Returns the number of dates updated.
+     */
+    public function setRange(Property $property, RoomType $roomType, string $from, string $to, array $weekdays, array $prices): int
+    {
+        if (!$this->isValidDate($from) || !$this->isValidDate($to) || $to < $from) {
+            throw ValidationException::withMessages(['range' => 'Please choose a valid date range.']);
+        }
+
+        $from = max($from, BusinessDate::today()); // never onto past dates
+        if ($from > $to) {
+            throw ValidationException::withMessages(['range' => 'The range must include today or a future date; past rates cannot be changed.']);
+        }
+
+        $dates = array_values(array_filter(
+            $this->dateRange($from, $to, self::MAX_COPY_DAYS),
+            fn ($date) => !$weekdays || in_array((int) date('w', strtotime($date)), $weekdays)
+        ));
+        if (!$dates) {
+            throw ValidationException::withMessages(['range' => 'No dates in the range fall on the selected days of the week.']);
+        }
+
+        // Only the combinations the owner filled in, checked once for the whole range
+        $filled = [];
+        foreach ($prices as $occupancyId => $meals) {
+            foreach ((array) $meals as $mealTypeId => $cell) {
+                if (trim((string) ($cell['USD'] ?? '')) !== '' || trim((string) ($cell['LKR'] ?? '')) !== '') {
+                    $filled[$occupancyId][$mealTypeId] = $cell;
+                }
+            }
+        }
+        $errors = [];
+        $cells = $this->validatePrices($roomType, $filled, '', $errors);
+        if (!$errors && !$this->hasCompleteCombination($cells)) {
+            $errors[] = 'Enter the USD and LKR price for at least one occupancy and meal plan.';
+        }
+        if ($errors) {
+            throw ValidationException::withMessages(['range' => array_values(array_unique($errors))]);
+        }
+
+        $this->write($property, $roomType, array_fill_keys($dates, $cells));
+
+        Audit::log('rates.range', $roomType, "Rates of {$roomType->roomType} set for ".count($dates)." date(s) between $from and $to", null, $property->id);
+
+        return count($dates);
+    }
+
+    /**
      * Open dates of a room type at a property within [from, to]:
      * dates that have at least one complete (USD + LKR) combination.
      * Used by availability: a closed date has 0 rooms available.
@@ -263,6 +286,46 @@ class RatesCalendar
                 }
             }
         });
+    }
+
+    /**
+     * Checks one date's prices: $prices[occupancy_id][mealType_id][USD|LKR].
+     * Returns [occupancy][meal][code] => float|null (null = no price) and adds
+     * messages (prefixed with $labelPrefix) to $errors.
+     */
+    private function validatePrices(RoomType $roomType, array $prices, string $labelPrefix, array &$errors): array
+    {
+        $occupancyNames = $this->occupancies($roomType)->pluck('occupancy_name', 'id');
+        $mealTypeNames = $this->mealTypes()->pluck('mealType', 'id');
+
+        $values = [];
+        foreach ($prices as $occupancyId => $meals) {
+            foreach ((array) $meals as $mealTypeId => $cellPrices) {
+                if (!isset($occupancyNames[$occupancyId], $mealTypeNames[$mealTypeId])) {
+                    $errors[] = 'Invalid occupancy or meal plan in rates.';
+                    continue;
+                }
+                $label = $labelPrefix."{$occupancyNames[$occupancyId]} / {$mealTypeNames[$mealTypeId]}";
+                $cell = [];
+                foreach (self::CURRENCIES as $code) {
+                    $raw = trim((string) ($cellPrices[$code] ?? ''));
+                    if ($raw === '' || (is_numeric($raw) && (float) $raw == 0)) {
+                        $cell[$code] = null;
+                    } elseif (!is_numeric($raw) || (float) $raw < 0 || (float) $raw > 99999999) {
+                        $errors[] = "$label: $code price must be a positive amount.";
+                        $cell[$code] = null;
+                    } else {
+                        $cell[$code] = round((float) $raw, 2);
+                    }
+                }
+                if (($cell['USD'] === null) !== ($cell['LKR'] === null)) {
+                    $errors[] = "$label: enter both the USD and the LKR price, or leave both empty.";
+                }
+                $values[(int) $occupancyId][(int) $mealTypeId] = $cell;
+            }
+        }
+
+        return $values;
     }
 
     // [occupancy][meal][code] => price; true if any combination has both prices

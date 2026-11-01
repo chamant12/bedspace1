@@ -11,10 +11,81 @@
                 is closed on that date. Leave a room type without rates to hide it at this property.
                 Past dates cannot be changed.
             </p>
-            @include('rate._selector')
-
             <div id="rate-errors" class="alert alert-danger" style="display:none;"></div>
             <div id="rate-success" class="alert alert-success" style="display:none;"></div>
+
+            {{-- Same prices for every date in a range, in one submit --}}
+            <div class="card border mb-4">
+                <div class="card-body">
+                    <h5 class="mb-1">Set rates for a date range</h5>
+                    <p class="text-muted small mb-3">Enter the prices once and they are applied to every day from the start date to the end date
+                        (past dates are never changed, up to 366 days at a time). Fill in the meal plans you offer; any you leave empty keep their current prices.</p>
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <label>Room type<span class="text-danger">*</span></label>
+                            <select id="range_roomType_id" class="form-control">
+                                <option value="">Select room type</option>
+                                @foreach($roomTypes as $roomType)
+                                    <option value="{{ $roomType->id }}" data-max="{{ $roomType->max_occupancy }}">{{ $roomType->roomType }} (max {{ $roomType->max_occupancy }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>From<span class="text-danger">*</span></label>
+                            <input id="range_from" class="form-control" type="text" readonly value="{{ $today }}"/>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>To<span class="text-danger">*</span></label>
+                            <input id="range_to" class="form-control" type="text" readonly value="{{ \Carbon\Carbon::parse($today)->addDays(29)->toDateString() }}"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="d-block">On these days</label>
+                        @foreach(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as $day => $label)
+                            <label class="me-2"><input type="checkbox" class="range-weekday" value="{{ $day }}" checked> {{ $label }}</label>
+                        @endforeach
+                    </div>
+
+                    <div id="range-prices" style="display:none;">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm mb-2 range-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">Guests</th>
+                                        @foreach($mealTypes as $mealType)
+                                            <th colspan="2" class="text-center">{{ $mealType->mealType }}</th>
+                                        @endforeach
+                                    </tr>
+                                    <tr>
+                                        @foreach($mealTypes as $mealType)
+                                            <th class="text-center">USD</th><th class="text-center">LKR</th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach($occupancies as $occupancy)
+                                    <tr class="range-row" data-size="{{ $occupancy->occupancy }}">
+                                        <td class="text-nowrap">{{ $occupancy->occupancy_name }}</td>
+                                        @foreach($mealTypes as $mealType)
+                                            @foreach(['USD', 'LKR'] as $code)
+                                                <td><input type="number" min="0" step="0.01" class="form-control form-control-sm range-price"
+                                                           data-occupancy="{{ $occupancy->id }}" data-meal="{{ $mealType->id }}" data-currency="{{ $code }}"
+                                                           aria-label="{{ $occupancy->occupancy_name }}, {{ $mealType->mealType }}, {{ $code }}"></td>
+                                            @endforeach
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <button id="applyRange" type="button" class="btn btn-primary">Apply to all dates in the range</button>
+                    </div>
+                    <p id="range-hint" class="text-muted small mb-0">Choose a room type to enter its prices.</p>
+                </div>
+            </div>
+
+            <h5>Rates calendar</h5>
+            @include('rate._selector')
 
             {{-- Copy one date's rates to future dates --}}
             <div id="copy-panel" class="card border mb-3" style="display:none;">
@@ -218,6 +289,82 @@ $(document).ready(function(){
     });
 
     $('#cancelCopy').click(function () { $('#copy-panel').hide(); });
+
+    // ---- Set rates for a date range ----
+    $('#range_from, #range_to').datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true, startDate: TODAY });
+
+    // Only occupancies up to the room type's maximum
+    $('#range_roomType_id').on('change', function () {
+        var max = parseInt($(this).find(':selected').data('max'), 10);
+        if (!max) {
+            $('#range-prices').hide();
+            $('#range-hint').show();
+            return;
+        }
+        $('.range-row').each(function () {
+            var show = parseInt($(this).data('size'), 10) <= max;
+            $(this).toggle(show);
+            if (!show) $(this).find('.range-price').val('');
+        });
+        $('#range-hint').hide();
+        $('#range-prices').show();
+    });
+
+    $('#applyRange').click(function () {
+        var roomTypeId = $('#range_roomType_id').val();
+        var from = $('#range_from').val(), to = $('#range_to').val();
+        var weekdays = $('.range-weekday:checked').map(function () { return parseInt(this.value); }).get();
+        var messages = [];
+
+        if (!from || !to || to < from) messages.push('Please choose a start date and an end date on or after it.');
+        if (weekdays.length === 0) messages.push('Please select at least one day of the week.');
+
+        // prices[occupancy_id][mealType_id] = {USD, LKR}; a meal plan needs both prices or neither
+        var prices = {}, complete = 0;
+        $('.range-price').removeClass('is-invalid');
+        $('.range-row:visible').each(function () {
+            var row = $(this);
+            row.find('.range-price[data-currency="USD"]').each(function () {
+                var usd = $(this), meal = usd.data('meal'), occ = usd.data('occupancy');
+                var lkr = row.find('.range-price[data-currency="LKR"][data-meal="' + meal + '"]');
+                var u = $.trim(usd.val()), l = $.trim(lkr.val());
+                if (u === '' && l === '') return;
+                if (u === '' || l === '' || parseFloat(u) <= 0 || parseFloat(l) <= 0) {
+                    usd.add(lkr).addClass('is-invalid');
+                    messages.push(row.find('td').first().text().trim() + ': enter both the USD and the LKR price (above 0), or leave both empty.');
+                    return;
+                }
+                prices[occ] = prices[occ] || {};
+                prices[occ][meal] = { USD: u, LKR: l };
+                complete++;
+            });
+        });
+        if (!roomTypeId) messages.push('Please choose a room type.');
+        else if (complete === 0 && messages.length === 0) messages.push('Enter the USD and LKR price for at least one meal plan.');
+
+        messages = messages.filter(function (m, i) { return messages.indexOf(m) === i; });
+        if (messages.length) {
+            showErrors(messages);
+            return;
+        }
+
+        var days = Math.round((new Date(to) - new Date(from)) / 86400000) + 1;
+        if (!confirm('Apply these prices to ' + $('#range_roomType_id option:selected').text() + ' on every selected day from ' + from + ' to ' + to + ' (' + days + ' day(s))?')) return;
+
+        post('/api/set-range-rates', {
+            roomType_id: roomTypeId,
+            from_date: from,
+            to_date: to,
+            weekdays: weekdays.length === 7 ? [] : weekdays,
+            prices: prices
+        }, function (response) {
+            showSuccess(response.message);
+            // Refresh the calendar below if it shows the same room type
+            if ($('#response-container').children().length && $('#roomType_id').val() == roomTypeId) {
+                loadGrid(function () { showSuccess(response.message); });
+            }
+        });
+    });
 
     $('#copyRates').click(function () {
         var weekdays = $('.copy-weekday:checked').map(function () { return parseInt(this.value); }).get();
