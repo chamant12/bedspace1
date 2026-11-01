@@ -7,10 +7,19 @@
     </p>
 
     @if($photos->isNotEmpty())
+        {{-- Photo categories (entrance, lobby, pool...): each opens the viewer with only those photos --}}
+        @php($photoTags = collect(\App\Models\Photo::tagsFor('property'))->filter(fn ($label, $key) => $photos->contains('tag', $key)))
+        @if($photoTags->count() > 1)
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                @foreach($photoTags as $key => $label)
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-open-gallery="property" data-tag="{{ $key }}">{{ $label }} ({{ $photos->where('tag', $key)->count() }})</button>
+                @endforeach
+            </div>
+        @endif
         <div class="row g-2 mb-3 bs-gallery">
             @foreach($photos as $photo)
                 <div class="col-6 col-md-4" @if($loop->index >= 6) hidden @endif>
-                    <a href="{{ $photo->url }}" data-gallery="property" data-caption="{{ $property->property_name }}"><img src="{{ $photo->thumb_url }}" alt="{{ $property->property_name }} photo {{ $loop->iteration }}" loading="lazy"></a>
+                    <a href="{{ $photo->url }}" data-gallery="property" data-tag="{{ $photo->tag }}" data-caption="{{ $photo->tag_label ?? $property->property_name }}"><img src="{{ $photo->thumb_url }}" alt="{{ $property->property_name }}{{ $photo->tag_label ? ' – '.$photo->tag_label : ' photo '.$loop->iteration }}" loading="lazy"></a>
                 </div>
             @endforeach
             @if($photos->count() > 6)
@@ -49,7 +58,7 @@
                         <div class="col-md-4 mb-3 mb-md-0">
                             <div class="bs-room-photos">
                                 @foreach($gallery as $photo)
-                                    <a href="{{ $photo->url }}" data-gallery="room-{{ $offer['roomType']->id }}" data-caption="{{ $offer['roomType']->roomType }}" @unless($loop->first) hidden @endunless>
+                                    <a href="{{ $photo->url }}" data-gallery="room-{{ $offer['roomType']->id }}" data-tag="{{ $photo->tag }}" data-caption="{{ $offer['roomType']->roomType }}{{ $photo->tag_label ? ' · '.$photo->tag_label : '' }}" @unless($loop->first) hidden @endunless>
                                         <img src="{{ $photo->thumb_url }}" class="bs-room-cover" alt="{{ $offer['roomType']->roomType }}" loading="lazy">
                                     </a>
                                 @endforeach
@@ -120,7 +129,8 @@
 @section('scripts')
 @include('public._scripts')
 <script>
-// Photo viewer: links with the same data-gallery form one gallery, in the owner's order
+// Photo viewer: links with the same data-gallery form one gallery, in the owner's order;
+// a data-tag on the opener shows only that category (e.g. the pool photos)
 (function () {
     var box = document.getElementById('bs-lightbox');
     var img = box.querySelector('img');
@@ -136,8 +146,9 @@
         box.querySelector('.bs-lb-prev').hidden = single;
         box.querySelector('.bs-lb-next').hidden = single;
     }
-    function open(name, start) {
-        items = Array.prototype.slice.call(document.querySelectorAll('a[data-gallery="' + name + '"]'));
+    function open(name, start, tag) {
+        items = Array.prototype.slice.call(document.querySelectorAll('a[data-gallery="' + name + '"]'))
+            .filter(function (link) { return !tag || link.dataset.tag === tag; });
         if (!items.length) return;
         index = Math.min(start || 0, items.length - 1);
         show();
@@ -157,14 +168,15 @@
             open(link.dataset.gallery, Array.prototype.indexOf.call(group, link));
         } else if (opener) {
             e.preventDefault();
-            open(opener.dataset.openGallery, parseInt(opener.dataset.start, 10) || 0);
+            open(opener.dataset.openGallery, parseInt(opener.dataset.start, 10) || 0, opener.dataset.tag);
         }
     });
     document.addEventListener('keydown', function (e) {
-        var opener = e.target.closest && e.target.closest('[data-open-gallery]');
+        // Buttons open on Enter/Space by themselves (click); thumbnails with role="button" need this
+        var opener = e.target.closest && e.target.closest('img[data-open-gallery]');
         if (opener && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
-            open(opener.dataset.openGallery, parseInt(opener.dataset.start, 10) || 0);
+            open(opener.dataset.openGallery, parseInt(opener.dataset.start, 10) || 0, opener.dataset.tag);
             return;
         }
         if (box.hidden) return;

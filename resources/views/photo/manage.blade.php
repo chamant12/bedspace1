@@ -29,9 +29,27 @@
         @if($photos->isEmpty())
             <p class="text-muted mb-0">No photos yet. Upload some below.</p>
         @else
+            @php($untagged = $photos->whereNull('tag')->count())
+            @if($untagged)
+                <div class="alert alert-warning py-2">{{ $untagged }} photo(s) have no category yet. Choose what each one shows using the list under the photo.</div>
+            @endif
+            {{-- Show one category at a time; reordering works when all photos are shown --}}
+            <div class="d-flex flex-wrap gap-2 mb-3" id="tag-filter">
+                <button type="button" class="btn btn-sm btn-primary text-white" data-filter="">All ({{ $photos->count() }})</button>
+                @foreach($tags as $key => $label)
+                    @php($count = $photos->where('tag', $key)->count())
+                    @if($count)
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="{{ $key }}">{{ $label }} ({{ $count }})</button>
+                    @endif
+                @endforeach
+                @if($untagged)
+                    <button type="button" class="btn btn-sm btn-outline-warning" data-filter="none">No category ({{ $untagged }})</button>
+                @endif
+            </div>
+            <p id="filter-note" class="small text-muted" hidden>Showing one category. Choose <strong>All</strong> to change the order.</p>
             <div class="row" id="gallery">
                 @foreach($photos as $photo)
-                    <div class="col-6 col-md-4 col-xl-3 mb-4 photo-item" data-id="{{ $photo->id }}">
+                    <div class="col-6 col-md-4 col-xl-3 mb-4 photo-item" data-id="{{ $photo->id }}" data-tag="{{ $photo->tag ?? 'none' }}">
                         <div class="photo-card">
                             <span class="cover-badge">Cover</span>
                             <span class="drag-handle" title="Drag to reorder" aria-hidden="true">&#x2630;</span>
@@ -43,6 +61,12 @@
                                 <button type="button" class="btn btn-sm btn-danger remove-btn" title="Remove" aria-label="Remove photo">&times;</button>
                             </div>
                         </div>
+                        <select class="form-select form-select-sm mt-1 tag-select {{ $photo->tag ? '' : 'is-invalid' }}" aria-label="What this photo shows">
+                            @unless($photo->tag)<option value="">Choose category…</option>@endunless
+                            @foreach($tags as $key => $label)
+                                <option value="{{ $key }}" @selected($photo->tag === $key)>{{ $label }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 @endforeach
             </div>
@@ -51,7 +75,17 @@
 
     <div class="card"><div class="card-body">
         <h4 class="card-title">Upload photos</h4>
-        <p class="card-description">JPG, PNG or WebP, up to 10 MB each and 20 at a time. Photos are resized automatically. New photos are added at the end.</p>
+        <p class="card-description">JPG, PNG or WebP, up to 10 MB each and 20 at a time. Photos are resized automatically. New photos are added at the end.
+            Upload one kind of photo at a time (for example all the {{ $roomType ? 'bathroom' : 'pool' }} photos), or change a photo's category later.</p>
+        <div class="form-group" style="max-width:360px;">
+            <label for="upload-tag">What do these photos show?<span class="text-danger">*</span></label>
+            <select id="upload-tag" class="form-select">
+                <option value="">Choose a category…</option>
+                @foreach($tags as $key => $label)
+                    <option value="{{ $key }}">{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
         <div id="upload-area" class="upload-area" tabindex="0" role="button">
             <p>Drop images here or click to choose</p>
             <input type="file" id="file-input" multiple accept="image/jpeg,image/png,image/webp" hidden>
@@ -87,6 +121,9 @@
 .sortable-ghost .photo-card { opacity: .35; outline: 2px dashed #0d6efd; }
 .sortable-chosen .photo-card { cursor: grabbing; }
 .saving #gallery { pointer-events: none; opacity: .8; }
+#gallery.filtered .move-btn, #gallery.filtered .cover-badge, #gallery.filtered .drag-handle { display: none !important; }
+#gallery.filtered .photo-card { cursor: default; }
+.photo-item[hidden] { display: none !important; }
 .upload-area { border: 2px dashed #aaa; padding: 40px 16px; text-align: center; border-radius: 10px; cursor: pointer; background: #fafafa; }
 .upload-area:hover, .upload-area:focus { border-color: #0d6efd; background: #f1f8ff; outline: none; }
 .upload-area.dragover { border-color: #198754; background: #e9f7ef; }
@@ -160,9 +197,9 @@
                 .finally(function () { document.body.classList.remove('saving'); });
         };
 
-        Sortable.create(gallery, {
+        const sortable = Sortable.create(gallery, {
             draggable: '.photo-item',
-            filter: '.photo-actions',
+            filter: '.photo-actions, .tag-select',
             preventOnFilter: false,
             animation: 150,
             delay: 200,
@@ -205,6 +242,43 @@
                     })
                     .catch(function (err) { setStatus(err.message, 'text-danger'); });
             }
+        });
+
+        // ---- Categories ----
+        gallery.addEventListener('change', function (e) {
+            const select = e.target.closest('.tag-select');
+            if (!select || !select.value) return;
+            const item = select.closest('.photo-item');
+            setStatus('Saving category…', 'text-muted');
+            postJson('/api/photo-tag/' + item.dataset.id, { tag: select.value })
+                .then(function (data) {
+                    item.dataset.tag = select.value;
+                    select.classList.remove('is-invalid');
+                    const blank = select.querySelector('option[value=""]');
+                    if (blank) blank.remove();
+                    setStatus('Category saved: ' + data.label, 'text-success');
+                })
+                .catch(function (err) { setStatus(err.message, 'text-danger'); });
+        });
+
+        // Show one category; reordering is switched off until all photos are shown again
+        const filterBar = document.getElementById('tag-filter');
+        filterBar.addEventListener('click', function (e) {
+            const button = e.target.closest('[data-filter]');
+            if (!button) return;
+            const filter = button.dataset.filter;
+            filterBar.querySelectorAll('[data-filter]').forEach(function (b) {
+                const active = b === button;
+                b.classList.toggle('btn-primary', active);
+                b.classList.toggle('text-white', active);
+                b.classList.toggle('btn-outline-primary', !active && b.dataset.filter !== 'none');
+            });
+            gallery.querySelectorAll('.photo-item').forEach(function (item) {
+                item.hidden = filter !== '' && item.dataset.tag !== filter;
+            });
+            sortable.option('disabled', filter !== '');
+            gallery.classList.toggle('filtered', filter !== '');
+            document.getElementById('filter-note').hidden = filter === '';
         });
     }
 
@@ -262,10 +336,19 @@
 
     uploadBtn.addEventListener('click', function () {
         if (!selected.length) return;
+        const tag = document.getElementById('upload-tag');
+        if (!tag.value) {
+            tag.classList.add('is-invalid');
+            tag.focus();
+            alert('Choose what these photos show (for example ' + @json(array_values($tags)[0] ?? 'Other') + ').');
+            return;
+        }
+        tag.classList.remove('is-invalid');
         const form = new FormData();
         selected.forEach(function (file) { form.append('photos[]', file); });
         form.append('upload_type', @json($uploadType));
         form.append('type_id', @json($typeId));
+        form.append('tag', tag.value);
 
         const overlay = document.getElementById('upload-overlay');
         const bar = document.getElementById('upload-progress-bar');

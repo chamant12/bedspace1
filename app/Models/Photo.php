@@ -15,6 +15,18 @@ class Photo extends Model
         'is_active' => 'boolean',
     ];
 
+    // Tags owners can choose for a gallery type: [key => label]
+    public static function tagsFor(string $uploadType): array
+    {
+        return config("bedspace.photo_tags.$uploadType", []);
+    }
+
+    // "Swimming pool", or null when not tagged
+    public function getTagLabelAttribute(): ?string
+    {
+        return $this->tag ? (self::tagsFor($this->upload_type)[$this->tag] ?? null) : null;
+    }
+
     public function getUrlAttribute(): string
     {
         return $this->storageUrl($this->file_name);

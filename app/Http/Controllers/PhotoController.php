@@ -10,6 +10,7 @@ use App\Services\ImageUploader;
 use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 /**
  * Property and room-type photo galleries: upload, reorder by drag and drop,
@@ -66,7 +67,9 @@ class PhotoController extends Controller
             ->whereIn('id', PropertyRoomType::where(['property_id' => $property->id, 'is_active' => true])->select('roomType_id'))
             ->orderBy('roomType')->get();
 
-        return view('photo.manage', compact('property', 'roomType', 'photos', 'roomTypes'));
+        $tags = Photo::tagsFor($roomType ? 'roomType' : 'property');
+
+        return view('photo.manage', compact('property', 'roomType', 'photos', 'roomTypes', 'tags'));
     }
 
     public function uploadPhotos(Request $request, ImageUploader $uploader)
@@ -76,6 +79,10 @@ class PhotoController extends Controller
             'photos.*' => 'required|image|mimes:jpg,jpeg,png,webp|max:10240',
             'upload_type' => 'required|in:property,roomType',
             'type_id' => 'required|integer',
+            // What the photos show (entrance, pool, bathroom...)
+            'tag' => ['required', Rule::in(array_keys(Photo::tagsFor((string) $request->upload_type)))],
+        ], [
+            'tag.required' => 'Choose what the photos show.',
         ]);
 
         $uploadType = $request->upload_type;
@@ -94,6 +101,7 @@ class PhotoController extends Controller
                 'upload_path' => $path,
                 'upload_type' => $uploadType,
                 'type_id' => $typeId,
+                'tag' => $request->tag,
                 'file_name' => $stored['file_name'],
                 'has_thumbnail' => true,
                 'sort_order' => $maxOrder + $index + 1,
@@ -141,6 +149,25 @@ class PhotoController extends Controller
             $first->upload_type === 'property' ? (int) $first->type_id : null);
 
         return response()->json(['status' => 'success']);
+    }
+
+    // Changes what one photo shows (entrance, pool, bathroom...)
+    public function updatePhotoTag(Request $request, $photo_id)
+    {
+        $photo = Photo::where('is_active', true)->find($photo_id);
+        if (!$photo) {
+            return response()->json(['message' => 'Photo not found.'], 404);
+        }
+        $this->authorizeTarget($photo->upload_type, $photo->type_id);
+
+        $request->validate([
+            'tag' => ['required', Rule::in(array_keys(Photo::tagsFor($photo->upload_type)))],
+        ]);
+
+        $photo->tag = $request->tag;
+        $photo->save();
+
+        return response()->json(['status' => 'success', 'label' => $photo->tag_label]);
     }
 
     // Photos are hidden (deactivated), never deleted; the files stay in storage

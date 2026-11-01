@@ -56,6 +56,44 @@ return [
         ],
     ],
 
+    /*
+    | What a photo shows (photos.tag), chosen by the owner when uploading.
+    | Keys are stored; labels are shown to owners and guests. Add new tags at
+    | the end; do not rename keys that are already in use.
+    */
+    'photo_tags' => [
+        'property' => [
+            'entrance' => 'Entrance',
+            'exterior' => 'Exterior / outdoor',
+            'lobby' => 'Lobby',
+            'reception' => 'Reception',
+            'dining' => 'Dining area',
+            'restaurant' => 'Restaurant',
+            'bar' => 'Bar / lounge',
+            'pool' => 'Swimming pool',
+            'garden' => 'Garden',
+            'spa' => 'Spa & wellness',
+            'gym' => 'Fitness centre',
+            'beach' => 'Beach',
+            'view' => 'View',
+            'common' => 'Common areas',
+            'kids' => "Kids' area",
+            'events' => 'Meeting / event space',
+            'parking' => 'Parking',
+            'other' => 'Other',
+        ],
+        'roomType' => [
+            'bed' => 'Bed / bedroom',
+            'bathroom' => 'Bathroom',
+            'amenities' => 'Room amenities',
+            'living' => 'Living / seating area',
+            'balcony' => 'Balcony / terrace',
+            'view' => 'View from the room',
+            'kitchenette' => 'Kitchenette',
+            'other' => 'Other',
+        ],
+    ],
+
     'currency_cookie' => 'bedspace_currency',
     'currency_cookie_minutes' => 60 * 24 * 365 * 2,
 

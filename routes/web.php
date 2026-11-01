@@ -220,6 +220,7 @@ Route::middleware(['auth', 'user.type:owner,staff', 'partner.approved', 'can.edi
         Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
         Route::post('/upload-photos', [PhotoController::class, 'uploadPhotos']);
         Route::post('/update-photo-order', [PhotoController::class, 'updatePhotoOrder']);
+        Route::post('/photo-tag/{photo_id}', [PhotoController::class, 'updatePhotoTag']);
         Route::post('/remove-photo/{photo_id}', [PhotoController::class, 'deactivatePhoto']);
     });
 });
