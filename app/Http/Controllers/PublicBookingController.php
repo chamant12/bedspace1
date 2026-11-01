@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\PaymentMethod;
 use App\Models\Amenity;
-use App\Models\District;
 use App\Models\MealType;
 use App\Models\Occupancy;
 use App\Models\Photo;
@@ -17,6 +16,7 @@ use App\Services\Payments;
 use App\Cms\Cms;
 use App\Models\BlogPost;
 use App\Services\CancellationPolicy;
+use App\Services\LocationSearch;
 use App\Enums\ReservationStatus;
 use App\Services\Reservations;
 use App\Support\BusinessDate;
@@ -40,6 +40,7 @@ class PublicBookingController extends Controller
         private Reservations $reservations,
         private Payments $payments,
         private CancellationPolicy $cancellationPolicy,
+        private LocationSearch $locations,
     ) {
     }
 
@@ -88,7 +89,7 @@ class PublicBookingController extends Controller
         return view('welcome', [
             'page' => Cms::page('home'),
             'stay' => $stay,
-            'districts' => $this->districtsWithProperties(),
+            'destinations' => $this->locations->destinations(),
             'occupancies' => Occupancy::orderBy('occupancy')->get(),
             'featuredStays' => $featuredStays,
             'posts' => BlogPost::published()->orderByDesc('published_at')->take(3)->get(),
@@ -97,27 +98,26 @@ class PublicBookingController extends Controller
 
     public function search(Request $request){
         $stay = $this->stayFromRequest($request);
-        $districts = $this->districtsWithProperties();
+        $destinations = $this->locations->destinations();
 
-        // ?area=Kandy (destination links): use the matching district, otherwise match city names
-        $area = trim((string) $request->query('area', ''));
-        if ($area !== '' && !$stay['district_id']) {
-            $stay['district_id'] = District::where('district_name', 'like', '%'.$area.'%')->value('id');
+        // "Where": a city, district or name typed by the guest (?where=Ella); ?area= (destination
+        // links) and ?district_id= (older links) still work
+        $place = $request->filled('district_id') && !$request->filled('where')
+            ? $this->locations->forDistrictId($request->district_id)
+            : $this->locations->resolve($stay['where'] !== '' ? $stay['where'] : $request->query('area'));
+        if ($place && $stay['where'] === '') {
+            $stay['where'] = $place->label;
         }
 
+        $searched = $request->filled('check_in') || $place !== null;
         $results = [];
         $error = null;
-        if ($request->filled('check_in') || $request->filled('district_id') || $area !== '') {
+        if ($searched) {
             $error = $this->quotes->validateStay($stay['check_in'], $stay['check_out']);
             if (!$error) {
                 $properties = Property::with('city.district')
                     ->where('is_active', true)
-                    ->when($stay['district_id'], fn ($q) => $q->whereIn('city_id', function ($sub) use ($stay) {
-                        $sub->select('id')->from('cities')->where('district_id', $stay['district_id']);
-                    }))
-                    ->when(!$stay['district_id'] && $area !== '', fn ($q) => $q->whereIn('city_id', function ($sub) use ($area) {
-                        $sub->select('id')->from('cities')->where('city_name', 'like', '%'.$area.'%');
-                    }))
+                    ->when($place, fn ($q) => $this->locations->apply($q, $place))
                     ->orderBy('property_name')
                     ->get();
 
@@ -135,12 +135,10 @@ class PublicBookingController extends Controller
 
         // Location searches ("Hotels in Kandy"): a few available properties picked at random,
         // each with a random sample of its photos
-        $location = $stay['district_id'] ? District::whereKey($stay['district_id'])->value('district_name') : ($area !== '' ? $area : null);
-        $featured = $location
-            ? $this->featuredForLocation($request, $stay['district_id'] ? 'district:'.$stay['district_id'] : 'area:'.mb_strtolower($area), $results)
-            : collect();
+        $location = $place?->label;
+        $featured = $place ? $this->featuredForLocation($request, $place->key, $results) : collect();
 
-        return view('public.search', compact('stay', 'districts', 'results', 'error', 'location', 'featured') + [
+        return view('public.search', compact('stay', 'destinations', 'results', 'error', 'location', 'featured', 'searched') + [
             'occupancies' => Occupancy::orderBy('occupancy')->get(),
         ]);
     }
@@ -313,22 +311,12 @@ class PublicBookingController extends Controller
         return redirect($this->bookingUrl($reservation));
     }
 
-    // Districts that have at least one active property
-    private function districtsWithProperties()
-    {
-        return District::whereIn('id', function ($query) {
-            $query->select('cities.district_id')->from('properties')
-                ->join('cities', 'cities.id', '=', 'properties.city_id')
-                ->where('properties.is_active', true);
-        })->orderBy('district_name')->get();
-    }
-
     private function bookingUrl(Reservation $reservation): string
     {
         return URL::temporarySignedRoute('booking.show', now()->addDays(30), ['reference' => $reservation->reference]);
     }
 
-    // check_in, check_out, guests (per room), rooms; defaults: tomorrow, 1 night, any occupancy, 1 room
+    // check_in, check_out, guests (per room), rooms, where; defaults: tomorrow, 1 night, any occupancy, 1 room, anywhere
     private function stayFromRequest(Request $request): array
     {
         $tomorrow = CarbonImmutable::parse(BusinessDate::today())->addDay();
@@ -337,7 +325,7 @@ class PublicBookingController extends Controller
             'check_out' => (string) $request->input('check_out', $tomorrow->addDay()->toDateString()),
             'guests' => $request->filled('guests') ? max(1, (int) $request->guests) : null,
             'rooms' => min(BookingQuotes::MAX_ROOMS, max(1, (int) $request->input('rooms', 1))),
-            'district_id' => $request->input('district_id'),
+            'where' => mb_substr(trim((string) $request->input('where', '')), 0, 100),
         ];
     }
 

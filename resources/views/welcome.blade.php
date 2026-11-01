@@ -21,12 +21,7 @@
             <div class="row">
                 <div class="col-lg-3 col-md-6 form-group">
                     <label for="search-area">Where</label>
-                    <select name="district_id" id="search-area" class="form-control">
-                        <option value="">Anywhere in Sri Lanka</option>
-                        @foreach($districts as $district)
-                            <option value="{{ $district->id }}">{{ $district->district_name }}</option>
-                        @endforeach
-                    </select>
+                    @include('public._whereInput', ['id' => 'search-area', 'value' => ''])
                 </div>
                 <div class="col-lg-2 col-md-3 col-6 form-group">
                     <label for="bs-check-in">Check-in</label>

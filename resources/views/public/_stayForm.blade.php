@@ -1,14 +1,9 @@
-{{-- Stay search form (dates, guests per room, rooms). $action, $stay; optional $districts --}}
+{{-- Stay search form (dates, guests per room, rooms). $action, $stay; optional $destinations (adds the "Where" box) --}}
 <form method="GET" action="{{ $action }}" class="row g-2 align-items-end bs-stay-form">
-    @isset($districts)
+    @isset($destinations)
     <div class="col-md-3">
-        <label>Where</label>
-        <select name="district_id" class="form-control">
-            <option value="">Anywhere in Sri Lanka</option>
-            @foreach($districts as $district)
-                <option value="{{ $district->id }}" @selected((string) $stay['district_id'] === (string) $district->id)>{{ $district->district_name }}</option>
-            @endforeach
-        </select>
+        <label for="stay-where">Where</label>
+        @include('public._whereInput', ['id' => 'stay-where', 'value' => $stay['where']])
     </div>
     @endisset
     <div class="col-md-2">

@@ -34,8 +34,8 @@
 
     @if($error)
         <div class="alert alert-danger">{{ $error }}</div>
-    @elseif(request()->filled('check_in') || request()->filled('district_id') || request()->filled('area'))
-        <p class="bs-muted">{{ count($results) }} {{ count($results) === 1 ? 'property' : 'properties' }} available
+    @elseif($searched)
+        <p class="bs-muted">{{ count($results) }} {{ count($results) === 1 ? 'property' : 'properties' }} available{{ $location ? ' in '.$location : '' }}
             &middot; prices for {{ $stay['rooms'] }} room(s), whole stay, in {{ $visitorCurrency->code }}</p>
 
         @forelse($results as $result)
