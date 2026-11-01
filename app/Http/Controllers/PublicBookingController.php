@@ -157,11 +157,18 @@ class PublicBookingController extends Controller
             ->whereIn('type_id', collect($offers)->map(fn ($offer) => $offer['roomType']->id))
             ->orderBy('sort_order')->orderBy('id')->get()
             ->groupBy('type_id');
+        // Room amenities per room type, grouped by category: [roomType_id => [category => amenities]]
+        $roomAmenityLinks = DB::table('roomType_amenity_xrefs')->where('is_active', true)
+            ->whereIn('roomType_id', collect($offers)->map(fn ($offer) => $offer['roomType']->id))
+            ->get(['roomType_id', 'amenity_id']);
+        $activeAmenities = Amenity::where('is_active', true)->whereIn('id', $roomAmenityLinks->pluck('amenity_id')->unique())->get()->keyBy('id');
+        $roomAmenities = $roomAmenityLinks->groupBy('roomType_id')->map(fn ($links) => Amenity::grouped('roomType',
+            $links->map(fn ($link) => $activeAmenities->get($link->amenity_id))->filter()));
         $amenities = Amenity::whereIn('id', function ($q) use ($property) {
             $q->select('amenity_id')->from('property_amenity_xrefs')->where(['property_id' => $property->id, 'is_active' => true]);
         })->where('is_active', true)->orderBy('amenity')->get();
 
-        return view('public.property', compact('property', 'stay', 'error', 'offers', 'photos', 'roomPhotos', 'amenities') + [
+        return view('public.property', compact('property', 'stay', 'error', 'offers', 'photos', 'roomPhotos', 'roomAmenities', 'amenities') + [
             'occupancies' => Occupancy::orderBy('occupancy')->get(),
             'cancellationSummary' => $error
                 ? $this->cancellationPolicy->summary($property)

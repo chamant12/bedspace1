@@ -2,148 +2,120 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Amenity;
+use App\Models\Property;
 use App\Models\PropertyAmenityXref;
+use App\Models\PropertyRoomType;
 use App\Models\RoomAmenityXref;
 use App\Models\RoomType;
-use App\Models\Property;
-use Illuminate\Validation\Rule;
 use App\Support\Audit;
-use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * Owners tick the amenities of each property and room type from the admin's
+ * list, grouped by category (room amenities follow Expedia's groups).
+ * Unticking deactivates the link; nothing is deleted.
+ */
 class AmenityController extends Controller
 {
-    public function getAmenities($amenity_type,$type_id){
-        $this->authorizeTarget($amenity_type, $type_id);
-
-        $property_id = $type_id;
-        $roomType_id = 0;
-        if($amenity_type=="roomType"){
-            $property_id = 0;
-            $roomType_id = $type_id;
-        }
-
-        $amenities = [];
-        $allAmenities = [];
-        $roomTypes = [];
-
-        if($property_id>0){
-            $amenities = DB::table('amenities')
-            ->join('property_amenity_xrefs', 'amenities.id', '=', 'property_amenity_xrefs.amenity_id')
-            ->where('property_amenity_xrefs.property_id', $property_id)
-            ->where('property_amenity_xrefs.is_active', true)
-            ->where('amenities.amenity_type', 'property') // Based on your 'amenity_type' filter
-            ->select('amenities.*')
+    // Every checklist the user can manage: each property and the room types it offers
+    public function amenities(){
+        $properties = Property::with('city.district')
+            ->whereIn('id', auth()->user()->accessiblePropertyIds())
+            ->orderBy('property_name')
             ->get();
 
-            $allAmenities = DB::table('amenities')
-            ->where('amenities.amenity_type', 'property')
-            ->where('amenities.is_active', true)
-            ->whereNotIn('amenities.id', function ($query) use ($property_id) {
-                $query->select('amenity_id')
-                    ->from('property_amenity_xrefs')
-                    ->where('property_id', $property_id)
-                    ->where('is_active', true);
-            })
-            ->get();
+        $roomTypesByProperty = PropertyRoomType::with('roomType')
+            ->whereIn('property_id', $properties->pluck('id'))
+            ->where('is_active', true)
+            ->get()
+            ->filter(fn ($row) => $row->roomType?->is_active)
+            ->groupBy('property_id');
 
-            // Room types are owner-level: list all of the property owner's room types
-            $ownerId = Property::findOrFail($property_id)->property_owner_id;
-            $roomTypes = RoomType::where('is_active', true)
-                ->whereIn('property_id', Property::where('property_owner_id', $ownerId)->select('id'))
-                ->orderBy('roomType')
-                ->get();
-        } else {
-            $amenities = DB::table('amenities')
-            ->join('roomType_amenity_xrefs', 'amenities.id', '=', 'roomType_amenity_xrefs.amenity_id')
-            ->where('roomType_amenity_xrefs.roomType_id', $roomType_id)
-            ->where('roomType_amenity_xrefs.is_active', true)
-            ->where('amenities.amenity_type', 'roomType') // Based on your 'amenity_type' filter
-            ->select('amenities.*')
-            ->get();
+        $counts = [
+            'property' => PropertyAmenityXref::where('is_active', true)->whereIn('property_id', $properties->pluck('id'))
+                ->selectRaw('property_id, COUNT(*) as total')->groupBy('property_id')->pluck('total', 'property_id'),
+            'roomType' => RoomAmenityXref::where('is_active', true)
+                ->whereIn('roomType_id', $roomTypesByProperty->collapse()->pluck('roomType_id'))
+                ->selectRaw('roomType_id, COUNT(*) as total')->groupBy('roomType_id')->pluck('total', 'roomType_id'),
+        ];
 
-            $allAmenities = DB::table('amenities')
-            ->where('amenities.amenity_type', 'roomType')
-            ->where('amenities.is_active', true)
-            ->whereNotIn('amenities.id', function ($query) use ($roomType_id) {
-                $query->select('amenity_id')
-                    ->from('roomType_amenity_xrefs')
-                    ->where('roomType_id', $roomType_id)
-                    ->where('is_active', true);
-            })
-            ->get();
-
-        }
-
-
-        $str="";
-        $str2="<option value=''>Select Amenity</option>";
-        $str3="<option value=''>Select Room Type</option>";
-        foreach($amenities as $amenity){
-            $str .= "<li id='".$amenity->id."_".$amenity_type."'>".e($amenity->amenity)." <a href='#' class='btn btn-danger' deleteAmenity='".$amenity->id.",".$amenity_type."'>Delete</a></li>";
-        }
-        foreach($allAmenities as $amenity){
-            $str2 .="<option value='".$amenity->id."'>".e($amenity->amenity)."</option>";
-        }
-
-        foreach($roomTypes as $roomType){
-            $str3 .="<option value='".$roomType->id."'>".e($roomType->roomType)."</option>";
-        }
-
-        return response()->json([
-                'status' => 'success',
-                'html' => $str,
-                'selectHtml' => $str2,
-                'roomTypeHtml' => $str3,
-            ]);
+        return view('amenity.index', compact('properties', 'roomTypesByProperty', 'counts'));
     }
 
-    // Links are deactivated, not deleted; adding the amenity again reactivates the link
-    public function removeAmenity($amenity_id,$type_id,$amenity_type){
-        $this->authorizeTarget($amenity_type, $type_id);
+    public function propertyAmenities($property_id){
+        $property = $this->authorizeTarget('property', $property_id);
+        $selected = PropertyAmenityXref::where(['property_id' => $property->id, 'is_active' => true])->pluck('amenity_id')->all();
 
-        if($amenity_type=="roomType"){
-            RoomAmenityXref::where(['amenity_id'=>$amenity_id,'roomType_id'=>$type_id])->update(['is_active'=>false]);
-        } else {
-            PropertyAmenityXref::where(['amenity_id'=>$amenity_id,'property_id'=>$type_id])->update(['is_active'=>false]);
-        }
-        Audit::log('amenity.removed', null, "Amenity #$amenity_id removed from $amenity_type #$type_id", null,
-            $amenity_type === 'property' ? (int) $type_id : null);
-
-        return response()->json([
-                'status' => 'success'
-            ]);
+        return $this->checklist($property, null, $selected);
     }
 
-    public function addAmenity(Request $request){
+    public function roomTypeAmenities($property_id, $roomType_id){
+        [$property, $roomType] = $this->resolvePropertyRoomType($property_id, $roomType_id, 'update');
+        $this->authorizeTarget('roomType', $roomType->id);
+        $selected = RoomAmenityXref::where(['roomType_id' => $roomType->id, 'is_active' => true])->pluck('amenity_id')->all();
+
+        return $this->checklist($property, $roomType, $selected);
+    }
+
+    public function savePropertyAmenities(Request $request, $property_id){
+        $property = $this->authorizeTarget('property', $property_id);
+        $ids = $this->validIds($request, 'property');
+
+        $this->sync(PropertyAmenityXref::class, 'property_id', $property->id, 'property', $ids);
+        Audit::log('amenities.saved', $property, count($ids).' amenities ticked for the property', null, $property->id);
+
+        return redirect()->back()->with('success', 'Amenities of '.$property->property_name.' were saved.');
+    }
+
+    public function saveRoomTypeAmenities(Request $request, $property_id, $roomType_id){
+        [$property, $roomType] = $this->resolvePropertyRoomType($property_id, $roomType_id, 'update');
+        $this->authorizeTarget('roomType', $roomType->id);
+        $ids = $this->validIds($request, 'roomType');
+
+        $this->sync(RoomAmenityXref::class, 'roomType_id', $roomType->id, 'roomType', $ids);
+        Audit::log('amenities.saved', $roomType, count($ids).' amenities ticked for room type '.$roomType->roomType, null, $property->id);
+
+        return redirect()->back()->with('success', 'Room amenities of '.$roomType->roomType.' were saved.');
+    }
+
+    private function checklist(Property $property, ?RoomType $roomType, array $selected){
+        $type = $roomType ? 'roomType' : 'property';
+        $groups = Amenity::grouped($type, Amenity::where(['amenity_type' => $type, 'is_active' => true])->get());
+
+        // Other checklists of this property, for quick switching
+        $roomTypes = RoomType::where('is_active', true)
+            ->whereIn('id', PropertyRoomType::where(['property_id' => $property->id, 'is_active' => true])->select('roomType_id'))
+            ->orderBy('roomType')->get();
+
+        return view('amenity.checklist', compact('property', 'roomType', 'groups', 'selected', 'roomTypes'));
+    }
+
+    // Ticked ids that are active amenities of the right type
+    private function validIds(Request $request, string $type): array
+    {
         $request->validate([
-            'amenity_type' => ['required', 'in:property,roomType'],
-            'property_id' => ['required', 'integer'],
-            'room_type_id' => ['required_if:amenity_type,roomType', 'nullable', 'integer'],
-            'amenity_id' => ['required', 'integer', Rule::exists('amenities', 'id')->where('amenity_type', $request->amenity_type)->where('is_active', true)],
+            'amenity_ids' => ['nullable', 'array'],
+            'amenity_ids.*' => ['integer'],
         ]);
 
-        if($request->amenity_type=="roomType"){
-            $this->authorizeTarget('roomType', $request->room_type_id);
-            RoomAmenityXref::updateOrCreate([
-                'roomType_id' => $request->room_type_id,
-                'amenity_id' => $request->amenity_id,
-            ], ['is_active' => true]);
-        } else {
-            $this->authorizeTarget('property', $request->property_id);
-            PropertyAmenityXref::updateOrCreate([
-                'property_id' => $request->property_id,
-                'amenity_id' => $request->amenity_id,
-            ], ['is_active' => true]);
-        }
-
-        session()->flash('success', 'Amenity added successfully');
-        return redirect()->back();
+        return Amenity::where(['amenity_type' => $type, 'is_active' => true])
+            ->whereIn('id', array_map('intval', $request->input('amenity_ids', [])))
+            ->pluck('id')->all();
     }
 
-    public function amenities(){
-        $properties = Property::with('city','city.district')->whereIn('id', auth()->user()->accessiblePropertyIds())->orderBy('property_name')->get();
-        return view('amenity.amenity',compact('properties'));
+    // Ticked: link (re)activated; unticked active amenities: link deactivated
+    private function sync(string $xrefClass, string $column, int $ownerId, string $type, array $ids): void
+    {
+        DB::transaction(function () use ($xrefClass, $column, $ownerId, $type, $ids) {
+            foreach ($ids as $amenityId) {
+                $xrefClass::updateOrCreate([$column => $ownerId, 'amenity_id' => $amenityId], ['is_active' => true]);
+            }
+            $xrefClass::where([$column => $ownerId, 'is_active' => true])
+                ->whereNotIn('amenity_id', $ids ?: [0])
+                ->whereIn('amenity_id', Amenity::where(['amenity_type' => $type, 'is_active' => true])->select('id'))
+                ->update(['is_active' => false]);
+        });
     }
 }

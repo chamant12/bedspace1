@@ -199,7 +199,10 @@ Route::middleware(['auth', 'user.type:owner,staff', 'partner.approved', 'can.edi
     Route::put('/rooms/{room_id}', [RoomNumberController::class, 'update']);
     Route::post('/rooms/{room_id}/toggle-active', [RoomNumberController::class, 'toggleActive']);
     Route::get('/amenities', [AmenityController::class, 'amenities']);
-    Route::post('/addAmenity', [AmenityController::class, 'addAmenity']);
+    Route::get('/amenities/property/{property_id}', [AmenityController::class, 'propertyAmenities']);
+    Route::post('/amenities/property/{property_id}', [AmenityController::class, 'savePropertyAmenities']);
+    Route::get('/amenities/property/{property_id}/room-type/{roomType_id}', [AmenityController::class, 'roomTypeAmenities']);
+    Route::post('/amenities/property/{property_id}/room-type/{roomType_id}', [AmenityController::class, 'saveRoomTypeAmenities']);
     Route::get('/photos', [PhotoController::class, 'selectPhotoType']);
     Route::get('/photos/property/{property_id}', [PhotoController::class, 'propertyGallery']);
     Route::get('/photos/property/{property_id}/room-type/{roomType_id}', [PhotoController::class, 'roomTypeGallery']);
@@ -216,8 +219,6 @@ Route::middleware(['auth', 'user.type:owner,staff', 'partner.approved', 'can.edi
         Route::post('/inventory/total', [InventoryController::class, 'saveTotal']);
         Route::post('/inventory/closed', [InventoryController::class, 'saveClosed']);
         Route::post('/inventory/close-range', [InventoryController::class, 'closeRange']);
-        Route::post('/remove-amenity/{amenity_id}/{type_id}/{amenityType}', [AmenityController::class, 'removeAmenity']);
-        Route::get('/get-amenities/{amenity_type}/{type_id}', [AmenityController::class, 'getAmenities']);
         Route::post('/upload-photos', [PhotoController::class, 'uploadPhotos']);
         Route::post('/update-photo-order', [PhotoController::class, 'updatePhotoOrder']);
         Route::post('/photo-tag/{photo_id}', [PhotoController::class, 'updatePhotoTag']);

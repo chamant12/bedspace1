@@ -94,6 +94,33 @@ return [
         ],
     ],
 
+    /*
+    | Amenity groups (amenities.category), in display order. Room amenities
+    | follow the groups used by Expedia. Admins pick one when adding an amenity.
+    */
+    'amenity_categories' => [
+        'roomType' => [
+            'bedroom' => 'Bedroom',
+            'bathroom' => 'Bathroom',
+            'entertainment' => 'Entertainment',
+            'food' => 'Food and drink',
+            'internet' => 'Internet',
+            'comfort' => 'Comfort',
+            'practical' => 'Practical',
+            'outdoor' => 'Outdoor space and view',
+            'accessibility' => 'Accessibility',
+            'other' => 'Other',
+        ],
+        'property' => [
+            'general' => 'General',
+            'wellness' => 'Wellness and leisure',
+            'food' => 'Food and drink',
+            'services' => 'Services',
+            'internet' => 'Internet and entertainment',
+            'other' => 'Other',
+        ],
+    ],
+
     'currency_cookie' => 'bedspace_currency',
     'currency_cookie_minutes' => 60 * 24 * 365 * 2,
 

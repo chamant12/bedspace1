@@ -27,6 +27,8 @@
 .bs-featured-photos-1 { grid-template-columns: 1fr; }
 .bs-featured-photos-2 img:nth-child(2) { grid-row: 1 / 3; }
 .bs-featured-body { padding: 12px 14px; }
+.bs-room-amenities summary { cursor: pointer; color: var(--site-primary, #1675ac); }
+.bs-room-amenities ul { padding-left: 18px; }
 .bs-stay-form label { font-size: 0.85rem; margin-bottom: 2px; }
 /* Bootstrap 5 utilities used on these pages (the public theme ships Bootstrap 4) */
 .gap-2 { gap: .5rem; }

@@ -17,7 +17,9 @@ class AmenityController extends Controller
 {
     public function index()
     {
-        $amenities = Amenity::orderBy('amenity_type')->orderBy('amenity')->get();
+        // Room amenities first, then property amenities, each in their category order
+        $amenities = Amenity::grouped('roomType', Amenity::where('amenity_type', 'roomType')->get())->collapse()
+            ->concat(Amenity::grouped('property', Amenity::where('amenity_type', 'property')->get())->collapse());
 
         // Number of properties / room types using each amenity
         $propertyUsage = PropertyAmenityXref::where('is_active', true)->selectRaw('amenity_id, count(*) as total')->groupBy('amenity_id')->pluck('total', 'amenity_id');
@@ -36,6 +38,9 @@ class AmenityController extends Controller
         $amenity = new Amenity();
         $amenity->amenity = $data['amenity'];
         $amenity->amenity_type = $data['amenity_type'];
+        $amenity->category = $data['category'];
+        // At the end of its category
+        $amenity->sort_order = (int) Amenity::where(['amenity_type' => $data['amenity_type'], 'category' => $data['category']])->max('sort_order') + 1;
         $amenity->save();
 
         session()->flash('success', 'Amenity added successfully');
@@ -49,6 +54,7 @@ class AmenityController extends Controller
 
         $amenity->amenity = $data['amenity'];
         $amenity->amenity_type = $data['amenity_type'];
+        $amenity->category = $data['category'];
         $amenity->save();
 
         session()->flash('success', 'Amenity updated successfully');
@@ -71,6 +77,7 @@ class AmenityController extends Controller
     {
         return $request->validate([
             'amenity_type' => ['required', 'in:property,roomType'],
+            'category' => ['required', Rule::in(array_keys(Amenity::categoriesFor((string) $request->amenity_type)))],
             'amenity' => [
                 'required', 'string', 'max:255',
                 Rule::unique('amenities', 'amenity')

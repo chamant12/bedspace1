@@ -36,7 +36,9 @@
     @if($amenities->isNotEmpty())
         <div class="bs-card">
             <h5>Amenities</h5>
-            <div>{{ $amenities->pluck('amenity')->join(' · ') }}</div>
+            @foreach(\App\Models\Amenity::grouped('property', $amenities) as $category => $items)
+                <div class="mb-1"><strong>{{ $category }}:</strong> {{ $items->pluck('amenity')->join(' · ') }}</div>
+            @endforeach
         </div>
     @endif
 
@@ -77,6 +79,24 @@
                     <div class="{{ $gallery->isNotEmpty() ? 'col-md-8' : 'col-12' }}">
                         <h4 class="mb-0">{{ $offer['roomType']->roomType }}</h4>
                         <p class="bs-muted">Up to {{ $offer['roomType']->max_occupancy }} guests &middot; {{ $offer['available'] }} room(s) left</p>
+                        @php($amenityGroups = $roomAmenities->get($offer['roomType']->id, collect()))
+                        @if($amenityGroups->isNotEmpty())
+                            @php($allRoomAmenities = $amenityGroups->collapse())
+                            <p class="mb-1">{{ $allRoomAmenities->take(6)->pluck('amenity')->join(' · ') }}</p>
+                            <details class="bs-room-amenities mb-2">
+                                <summary>All room amenities ({{ $allRoomAmenities->count() }})</summary>
+                                <div class="row mt-2">
+                                    @foreach($amenityGroups as $category => $items)
+                                        <div class="col-sm-6 mb-2">
+                                            <strong>{{ $category }}</strong>
+                                            <ul class="mb-0 ps-3">
+                                                @foreach($items as $item)<li>{{ $item->amenity }}</li>@endforeach
+                                            </ul>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </details>
+                        @endif
                         <p class="mb-0">Choose the number of guests and a meal plan below.</p>
                     </div>
                 </div>
