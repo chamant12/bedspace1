@@ -34,7 +34,8 @@ class ReportController extends Controller
             return $this->simpleCsv("occupancy-$month.csv", $rows, [
                 'property_name' => 'Property', 'room_type' => 'Room type', 'rooms' => 'Rooms', 'available_nights' => 'Available room-nights',
                 'sold_nights' => 'Sold room-nights', 'occupancy' => 'Occupancy %', 'revenue_lkr' => 'Room revenue (LKR)',
-                'adr_lkr' => 'ADR (LKR)', 'revpar_lkr' => 'RevPAR (LKR)',
+                'adr_lkr' => 'ADR (LKR)', 'revpar_lkr' => 'RevPAR (LKR)', 'revenue_usd' => 'Room revenue (USD)',
+                'adr_usd' => 'ADR (USD)', 'revpar_usd' => 'RevPAR (USD)',
             ]);
         }
         return view('reports.occupancy', compact('month', 'rows'));
@@ -47,7 +48,7 @@ class ReportController extends Controller
             return $this->simpleCsv("bookings-$month.csv", $rows, [
                 'property_name' => 'Property', 'bookings' => 'Bookings', 'confirmed' => 'Confirmed / stayed', 'cancelled' => 'Cancelled / expired',
                 'no_show' => 'No-show', 'cancellation_rate' => 'Cancellation %', 'web' => 'Website', 'walk_in' => 'Entered by hotel',
-                'online_payment' => 'Paid online', 'pay_at_hotel' => 'Pay at hotel', 'value_lkr' => 'Value (LKR)', 'room_nights' => 'Room-nights',
+                'online_payment' => 'Paid online', 'pay_at_hotel' => 'Pay at hotel', 'value_lkr' => 'Value (LKR)', 'value_usd' => 'Value (USD)', 'room_nights' => 'Room-nights',
                 'avg_nights' => 'Avg nights', 'avg_lead_days' => 'Avg days booked ahead', 'new_guests' => 'New guests', 'returning_guests' => 'Returning guests',
             ]);
         }
@@ -87,13 +88,14 @@ class ReportController extends Controller
 
     private function csv(string $month, $rows, bool $forAdmin): StreamedResponse
     {
+        // One row per property and currency; amounts are in the row's currency
         $columns = $forAdmin
-            ? ['property_name' => 'Property', 'owner_name' => 'Owner', 'bookings' => 'Bookings', 'online_lkr' => 'Collected online (LKR)',
-               'hotel_lkr' => 'Collected at hotel (LKR)', 'refunds_lkr' => 'Refunds (LKR)', 'gross_lkr' => 'Gross after refunds (LKR)', 'commission_lkr' => 'Commission (LKR)',
-               'settlement_lkr' => 'Settlement: platform pays hotel (LKR)']
-            : ['property_name' => 'Property', 'bookings' => 'Bookings', 'online_lkr' => 'Paid online (LKR)', 'hotel_lkr' => 'Paid at hotel (LKR)',
-               'refunds_lkr' => 'Refunds (LKR)', 'gross_lkr' => 'Gross income after refunds (LKR)', 'commission_lkr' => 'Platform commission (LKR)', 'net_to_hotel_lkr' => 'Net income (LKR)',
-               'settlement_lkr' => 'Settlement: platform pays you (LKR)'];
+            ? ['property_name' => 'Property', 'owner_name' => 'Owner', 'currency' => 'Currency', 'bookings' => 'Bookings', 'online' => 'Collected online',
+               'hotel' => 'Collected at hotel', 'refunds' => 'Refunds', 'gross' => 'Gross after refunds', 'commission' => 'Commission',
+               'settlement' => 'Settlement: platform pays hotel']
+            : ['property_name' => 'Property', 'currency' => 'Currency', 'bookings' => 'Bookings', 'online' => 'Paid online', 'hotel' => 'Paid at hotel',
+               'refunds' => 'Refunds', 'gross' => 'Gross income after refunds', 'commission' => 'Platform commission', 'net_to_hotel' => 'Net income',
+               'settlement' => 'Settlement: platform pays you'];
 
         return response()->streamDownload(function () use ($rows, $columns) {
             $out = fopen('php://output', 'w');

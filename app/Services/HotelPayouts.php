@@ -12,9 +12,12 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * What the platform owes hotels: for each online payment it collected,
- * the LKR amount less the platform commission, until the admin records a
+ * the amount less the platform commission, until the admin records a
  * payout covering it. Payments of bookings with a refund due (or already
  * refunded) are left out: that money goes back to the guest.
+ *
+ * Amounts stay in the payment's currency: LKR and USD are owed and paid
+ * out separately, never converted.
  */
 class HotelPayouts
 {
@@ -27,30 +30,32 @@ class HotelPayouts
             ->whereIn('payments.reservation_id', fn ($q) => $q->select('id')->from('reservations')->where('refund_status', '!=', 'due'));
     }
 
-    // Amount owed to the hotel for one payment
+    // Amount owed to the hotel for one payment, in the payment's currency
     public static function payable(Payment $payment): float
     {
-        return round((float) $payment->amount_lkr - (float) $payment->commission_lkr, 2);
+        return round((float) $payment->amount - (float) $payment->commission_amount, 2);
     }
 
-    // One row per property with an unpaid balance
+    // One row per property and currency with an unpaid balance
     public function byProperty(?int $ownerId = null): Collection
     {
         $rows = $this->unpaid()
             ->join('reservations', 'reservations.id', '=', 'payments.reservation_id')
             ->join('properties', 'properties.id', '=', 'reservations.property_id')
+            ->join('currency_types', 'currency_types.id', '=', 'payments.currency_type_id')
             ->when($ownerId, fn ($q) => $q->where('properties.property_owner_id', $ownerId))
-            ->groupBy('reservations.property_id')
-            ->selectRaw('reservations.property_id, COUNT(payments.id) as payments, SUM(payments.amount_lkr - payments.commission_lkr) as payable_lkr')
+            ->groupBy('reservations.property_id', 'currency_types.code')
+            ->selectRaw('reservations.property_id, currency_types.code as currency, COUNT(payments.id) as payments, SUM(payments.amount - payments.commission_amount) as payable')
             ->get();
 
         $properties = Property::with('propertyOwner')->whereIn('id', $rows->pluck('property_id'))->get()->keyBy('id');
 
         return $rows->map(fn ($row) => (object) [
             'property' => $properties[$row->property_id],
+            'currency' => $row->currency,
             'payments' => (int) $row->payments,
-            'payable_lkr' => round((float) $row->payable_lkr, 2),
-        ])->filter(fn ($row) => $row->payable_lkr != 0)->sortBy(fn ($row) => $row->property->property_name)->values();
+            'payable' => round((float) $row->payable, 2),
+        ])->filter(fn ($row) => $row->payable != 0)->sortBy(fn ($row) => $row->property->property_name.'|'.$row->currency)->values();
     }
 
     public function paymentsFor(Property $property): Collection
@@ -63,7 +68,7 @@ class HotelPayouts
     }
 
     /**
-     * The platform paid the hotel for the selected online payments.
+     * The platform paid the hotel for the selected online payments (all in one currency).
      * @param int[] $paymentIds
      */
     public function pay(Property $property, array $paymentIds, ?string $reference, ?string $notes, User $by): HotelPayout
@@ -78,10 +83,14 @@ class HotelPayouts
             if ($payments->isEmpty() || $payments->count() !== count(array_unique($paymentIds))) {
                 throw ValidationException::withMessages(['payments' => 'Some selected payments are already paid out, refunded or do not belong to this property.']);
             }
+            if ($payments->pluck('currency_type_id')->unique()->count() > 1) {
+                throw ValidationException::withMessages(['payments' => 'Pay out LKR and USD payments separately.']);
+            }
 
             $payout = new HotelPayout();
             $payout->property_id = $property->id;
-            $payout->amount_lkr = round($payments->sum(fn ($payment) => self::payable($payment)), 2);
+            $payout->currency_type_id = $payments->first()->currency_type_id;
+            $payout->amount = round($payments->sum(fn ($payment) => self::payable($payment)), 2);
             $payout->reference = $reference;
             $payout->notes = $notes;
             $payout->paid_at = now();

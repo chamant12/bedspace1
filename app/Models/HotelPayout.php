@@ -13,13 +13,25 @@ class HotelPayout extends Model
     use Concerns\Auditable;
 
     protected $casts = [
-        'amount_lkr' => 'decimal:2',
+        'amount' => 'decimal:2',
+        'amount_lkr' => 'decimal:2', // before currencies were kept apart (no longer written)
         'paid_at' => 'datetime',
     ];
 
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class);
+    }
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(CurrencyType::class, 'currency_type_id');
+    }
+
+    // Amount with its currency code, e.g. 'USD 120.00'
+    public function money(): string
+    {
+        return ($this->currency?->code ?? 'LKR').' '.number_format((float) $this->amount, 2);
     }
 
     public function payments(): HasMany

@@ -1,11 +1,5 @@
 @extends('layout.app')
 @section('content')
-@if($missingRates->isNotEmpty())
-<div class="alert alert-warning">
-    You have not updated today's {{ $missingRates->pluck('code')->join(', ') }} exchange rate.
-    <a href="/exchange-rates">Update now</a>
-</div>
-@endif
 <div class="row">
     @foreach([
         'Properties' => $stats['properties'],
@@ -29,14 +23,15 @@
     {{ $refundsDue }} cancelled booking(s) have a refund due. <a href="/reservations?refund=due">Review</a>
 </div>
 @endif
-@if($payoutDue > 0)
+{{-- Amounts per currency (LKR and USD are never combined) --}}
+@if($payoutDue->isNotEmpty())
 <div class="alert alert-success">
-    EpickTours owes you <strong>LKR {{ number_format($payoutDue, 2) }}</strong> for online payments (after commission), to be paid out.
+    EpickTours owes you <strong>{{ $payoutDue->map(fn ($amount, $code) => $code.' '.number_format($amount, 2))->join(' and ') }}</strong> for online payments (after commission), to be paid out.
 </div>
 @endif
-@if($commissionDue > 0)
+@if($commissionDue->isNotEmpty())
 <div class="alert alert-info">
-    Commission due to EpickTours on payments collected at your properties: <strong>LKR {{ number_format($commissionDue, 2) }}</strong>.
+    Commission due to EpickTours on payments collected at your properties: <strong>{{ $commissionDue->map(fn ($amount, $code) => $code.' '.number_format($amount, 2))->join(' and ') }}</strong>.
 </div>
 @endif
 

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Property;
 use App\Models\PropertyRoomType;
 use App\Models\RoomType;
-use App\Services\ExchangeRates;
 use App\Services\CommissionDues;
 use App\Models\Reservation;
 use App\Services\HotelPayouts;
@@ -17,7 +16,7 @@ use App\Support\BusinessDate;
 class DashboardController extends Controller
 {
     // Owner / staff dashboard: only the properties the user may access
-    public function index(ExchangeRates $exchangeRates, CommissionDues $commissionDues, HotelPayouts $hotelPayouts)
+    public function index(CommissionDues $commissionDues, HotelPayouts $hotelPayouts)
     {
         $user = auth()->user();
 
@@ -25,8 +24,6 @@ class DashboardController extends Controller
         if (!$user->isApproved()) {
             return view('dashboardPending');
         }
-
-        $missingRates = $user->canEditProperties() ? $exchangeRates->missingTodayFor($user->ownerId()) : collect();
 
         $properties = Property::with('city')
             ->whereIn('id', $user->accessiblePropertyIds())
@@ -58,13 +55,21 @@ class DashboardController extends Controller
             ->take(50)
             ->get();
 
-        // Money owed between the owner and the platform: owners only
-        $commissionDue = $user->isOwner() ? round($commissionDues->byProperty($user->id)->sum('due_lkr'), 2) : 0;
-        $payoutDue = $user->isOwner() ? round($hotelPayouts->byProperty($user->id)->sum('payable_lkr'), 2) : 0;
+        // Money owed between the owner and the platform: owners only, per currency [code => amount]
+        $commissionDue = $user->isOwner() ? $this->perCurrency($commissionDues->byProperty($user->id), 'due') : collect();
+        $payoutDue = $user->isOwner() ? $this->perCurrency($hotelPayouts->byProperty($user->id), 'payable') : collect();
         $refundsDue = Reservation::whereIn('property_id', $propertyIds)->where('refund_status', 'due')->count();
         $offlineChannels = PaymentChannel::offline();
         $today = BusinessDate::today();
 
-        return view('dashboard', compact('properties', 'stats', 'missingRates', 'roomCounts', 'offlineToSettle', 'commissionDue', 'payoutDue', 'refundsDue', 'offlineChannels', 'today'));
+        return view('dashboard', compact('properties', 'stats', 'roomCounts', 'offlineToSettle', 'commissionDue', 'payoutDue', 'refundsDue', 'offlineChannels', 'today'));
+    }
+
+    // [currency code => amount] of non-zero balances, e.g. ['LKR' => 1500.0, 'USD' => 40.0]
+    private function perCurrency($rows, string $field)
+    {
+        return $rows->groupBy('currency')->sortKeys()
+            ->map(fn ($group) => round($group->sum($field), 2))
+            ->filter(fn ($amount) => $amount > 0);
     }
 }

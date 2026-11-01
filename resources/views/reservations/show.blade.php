@@ -55,9 +55,6 @@
                 @endforeach
             @endforeach
             <tr><th colspan="4">Total</th><th class="text-end">{{ $r->money($r->total) }}</th></tr>
-            @if($r->currency->code !== 'LKR')
-                <tr><td colspan="4" class="text-muted">In LKR at {{ number_format($r->exchange_rate, 2) }} per {{ $r->currency->code }} (rate when booked)</td><td class="text-end text-muted">LKR {{ number_format($r->total_lkr, 2) }}</td></tr>
-            @endif
             </tbody>
         </table>
     </div></div>
@@ -72,7 +69,7 @@
 
         @if($r->payments->isNotEmpty())
         <table class="table table-sm">
-            <thead><tr><th>Date</th><th>Method</th><th>Status</th><th class="text-end">Amount</th><th class="text-end">LKR</th><th class="text-end">Commission (LKR)</th><th>Reference</th><th>By</th></tr></thead>
+            <thead><tr><th>Date</th><th>Method</th><th>Status</th><th class="text-end">Amount</th><th class="text-end">Commission</th><th>Reference</th><th>By</th></tr></thead>
             <tbody>
             @foreach($r->payments as $payment)
                 <tr>
@@ -80,8 +77,7 @@
                     <td>{{ $payment->isRefund() ? "Refund · " : "" }}{{ $payment->method->label() }}</td>
                     <td>{{ ucfirst($payment->status) }}</td>
                     <td class="text-end">{{ $r->money($payment->amount) }}</td>
-                    <td class="text-end">{{ $payment->amount_lkr !== null ? number_format($payment->amount_lkr, 2) : '–' }}</td>
-                    <td class="text-end">{{ $payment->commission_lkr !== null ? number_format($payment->commission_lkr, 2) : '–' }}</td>
+                    <td class="text-end">{{ $payment->commission_amount !== null ? $r->money($payment->commission_amount) : '–' }}</td>
                     <td>{{ $payment->gateway_reference ?? $payment->reference }}@if($payment->notes)<br/><small class="text-muted">{{ $payment->notes }}</small>@endif</td>
                     <td>{{ $payment->recordedBy?->name ?? ($payment->gateway ? 'Gateway' : '') }}</td>
                 </tr>

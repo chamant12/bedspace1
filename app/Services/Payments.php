@@ -22,8 +22,8 @@ use Illuminate\Validation\ValidationException;
  * - At the hotel: recordOffline() records cash / card / transfer taken
  *   by the hotel (partial payments allowed).
  *
- * On completion every payment stores the owner's exchange-rate snapshot
- * (LKR amount) and the platform commission at the reservation's rate.
+ * On completion every payment stores the platform commission at the
+ * reservation's rate, in the payment's own currency (no conversion).
  * Completing the same payment twice, or re-submitting the same form
  * (idempotency key), has no further effect.
  */
@@ -31,7 +31,6 @@ class Payments
 {
     public function __construct(
         private PaymentGateway $gateway,
-        private ExchangeRates $exchangeRates,
         private Reservations $reservations,
     ) {
     }
@@ -168,7 +167,7 @@ class Payments
      * (cancellation policy). $collectedBy says whose money is refunded:
      * - platform: online payments, refunded through the gateway (admin)
      * - property: payments taken at the hotel, refunded by the hotel ($channel)
-     * The refund row reverses the LKR amount and the commission, so every
+     * The refund row reverses the amount and the commission, so every
      * report, the commission dues and the payouts are reduced accordingly.
      */
     public function refund(Reservation $reservation, string $collectedBy, float $amount, ?PaymentChannel $channel,
@@ -196,8 +195,6 @@ class Payments
             }
 
             $originals = $rows->where('kind', Payment::KIND_PAYMENT);
-            // Same LKR rate as the money received, so the refund exactly reverses it
-            $rate = (float) $originals->sum('amount') > 0 ? (float) $originals->sum('amount_lkr') / (float) $originals->sum('amount') : 1.0;
 
             $refund = new Payment();
             $refund->reservation_id = $reservation->id;
@@ -206,11 +203,8 @@ class Payments
             $refund->collected_by = $collectedBy;
             $refund->currency_type_id = $reservation->currency_type_id;
             $refund->amount = -$amount;
-            $refund->exchange_rate = round($rate, 4);
-            $refund->amount_lkr = -round($amount * $rate, 2);
             $refund->commission_rate = $reservation->commission_rate;
             $refund->commission_amount = -round($amount * (float) $reservation->commission_rate / 100, 2);
-            $refund->commission_lkr = -round($amount * $rate * (float) $reservation->commission_rate / 100, 2);
             $refund->reference = $reference;
             $refund->notes = $notes;
             $refund->recorded_by_user_id = $by->id;
@@ -243,16 +237,11 @@ class Payments
         });
     }
 
-    // Completes a payment: exchange-rate snapshot, commission, reservation totals
+    // Completes a payment: commission (same currency as the payment), reservation totals
     private function markCompleted(Payment $payment, Reservation $reservation, ?User $by): void
     {
-        $snapshot = $this->exchangeRates->snapshot((int) $reservation->property->property_owner_id, $reservation->currency, (float) $payment->amount);
-
         $payment->status = Payment::COMPLETED;
-        $payment->exchange_rate = $snapshot['exchange_rate'];
-        $payment->amount_lkr = $snapshot['amount_lkr'];
         $payment->commission_amount = round((float) $payment->amount * (float) $payment->commission_rate / 100, 2);
-        $payment->commission_lkr = round((float) $snapshot['amount_lkr'] * (float) $payment->commission_rate / 100, 2);
         $payment->paid_at = now();
         $payment->recorded_by_user_id = $by?->id;
         $payment->save();

@@ -20,7 +20,7 @@ class Payment extends Model
     const COMPLETED = 'completed';
     const FAILED = 'failed';
 
-    // kind: refunds carry negative amount, amount_lkr and commission
+    // kind: refunds carry negative amount and commission (in the payment currency)
     const KIND_PAYMENT = 'payment';
     const KIND_REFUND = 'refund';
 

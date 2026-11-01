@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * An owner's exchange rate for one currency on one day, expressed as
  * base-currency (LKR) units per 1 unit of the currency.
+ *
+ * No longer used: currencies are not converted (LKR and USD amounts are
+ * totalled separately). Kept for the history of rates entered earlier.
  */
 class CurrencyRate extends Model
 {

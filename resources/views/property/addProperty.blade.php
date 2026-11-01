@@ -58,14 +58,6 @@
                         <label for="exampleInputUsername1">Contact Email</label>
                         <input type="email" class="form-control" placeholder="Email" name="contact_email">
                       </div>
-                      @foreach($foreignCurrencies as $currency)
-                      <div class="form-group">
-                        <label>{{ $currency->code }} exchange rate (LKR for 1 {{ $currency->code }})<span style="color:red;">*</span></label>
-                        <input type="number" step="0.01" min="0.01" class="form-control" name="exchange_rates[{{ $currency->id }}]" required
-                               value="{{ old('exchange_rates.'.$currency->id, $currentRates[$currency->id]) }}">
-                        <small class="text-muted">Used to total your {{ $currency->code }} income in rupees. Keep it up to date daily under Exchange Rates.</small>
-                      </div>
-                      @endforeach
                       <div class="form-check form-check-flat form-check-primary">
                         <label class="form-check-label">
                           <input type="checkbox" class="form-check-input" required>I hereby agree to the terms and conditions<i class="input-helper"></i><span style="color:red;">*</span> </label>

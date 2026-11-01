@@ -8,7 +8,7 @@
         </div>
         <p class="card-description">Staff can view the details, rates and inventory of their properties and manage reservations
             (check-in, payments, cancellations). With <strong>Edit property details</strong> they can also change property data,
-            room types, rates, inventory, room numbers, amenities, photos and exchange rates. Only you can add properties and staff.</p>
+            room types, rates, inventory, room numbers, amenities and photos. Only you can add properties and staff.</p>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead><tr><th>Name</th><th>Email / mobile</th><th>Properties</th><th>Edit property details</th><th>Status</th><th></th></tr></thead>

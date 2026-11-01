@@ -198,8 +198,6 @@ Route::middleware(['auth', 'user.type:owner,staff', 'partner.approved', 'can.edi
     Route::post('/rooms', [RoomNumberController::class, 'store']);
     Route::put('/rooms/{room_id}', [RoomNumberController::class, 'update']);
     Route::post('/rooms/{room_id}/toggle-active', [RoomNumberController::class, 'toggleActive']);
-    Route::post('/update-exchange-rates', [RateController::class, 'updateExchangeRates']);
-    Route::get('/exchange-rates', [RateController::class, 'editExchangeRates']);
     Route::get('/amenities', [AmenityController::class, 'amenities']);
     Route::post('/addAmenity', [AmenityController::class, 'addAmenity']);
     Route::get('/photos', [PhotoController::class, 'selectPhotoType']);

@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Property;
 use App\Models\RoomType;
-use App\Models\CurrencyType;
-use App\Models\CurrencyRate;
 use App\Services\RatesCalendar;
 use App\Support\BusinessDate;
 use Illuminate\Http\Request;
@@ -115,44 +113,4 @@ class RateController extends Controller
 
         return response()->json(['status' => 'success', 'html' => $html]);
     }
-
-
-        // Owner's exchange rates (LKR per 1 unit) for every active foreign currency
-        public function editExchangeRates(){
-            $currencies = CurrencyType::active()->where('is_base', false)->orderBy('id')->get();
-            $ownerId = auth()->user()->ownerId();
-
-            $latest = $currencies->mapWithKeys(fn ($currency) => [
-                $currency->id => CurrencyRate::where(['property_owner_id'=>$ownerId,'currency_type_id'=>$currency->id])
-                    ->orderByDesc('rate_date')->orderByDesc('id')->first(),
-            ]);
-
-            return view('currency.exchangeRates', compact('currencies', 'latest'));
-        }
-
-        // Each update is a new row so the history of rates is kept
-        public function updateExchangeRates(Request $request){
-            $currencyIds = CurrencyType::active()->where('is_base', false)->pluck('id');
-
-            $request->validate([
-                'rates' => ['required', 'array'],
-                'rates.*' => ['required', 'numeric', 'gt:0', 'max:1000000'],
-            ]);
-
-            foreach ($request->rates as $currencyId => $rate) {
-                if (!$currencyIds->contains((int) $currencyId)) {
-                    continue;
-                }
-                $currencyRate = new CurrencyRate();
-                $currencyRate->currency_type_id = $currencyId;
-                $currencyRate->property_owner_id = auth()->user()->ownerId();
-                $currencyRate->rate_date = BusinessDate::today();
-                $currencyRate->rate = $rate;
-                $currencyRate->save();
-            }
-
-            session()->flash('success', 'Exchange rates were updated successfully');
-
-            return redirect()->back();
-        }
 }

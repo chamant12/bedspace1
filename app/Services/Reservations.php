@@ -35,7 +35,6 @@ class Reservations
         private BookingQuotes $quotes,
         private Inventory $inventory,
         private GuestMatcher $guests,
-        private ExchangeRates $exchangeRates,
         private CancellationPolicy $cancellationPolicy,
     ) {
     }
@@ -75,7 +74,6 @@ class Reservations
             $subtotal = round(array_sum(array_map(fn ($l) => $l['quote']['subtotal'], $priced)), 2);
             $discountTotal = round(array_sum(array_map(fn ($l) => $l['quote']['discount_total'], $priced)), 2);
             $total = round($subtotal - $discountTotal, 2);
-            $snapshot = $this->exchangeRates->snapshot((int) $property->property_owner_id, $currency, $total);
 
             $status = $paymentMethod === PaymentMethod::PayAtHotel ? ReservationStatus::Confirmed : ReservationStatus::Pending;
 
@@ -100,8 +98,6 @@ class Reservations
             $reservation->subtotal = $subtotal;
             $reservation->discount_total = $discountTotal;
             $reservation->total = $total;
-            $reservation->exchange_rate = $snapshot['exchange_rate'];
-            $reservation->total_lkr = $snapshot['amount_lkr'];
             $reservation->commission_rate = config('bedspace.commission_rate'); // fixed for this booking
             // Cancellation policy in force when booked
             $reservation->cancellation_days = $property->effectiveCancellationDays();

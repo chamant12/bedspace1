@@ -1,11 +1,12 @@
 @extends('layout.app')
 @section('content')
 @php($fmt = fn ($v) => number_format($v, 2))
+@foreach($totals as $currency => $total)
 <div class="row">
     @foreach([
-        'Gross income (LKR)' => $totals->gross_lkr,
-        'Platform commission (LKR)' => $totals->commission_lkr,
-        'Net income (LKR)' => $totals->net_to_hotel_lkr,
+        "Gross income ($currency)" => $total->gross,
+        "Platform commission ($currency)" => $total->commission,
+        "Net income ($currency)" => $total->net_to_hotel,
     ] as $label => $value)
     <div class="col-sm-4 grid-margin stretch-card">
         <div class="card card-rounded"><div class="card-body">
@@ -15,16 +16,19 @@
     </div>
     @endforeach
 </div>
+@endforeach
 
 <div class="col-lg-12 grid-margin stretch-card">
     <div class="card"><div class="card-body">
         <h4 class="card-title">Monthly income</h4>
+        <p class="card-description">LKR payments are totalled in LKR and USD payments in USD. The two currencies are never converted or combined.</p>
         @include('reports._monthPicker')
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Property</th>
+                        <th>Currency</th>
                         <th class="text-end">Bookings</th>
                         <th class="text-end">Paid online</th>
                         <th class="text-end">Paid at hotel</th>
@@ -39,38 +43,42 @@
                     @forelse($rows as $row)
                     <tr>
                         <td>{{ $row->property_name }}</td>
+                        <td>{{ $row->currency }}</td>
                         <td class="text-end">{{ $row->bookings }}</td>
-                        <td class="text-end">{{ $fmt($row->online_lkr) }}</td>
-                        <td class="text-end">{{ $fmt($row->hotel_lkr) }}</td>
-                        <td class="text-end">{{ $row->refunds_lkr > 0 ? "− ".$fmt($row->refunds_lkr) : "–" }}</td>
-                        <td class="text-end">{{ $fmt($row->gross_lkr) }}</td>
-                        <td class="text-end">{{ $fmt($row->commission_lkr) }}</td>
-                        <td class="text-end"><strong>{{ $fmt($row->net_to_hotel_lkr) }}</strong></td>
+                        <td class="text-end">{{ $fmt($row->online) }}</td>
+                        <td class="text-end">{{ $fmt($row->hotel) }}</td>
+                        <td class="text-end">{{ $row->refunds > 0 ? "− ".$fmt($row->refunds) : "–" }}</td>
+                        <td class="text-end">{{ $fmt($row->gross) }}</td>
+                        <td class="text-end">{{ $fmt($row->commission) }}</td>
+                        <td class="text-end"><strong>{{ $fmt($row->net_to_hotel) }}</strong></td>
                         <td class="text-end">
-                            @if($row->settlement_lkr >= 0)
-                                Platform pays you {{ $fmt($row->settlement_lkr) }}
+                            @if($row->settlement >= 0)
+                                Platform pays you {{ $row->currency }} {{ $fmt($row->settlement) }}
                             @else
-                                <span class="text-danger">You owe {{ $fmt(-$row->settlement_lkr) }}</span>
+                                <span class="text-danger">You owe {{ $row->currency }} {{ $fmt(-$row->settlement) }}</span>
                             @endif
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="9">No payments in this month.</td></tr>
+                    <tr><td colspan="10">No payments in this month.</td></tr>
                     @endforelse
                 </tbody>
                 @if($rows->isNotEmpty())
                 <tfoot>
+                    @foreach($totals as $currency => $total)
                     <tr>
-                        <th>Total</th>
-                        <th class="text-end">{{ $totals->bookings }}</th>
-                        <th class="text-end">{{ $fmt($totals->online_lkr) }}</th>
-                        <th class="text-end">{{ $fmt($totals->hotel_lkr) }}</th>
-                        <th class="text-end">{{ $totals->refunds_lkr > 0 ? "− ".$fmt($totals->refunds_lkr) : "–" }}</th>
-                        <th class="text-end">{{ $fmt($totals->gross_lkr) }}</th>
-                        <th class="text-end">{{ $fmt($totals->commission_lkr) }}</th>
-                        <th class="text-end">{{ $fmt($totals->net_to_hotel_lkr) }}</th>
-                        <th class="text-end">{{ $fmt($totals->settlement_lkr) }}</th>
+                        <th>Total {{ $currency }}</th>
+                        <th>{{ $currency }}</th>
+                        <th class="text-end">{{ $total->bookings }}</th>
+                        <th class="text-end">{{ $fmt($total->online) }}</th>
+                        <th class="text-end">{{ $fmt($total->hotel) }}</th>
+                        <th class="text-end">{{ $total->refunds > 0 ? "− ".$fmt($total->refunds) : "–" }}</th>
+                        <th class="text-end">{{ $fmt($total->gross) }}</th>
+                        <th class="text-end">{{ $fmt($total->commission) }}</th>
+                        <th class="text-end">{{ $fmt($total->net_to_hotel) }}</th>
+                        <th class="text-end">{{ $fmt($total->settlement) }}</th>
                     </tr>
+                    @endforeach
                 </tfoot>
                 @endif
             </table>

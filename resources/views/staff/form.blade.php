@@ -38,7 +38,7 @@
             <div class="form-group">
                 <label>
                     <input type="checkbox" name="can_edit_properties" value="1" @checked(old('can_edit_properties', $member?->can_edit_properties))>
-                    <strong>Edit property details</strong> &ndash; may change property data, room types, rates, inventory, room numbers, amenities, photos and exchange rates
+                    <strong>Edit property details</strong> &ndash; may change property data, room types, rates, inventory, room numbers, amenities and photos
                 </label>
             </div>
             <button type="submit" class="btn btn-primary">{{ $member ? 'Save' : 'Create staff account' }}</button>

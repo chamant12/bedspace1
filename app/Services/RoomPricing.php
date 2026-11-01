@@ -15,7 +15,7 @@ use Carbon\CarbonPeriod;
  * A room type can be booked at a property for a stay only if the chosen
  * occupancy + meal plan combination is complete (USD and LKR) on every
  * night. The guest is charged in their currency; prices are never
- * converted (exchange rates are only for income reports).
+ * converted between currencies.
  */
 class RoomPricing
 {

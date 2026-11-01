@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Pages that change property data (room types, rates, inventory, amenities,
- * photos, exchange rates) need the "edit property details" permission:
+ * photos) need the "edit property details" permission:
  * always the owner, staff only when the owner granted it. Per-property
  * checks are still done by PropertyPolicy.
  */

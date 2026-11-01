@@ -10,37 +10,40 @@
 
         @if($payments->isEmpty())
             <p>Nothing is owed to this hotel.</p>
-        @else
-        <form method="POST" action="/admin/payouts/{{ $property->id }}/pay"
-              onsubmit="return confirm('Record that the selected amounts have been paid to the hotel?');">
+        @endif
+
+        {{-- One payout per currency: LKR and USD are never combined --}}
+        @foreach($payments->groupBy(fn ($payment) => $payment->currency->code)->sortKeys() as $currency => $group)
+        <h5 class="mt-3">{{ $currency }} payments</h5>
+        <form method="POST" action="/admin/payouts/{{ $property->id }}/pay" class="mb-4"
+              onsubmit="return confirm('Record that the selected {{ $currency }} amounts have been paid to the hotel?');">
             @csrf
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th><input type="checkbox" id="select-all" checked></th>
+                            <th><input type="checkbox" class="select-all" checked></th>
                             <th>Paid by guest</th><th>Booking</th><th>Guest</th>
-                            <th class="text-end">Payment</th><th class="text-end">Payment (LKR)</th><th class="text-end">Commission (LKR)</th><th class="text-end">To hotel (LKR)</th>
+                            <th class="text-end">Payment ({{ $currency }})</th><th class="text-end">Commission ({{ $currency }})</th><th class="text-end">To hotel ({{ $currency }})</th>
                         </tr>
                     </thead>
                     <tbody>
-                    @foreach($payments as $payment)
+                    @foreach($group as $payment)
                         @php($payable = \App\Services\HotelPayouts::payable($payment))
                         <tr>
-                            <td><input type="checkbox" name="payment_ids[]" value="{{ $payment->id }}" class="pay-check" data-amount="{{ $payable }}" checked></td>
+                            <td><input type="checkbox" name="payment_ids[]" value="{{ $payment->id }}" class="row-check" data-amount="{{ $payable }}" checked></td>
                             <td>{{ $payment->paid_at->timezone(config('bedspace.timezone'))->format('Y-m-d') }}</td>
                             <td><a href="/reservations/{{ $payment->reservation->reference }}">{{ $payment->reservation->reference }}</a>
                                 <br/><small class="text-muted">{{ $payment->reservation->status->label() }}</small></td>
                             <td>{{ $payment->reservation->guest_name }}</td>
-                            <td class="text-end">{{ $payment->currency->code }} {{ number_format($payment->amount, 2) }}</td>
-                            <td class="text-end">{{ number_format($payment->amount_lkr, 2) }}</td>
-                            <td class="text-end">{{ number_format($payment->commission_lkr, 2) }}</td>
+                            <td class="text-end">{{ number_format($payment->amount, 2) }}</td>
+                            <td class="text-end">{{ number_format($payment->commission_amount, 2) }}</td>
                             <td class="text-end"><strong>{{ number_format($payable, 2) }}</strong></td>
                         </tr>
                     @endforeach
                     </tbody>
                     <tfoot>
-                        <tr><th colspan="7">Selected total</th><th class="text-end" id="selected-total">{{ number_format($payments->sum(fn ($p) => \App\Services\HotelPayouts::payable($p)), 2) }}</th></tr>
+                        <tr><th colspan="6">Selected total ({{ $currency }})</th><th class="text-end selected-total">{{ number_format($group->sum(fn ($p) => \App\Services\HotelPayouts::payable($p)), 2) }}</th></tr>
                     </tfoot>
                 </table>
             </div>
@@ -54,11 +57,11 @@
                     <input type="text" name="notes" class="form-control" maxlength="500">
                 </div>
                 <div class="col-md-3">
-                    <button type="submit" class="btn btn-success">Record payout</button>
+                    <button type="submit" class="btn btn-success">Record {{ $currency }} payout</button>
                 </div>
             </div>
         </form>
-        @endif
+        @endforeach
     </div></div>
 </div>
 
@@ -66,12 +69,12 @@
     <div class="card"><div class="card-body">
         <h4 class="card-title">Payout history</h4>
         <table class="table table-sm">
-            <thead><tr><th>Date</th><th class="text-end">Amount (LKR)</th><th>Reference</th><th>Note</th><th>Recorded by</th></tr></thead>
+            <thead><tr><th>Date</th><th class="text-end">Amount</th><th>Reference</th><th>Note</th><th>Recorded by</th></tr></thead>
             <tbody>
             @forelse($history as $payout)
                 <tr>
                     <td>{{ $payout->paid_at->timezone(config('bedspace.timezone'))->format('Y-m-d') }}</td>
-                    <td class="text-end">{{ number_format($payout->amount_lkr, 2) }}</td>
+                    <td class="text-end">{{ $payout->money() }}</td>
                     <td>{{ $payout->reference }}</td>
                     <td>{{ $payout->notes }}</td>
                     <td>{{ $payout->recordedBy?->name }}</td>
@@ -85,15 +88,5 @@
 </div>
 @stop
 @section('scripts')
-<script>
-$(function () {
-    function updateTotal() {
-        var total = 0;
-        $('.pay-check:checked').each(function () { total += parseFloat($(this).data('amount')); });
-        $('#selected-total').text(total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    }
-    $('#select-all').on('change', function () { $('.pay-check').prop('checked', this.checked); updateTotal(); });
-    $(document).on('change', '.pay-check', updateTotal);
-});
-</script>
+@include('admin._selectedTotal')
 @stop

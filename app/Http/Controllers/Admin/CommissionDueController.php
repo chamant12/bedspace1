@@ -17,16 +17,17 @@ class CommissionDueController extends Controller
 
     public function index(){
         $rows = $this->dues->byProperty();
-        $total = round($rows->sum('due_lkr'), 2);
-        $settlements = CommissionSettlement::with('property', 'recordedBy')->latest('settled_at')->take(20)->get();
+        // Per currency, never combined: [code => amount]
+        $totals = $rows->groupBy('currency')->sortKeys()->map(fn ($group) => round($group->sum('due'), 2));
+        $settlements = CommissionSettlement::with('property', 'recordedBy', 'currency')->latest('settled_at')->take(20)->get();
 
-        return view('admin.commissionDues', compact('rows', 'total', 'settlements'));
+        return view('admin.commissionDues', compact('rows', 'totals', 'settlements'));
     }
 
     public function show($property_id){
         $property = Property::with('propertyOwner')->findOrFail($property_id);
         $payments = $this->dues->paymentsFor($property);
-        $settlements = CommissionSettlement::with('recordedBy')->where('property_id', $property->id)->latest('settled_at')->get();
+        $settlements = CommissionSettlement::with('recordedBy', 'currency')->where('property_id', $property->id)->latest('settled_at')->get();
 
         return view('admin.commissionDuesProperty', compact('property', 'payments', 'settlements'));
     }
@@ -45,6 +46,6 @@ class CommissionDueController extends Controller
         $settlement = $this->dues->settle($property, array_map('intval', $data['payment_ids']),
             $data['reference'] ?? null, $data['notes'] ?? null, $request->user());
 
-        return redirect()->back()->with('success', 'Settlement of LKR '.number_format($settlement->amount_lkr, 2).' recorded for '.$property->property_name.'.');
+        return redirect()->back()->with('success', 'Settlement of '.$settlement->money().' recorded for '.$property->property_name.'.');
     }
 }

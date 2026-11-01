@@ -265,7 +265,6 @@
                   @endif
                   @if($navUser->canEditProperties())
                   <li class="nav-item"> <a class="nav-link" href="/add-room-type">Add Room Type</a></li>
-                  <li class="nav-item"> <a class="nav-link" href="/exchange-rates">Exchange Rates</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/amenities">Amenities</a></li>
                   <li class="nav-item"> <a class="nav-link" href="/photos">Photos</a></li>
                   @endif

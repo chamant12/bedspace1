@@ -14,7 +14,8 @@ use Illuminate\Support\Collection;
 
 /**
  * Occupancy and booking reports (FR-12), per property, for one month
- * (Sri Lanka dates). Money is in LKR at each booking's exchange rate.
+ * (Sri Lanka dates). Money is shown per currency: LKR bookings in LKR,
+ * USD bookings in USD, never converted or combined.
  */
 class OperationsReports
 {
@@ -30,7 +31,8 @@ class OperationsReports
      * - available room-nights: total - closed rooms on dates open in the rates calendar
      * - sold room-nights: rooms booked (from inventory)
      * - occupancy % = sold / available
-     * - room revenue (LKR) of staying bookings for nights in the month, ADR, RevPAR
+     * - room revenue of staying bookings for nights in the month, ADR, RevPAR,
+     *   each separately for LKR and USD bookings
      * Totals use the current room count (changes to totals are not back-dated).
      */
     public function occupancy(string $month, array $propertyIds): Collection
@@ -64,9 +66,6 @@ class OperationsReports
                     $sold += $booked;
                 }
 
-                $roomRevenue = round($revenue[$roomType->id]['lkr'] ?? 0, 2);
-                $revenueNights = $revenue[$roomType->id]['nights'] ?? 0;
-
                 if ($total === 0 && $sold === 0) {
                     continue;
                 }
@@ -78,14 +77,25 @@ class OperationsReports
                     'available_nights' => $available,
                     'sold_nights' => $sold,
                     'occupancy' => $available > 0 ? round(min(100, $sold / $available * 100), 1) : 0,
-                    'revenue_lkr' => $roomRevenue,
-                    'adr_lkr' => $revenueNights > 0 ? round($roomRevenue / $revenueNights, 2) : 0, // average daily rate
-                    'revpar_lkr' => $available > 0 ? round($roomRevenue / $available, 2) : 0,    // revenue per available room-night
-                ]);
+                ] + $this->moneyColumns($revenue[$roomType->id] ?? [], $available));
             }
         }
 
         return $rows;
+    }
+
+    // revenue_lkr / _usd, adr_ (average daily rate), revpar_ (revenue per available room-night), per currency
+    private function moneyColumns(array $revenue, int $available): array
+    {
+        $columns = [];
+        foreach (['lkr' => 'LKR', 'usd' => 'USD'] as $key => $code) {
+            $amount = round($revenue[$code]['amount'] ?? 0, 2);
+            $nights = $revenue[$code]['nights'] ?? 0;
+            $columns["revenue_$key"] = $amount;
+            $columns["adr_$key"] = $nights > 0 ? round($amount / $nights, 2) : 0;
+            $columns["revpar_$key"] = $available > 0 ? round($amount / $available, 2) : 0;
+        }
+        return $columns;
     }
 
     /**
@@ -97,7 +107,7 @@ class OperationsReports
     {
         [$fromUtc, $toUtc] = $this->income->monthRange($month);
 
-        $reservations = Reservation::with('property')
+        $reservations = Reservation::with('property', 'currency')
             ->whereIn('property_id', $propertyIds)
             ->where('created_at', '>=', $fromUtc)
             ->where('created_at', '<', $toUtc)
@@ -126,7 +136,8 @@ class OperationsReports
                 'walk_in' => $group->where('source', 'owner')->count(),
                 'online_payment' => $group->filter(fn ($r) => $r->payment_method->value === 'online')->count(),
                 'pay_at_hotel' => $group->filter(fn ($r) => $r->payment_method->value === 'pay_at_hotel')->count(),
-                'value_lkr' => round((float) $kept->sum('total_lkr'), 2),
+                'value_lkr' => round((float) $kept->filter(fn ($r) => $r->currency->code === 'LKR')->sum('total'), 2),
+                'value_usd' => round((float) $kept->filter(fn ($r) => $r->currency->code === 'USD')->sum('total'), 2),
                 'room_nights' => (int) $kept->sum(fn ($r) => $r->nights * $r->rooms()->sum('rooms')),
                 'avg_nights' => round((float) $group->avg('nights'), 1),
                 'avg_lead_days' => round((float) $group->avg(fn ($r) => CarbonImmutable::parse($r->created_at->timezone($tz)->toDateString())
@@ -137,25 +148,25 @@ class OperationsReports
         })->sortBy('property_name')->values();
     }
 
-    // [roomType_id => ['lkr' => revenue, 'nights' => room-nights]] for staying bookings, nights inside [from, to]
+    // [roomType_id => [currency code => ['amount' => revenue, 'nights' => room-nights]]] for staying bookings, nights inside [from, to]
     private function roomRevenue(Property $property, string $from, string $to): array
     {
         $result = [];
-        Reservation::with('rooms')
+        Reservation::with('rooms', 'currency')
             ->where('property_id', $property->id)
             ->whereIn('status', array_map(fn ($s) => $s->value, self::STAYING))
             ->where('check_in', '<=', $to)
             ->where('check_out', '>', $from)
             ->get()
             ->each(function (Reservation $reservation) use (&$result, $from, $to) {
-                $rate = (float) $reservation->exchange_rate;
+                $code = $reservation->currency->code;
                 foreach ($reservation->rooms as $line) {
                     foreach ((array) $line->nightly_rates as $date => $price) {
                         if ($date < $from || $date > $to) {
                             continue;
                         }
-                        $result[$line->roomType_id]['lkr'] = ($result[$line->roomType_id]['lkr'] ?? 0) + (float) $price * $line->rooms * $rate;
-                        $result[$line->roomType_id]['nights'] = ($result[$line->roomType_id]['nights'] ?? 0) + $line->rooms;
+                        $result[$line->roomType_id][$code]['amount'] = ($result[$line->roomType_id][$code]['amount'] ?? 0) + (float) $price * $line->rooms;
+                        $result[$line->roomType_id][$code]['nights'] = ($result[$line->roomType_id][$code]['nights'] ?? 0) + $line->rooms;
                     }
                 }
             });
