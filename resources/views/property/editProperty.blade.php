@@ -42,10 +42,10 @@
                         <label for="exampleInputUsername1">Address<span style="color:red;">*</span></label>
                         <textarea name="address" id="" class="form-control" required>{{$property->address}}</textarea>
                       </div>
-                      <div class="form-group">
-                        <label for="exampleInputUsername1">Location (on Google maps)</label>
-                        <input type="text" class="form-control" placeholder="Google location" name="location" value="{{$property->location}}">
-                      </div>
+                      @include('property._mapPicker', ['latitude' => $property->latitude, 'longitude' => $property->longitude])
+                      @if(!$property->hasPin() && $property->mapUrl())
+                        <p class="small text-muted">Previously entered map link: <a href="{{ $property->mapUrl() }}" target="_blank" rel="noopener">open</a>. Place a pin above to replace it.</p>
+                      @endif
                       <div class="form-group">
                         <label>Cancellation policy: no refund within (days before check-in)<span style="color:red;">*</span></label>
                         <input type="number" class="form-control" name="cancellation_days" min="0" max="365" step="1" required
@@ -104,6 +104,7 @@
 </form>
 @stop
 @section('scripts')
+@include('property._mapPickerScript')
 <script>
     $(document).ready(function(){
         $.ajaxSetup({

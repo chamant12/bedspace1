@@ -51,10 +51,15 @@
                 <p class="mb-1">{{ $property->address }}</p>
                 <p class="mb-1">{{ $property->city?->city_name }}, {{ $property->city?->district?->district_name }}</p>
                 <p class="mb-1">{{ $property->city?->district?->province?->province_name }}</p>
-                @if(preg_match('#^https?://#i', (string) $property->location))
-                    <p class="mb-0"><a href="{{ $property->location }}" target="_blank" rel="noopener">Open in maps</a></p>
+                @if($property->mapEmbedUrl())
+                    <iframe src="{{ $property->mapEmbedUrl() }}" style="width:100%;height:180px;border:0;border-radius:6px;" loading="lazy" title="Map"></iframe>
+                @endif
+                @if($property->mapUrl())
+                    <p class="mb-0"><a href="{{ $property->mapUrl() }}" target="_blank" rel="noopener">Open in Google Maps</a></p>
                 @elseif($property->location)
                     <p class="mb-0 text-muted">{{ $property->location }}</p>
+                @else
+                    <p class="mb-0 text-muted">No map pin yet.@if($canEdit) <a href="/view-property/{{ $property->id }}">Add one</a>@endif</p>
                 @endif
             </div></div>
         </div>

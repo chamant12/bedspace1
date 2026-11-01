@@ -18,6 +18,8 @@ class Property extends Model
         'city_id',
         'address',
         'location',
+        'latitude',
+        'longitude',
         'cancellation_days',
     ];
 
@@ -25,7 +27,31 @@ class Property extends Model
         'is_active' => 'boolean',
         'cancellation_days' => 'integer',
         'deactivated_at' => 'datetime',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
+
+    public function hasPin(): bool
+    {
+        return $this->latitude !== null && $this->longitude !== null;
+    }
+
+    // Google Maps link: the pin, or the link entered before pins existed
+    public function mapUrl(): ?string
+    {
+        if ($this->hasPin()) {
+            return 'https://www.google.com/maps/search/?api=1&query='.$this->latitude.','.$this->longitude;
+        }
+        return preg_match('#^https?://#i', (string) $this->location) ? $this->location : null;
+    }
+
+    // Map to embed on a page (works without an API key), or null without a pin
+    public function mapEmbedUrl(): ?string
+    {
+        return $this->hasPin()
+            ? 'https://maps.google.com/maps?q='.$this->latitude.','.$this->longitude.'&z=15&output=embed'
+            : null;
+    }
 
     // Non-refundable window before check-in: the owner's setting, or the platform default
     public function effectiveCancellationDays(): int

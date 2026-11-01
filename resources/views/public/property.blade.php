@@ -3,7 +3,7 @@
 <div class="container bs-page">
     <h2 class="mb-1">{{ $property->property_name }}</h2>
     <p class="bs-muted">{{ $property->address }} &middot; {{ $property->city?->city_name }}, {{ $property->city?->district?->district_name }}
-        @if(preg_match('#^https?://#i', (string) $property->location)) &middot; <a href="{{ $property->location }}" target="_blank" rel="noopener">Map</a> @endif
+        @if($property->mapUrl()) &middot; <a href="{{ $property->mapUrl() }}" target="_blank" rel="noopener">Open in Google Maps</a> @endif
     </p>
 
     @if($photos->isNotEmpty())
@@ -39,6 +39,15 @@
             @foreach(\App\Models\Amenity::grouped('property', $amenities) as $category => $items)
                 <div class="mb-1"><strong>{{ $category }}:</strong> {{ $items->pluck('amenity')->join(' · ') }}</div>
             @endforeach
+        </div>
+    @endif
+
+    @if($property->mapEmbedUrl())
+        <div class="bs-card">
+            <h5>Location</h5>
+            <iframe src="{{ $property->mapEmbedUrl() }}" class="bs-map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                    title="Map showing {{ $property->property_name }}"></iframe>
+            <a href="{{ $property->mapUrl() }}" target="_blank" rel="noopener">Open in Google Maps for directions</a>
         </div>
     @endif
 

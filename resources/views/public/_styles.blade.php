@@ -29,6 +29,7 @@
 .bs-featured-body { padding: 12px 14px; }
 .bs-room-amenities summary { cursor: pointer; color: var(--site-primary, #1675ac); }
 .bs-room-amenities ul { padding-left: 18px; }
+.bs-map { width: 100%; height: 300px; border: 0; border-radius: 6px; display: block; margin-bottom: 8px; }
 .bs-stay-form label { font-size: 0.85rem; margin-bottom: 2px; }
 /* Bootstrap 5 utilities used on these pages (the public theme ships Bootstrap 4) */
 .gap-2 { gap: .5rem; }

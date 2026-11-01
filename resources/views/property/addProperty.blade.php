@@ -36,10 +36,7 @@
                         <label for="exampleInputUsername1">Address<span style="color:red;">*</span></label>
                         <textarea name="address" id="" class="form-control" required></textarea>
                       </div>
-                      <div class="form-group">
-                        <label for="exampleInputUsername1">Location (on Google maps)</label>
-                        <input type="text" class="form-control" placeholder="Google location" name="location">
-                      </div>
+                      @include('property._mapPicker', ['latitude' => null, 'longitude' => null])
                       <div class="form-group">
                         <label>Cancellation policy: no refund within (days before check-in)<span style="color:red;">*</span></label>
                         <input type="number" class="form-control" name="cancellation_days" min="0" max="365" step="1" required
@@ -72,6 +69,7 @@
 </form>
 @stop
 @section('scripts')
+@include('property._mapPickerScript')
 <script>
     $(document).ready(function(){
         $.ajaxSetup({

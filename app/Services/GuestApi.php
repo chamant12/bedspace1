@@ -128,7 +128,7 @@ class GuestApi
             'city' => $property->city?->city_name,
             'district' => $property->city?->district?->district_name,
             'province' => $property->city?->district?->province?->province_name,
-            'map_url' => preg_match('#^https?://#i', (string) $property->location) ? $property->location : null,
+            'map_url' => $property->mapUrl(),
             'amenities' => $this->amenities('property_amenity_xrefs', 'property_id', $property->id),
             'room_types' => $roomTypes,
             'cancellation_policy' => $checkIn && $this->isDate($checkIn)
